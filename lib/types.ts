@@ -15,6 +15,7 @@ export interface StockImageItem {
   negativePrompt?: string;
   keywords: string[];
   modelUsed: string;
+  filename?: string;
   imageUrl?: string;
   imageBase64?: string;
   costEstimate?: string;

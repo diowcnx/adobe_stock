@@ -1,4 +1,5 @@
 import { MarketTrend, OpenRouterCreditInfo, StockImageItem } from "./types";
+import { generateMetadataCsv, generateUniqueStockFilename } from "./csv";
 
 interface Smtp2goSendResponse {
   data?: {
@@ -36,19 +37,38 @@ export async function sendDailyStockEmail({
     day: "numeric",
   });
 
-  const htmlBody = generateEmailHtml(todayStr, trend, images, credits);
-  const textBody = generateEmailPlainText(todayStr, trend, images, credits);
+  const now = new Date();
+  const dateSlug = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const csvFilename = `adobe_stock_metadata_${dateSlug}.csv`;
 
-  // เตรียม attachments เป็น PNG เสมอ
-  const attachments = images
-    .filter((img) => img.imageBase64)
+  // ตรวจสอบให้ทุกภาพมีชื่อไฟล์เฉพาะตัวที่ไม่ซ้ำกัน
+  images.forEach((img) => {
+    if (!img.filename) {
+      img.filename = generateUniqueStockFilename(img.seoTitle, img.id);
+    }
+  });
+
+  const htmlBody = generateEmailHtml(todayStr, trend, images, credits, csvFilename);
+  const textBody = generateEmailPlainText(todayStr, trend, images, credits, csvFilename);
+
+  // เตรียม attachments สำหรับภาพ PNG ทั้งหมด
+  const attachments: Array<{ filename: string; fileblob: string; mimetype: string }> = images
+    .filter((img) => img.imageBase64 && img.filename)
     .map((img) => {
       return {
-        filename: `adobe_stock_${img.id}_${img.aspectRatio.replace(":", "x")}.png`,
+        filename: img.filename!,
         fileblob: img.imageBase64!,
         mimetype: "image/png",
       };
     });
+
+  // แนบไฟล์ CSV ที่มีเฉพาะ Filename,Title,Keywords สำหรับนำไปอัปโหลดต่อได้ทันที
+  const csvContent = generateMetadataCsv(images);
+  attachments.push({
+    filename: csvFilename,
+    fileblob: Buffer.from(csvContent, "utf-8").toString("base64"),
+    mimetype: "text/csv",
+  });
 
   if (!key) {
     console.warn("SMTP2GO_API_KEY not configured. Simulating successful email dispatch.");
@@ -113,7 +133,8 @@ function generateEmailHtml(
   todayStr: string,
   trend: MarketTrend,
   images: StockImageItem[],
-  credits: OpenRouterCreditInfo
+  credits: OpenRouterCreditInfo,
+  csvFilename: string = "adobe_stock_metadata.csv"
 ): string {
   const imagesHtml = images
     .map((img) => {
@@ -135,6 +156,16 @@ function generateEmailHtml(
         </div>
 
         <div style="padding: 20px;">
+          <!-- Associated Image Filename Reference -->
+          <div style="margin-bottom: 16px; background-color: #f1f5f9; padding: 12px 14px; border-radius: 8px; border-left: 4px solid #0f172a;">
+            <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
+              📁 ชื่อไฟล์รูปภาพ (Associated Image Filename):
+            </div>
+            <div style="font-size: 14px; font-weight: 700; color: #0f172a; font-family: monospace; word-break: break-all;">
+              ${escapeHtml(img.filename || `stock_image_${img.id}.png`)}
+            </div>
+          </div>
+
           ${
             img.imageUrl
               ? `
@@ -272,6 +303,22 @@ function generateEmailHtml(
       </table>
     </div>
 
+    <!-- Attached CSV Banner Notice -->
+    <div style="background-color: #f0fdf4; border: 1.5px solid #22c55e; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.1);">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <div style="color: #15803d; font-size: 15px; font-weight: 800; margin-bottom: 4px;">
+              📄 แนบไฟล์ CSV ข้อมูลภาพเรียบร้อยแล้ว: <span style="font-family: monospace; background-color: #dcfce7; padding: 2px 8px; border-radius: 6px;">${escapeHtml(csvFilename)}</span>
+            </div>
+            <div style="color: #166534; font-size: 13px; line-height: 1.4;">
+              ประกอบด้วยคอลัมน์ <strong>Filename, Title, Keywords</strong> เท่านั้น สามารถนำไปใช้จับคู่ภาพหรือ Bulk Upload บน Adobe Stock Contributor ได้ทันที
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
     <!-- Generated Images Section -->
     <h3 style="font-size: 16px; font-weight: 700; color: #334155; margin: 0 0 16px 4px;">
       🎨 5 Curated Commercial Prompts &amp; Metadata
@@ -295,12 +342,14 @@ function generateEmailPlainText(
   todayStr: string,
   trend: MarketTrend,
   images: StockImageItem[],
-  credits: OpenRouterCreditInfo
+  credits: OpenRouterCreditInfo,
+  csvFilename: string = "adobe_stock_metadata.csv"
 ): string {
   const appUrl = process.env.APP_URL || "https://adobe-stock-lovat.vercel.app";
   let text = `📸 Adobe Stock Daily Dispatch - ${todayStr}\n`;
   text += `🔗 Web Dashboard: ${appUrl}\n`;
-  text += `OpenRouter Remaining Credit: $${credits.remainingCredits.toFixed(4)}\n\n`;
+  text += `OpenRouter Remaining Credit: $${credits.remainingCredits.toFixed(4)}\n`;
+  text += `📄 Attached Metadata CSV: ${csvFilename} (Columns: Filename,Title,Keywords)\n\n`;
   text += `--- MARKET TREND ---\n`;
   text += `Theme: ${trend.theme}\n`;
   text += `Target Market: ${trend.targetMarket}\n`;
@@ -310,6 +359,7 @@ function generateEmailPlainText(
   text += `--- 5 COMMERCIAL IMAGES & METADATA ---\n\n`;
   for (const img of images) {
     text += `[Image #${img.id}] (Ratio: ${img.aspectRatio}, Model: ${img.modelUsed})\n`;
+    text += `📁 Filename: ${img.filename}\n`;
     text += `SEO Title: ${img.seoTitle}\n`;
     text += `Category: ${img.category}\n`;
     text += `Prompt: ${img.prompt}\n`;

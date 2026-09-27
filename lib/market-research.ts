@@ -1,5 +1,6 @@
 import { callOpenRouterJSON } from "./openrouter";
 import { MarketTrend, StockImageItem } from "./types";
+import { generateUniqueStockFilename } from "./csv";
 
 interface ResearchResponse {
   trend: MarketTrend;
@@ -95,6 +96,7 @@ Return JSON in this exact structure:
         negativePrompt: p.negativePrompt,
         keywords: p.keywords,
         modelUsed: p.modelSuggestion || "recraft/recraft-v4.1-flash",
+        filename: generateUniqueStockFilename(p.seoTitle, p.id),
         costEstimate: isRecraft ? "~$0.007 / image" : "~$0.00003 / image",
       };
     });
@@ -113,19 +115,19 @@ Return JSON in this exact structure:
  * Fallback dataset curated strictly from this account's proven top sellers
  */
 function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] } {
-  return {
-    trend: {
-      theme: "Cloud Computing, Cyber Security & Modern Interior Mockups",
-      targetMarket: "Global Enterprise IT, FinTech, Modern Architecture & Commercial Advertising",
-      commercialReasoning: "Matches the account's historical top earners: High-demand tech infrastructure, data server rooms, interior frame mockups, and conceptual business metaphors with proven 180+ downloads.",
-      seasonalRelevance: "Year-Round Evergreen Commercial Demand + Q4 Enterprise Budget Planning",
-      buyerDemandRating: "Very High",
-    },
-    items: [
-      {
-        id: 1,
-        seoTitle: "Cloud Computing Data Center with Glowing Blue Neon Server Racks",
-        category: "Technology / Business",
+  const trend: MarketTrend = {
+    theme: "Cloud Computing, Cyber Security & Modern Interior Mockups",
+    targetMarket: "Global Enterprise IT, FinTech, Modern Architecture & Commercial Advertising",
+    commercialReasoning: "Matches the account's historical top earners: High-demand tech infrastructure, data server rooms, interior frame mockups, and conceptual business metaphors with proven 180+ downloads.",
+    seasonalRelevance: "Year-Round Evergreen Commercial Demand + Q4 Enterprise Budget Planning",
+    buyerDemandRating: "Very High",
+  };
+
+  const rawItems: Array<Omit<StockImageItem, "filename">> = [
+    {
+      id: 1,
+      seoTitle: "Cloud Computing Data Center with Glowing Blue Neon Server Racks",
+      category: "Technology / Business",
         aspectRatio: "16:9",
         prompt: "Ultra-wide 16:9 commercial shot of an enterprise cloud data center corridor with rows of sleek dark server racks, vibrant glowing neon blue and orange fiber optic light trails flowing into a central holographic cloud icon, cinematic symmetry, vast dark negative copy space on the right side for tech banner headlines, 8k resolution, shot on Sony A7R IV, clean photorealistic focus, no people.",
         negativePrompt: "people, human face, blurry, text, watermark, logo",
@@ -221,6 +223,13 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
         modelUsed: "recraft/recraft-v4.1-flash",
         costEstimate: "~$0.007 / image",
       }
-    ]
+    ];
+
+  return {
+    trend,
+    items: rawItems.map((item) => ({
+      ...item,
+      filename: generateUniqueStockFilename(item.seoTitle, item.id),
+    })),
   };
 }

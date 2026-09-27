@@ -16,9 +16,12 @@ import {
   Sliders,
   CheckCircle2,
   AlertCircle,
-  LogOut
+  LogOut,
+  Download,
+  FileSpreadsheet
 } from "lucide-react";
 import { WorkflowResult, OpenRouterCreditInfo, StockImageItem } from "@/lib/types";
+import { generateMetadataCsv } from "@/lib/csv";
 
 export default function Dashboard() {
   const [credits, setCredits] = useState<OpenRouterCreditInfo | null>(null);
@@ -91,6 +94,21 @@ export default function Dashboard() {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const downloadMetadataCsv = () => {
+    if (!latestResult || !latestResult.images || latestResult.images.length === 0) return;
+    const csvContent = generateMetadataCsv(latestResult.images);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `adobe_stock_metadata_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -360,13 +378,22 @@ export default function Dashboard() {
                   </div>
                   <h2 className="text-xl font-bold text-white mb-2">{latestResult.trend.theme}</h2>
                   <p className="text-sm text-slate-300 mb-3">{latestResult.trend.commercialReasoning}</p>
-                  <div className="flex flex-wrap gap-4 text-xs text-slate-400 border-t border-slate-800 pt-3">
-                    <div>
-                      <strong className="text-slate-300">Target Market:</strong> {latestResult.trend.targetMarket}
+                  <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400 border-t border-slate-800 pt-3">
+                    <div className="flex flex-wrap gap-4">
+                      <div>
+                        <strong className="text-slate-300">Target Market:</strong> {latestResult.trend.targetMarket}
+                      </div>
+                      <div>
+                        <strong className="text-slate-300">Seasonal Horizon:</strong> {latestResult.trend.seasonalRelevance}
+                      </div>
                     </div>
-                    <div>
-                      <strong className="text-slate-300">Seasonal Horizon:</strong> {latestResult.trend.seasonalRelevance}
-                    </div>
+                    <button
+                      onClick={downloadMetadataCsv}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-md shadow-emerald-950/40"
+                    >
+                      <FileSpreadsheet className="w-4 h-4" />
+                      <span>Download Metadata CSV (Filename,Title,Keywords)</span>
+                    </button>
                   </div>
                 </div>
 
@@ -415,6 +442,34 @@ export default function Dashboard() {
 
                         {/* Metadata Details */}
                         <div className="lg:col-span-8 space-y-4">
+                          {/* Unique Filename */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                📁 Unique Filename (ชื่อไฟล์รูปภาพ)
+                              </span>
+                              <button
+                                onClick={() => copyToClipboard(img.filename || `stock_${img.id}.png`, `filename-${img.id}`)}
+                                className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
+                              >
+                                {copiedKey === `filename-${img.id}` ? (
+                                  <>
+                                    <Check className="w-3 h-3 text-emerald-400" />
+                                    <span className="text-emerald-400">Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3" />
+                                    <span>Copy Filename</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                            <div className="text-xs font-mono font-medium text-emerald-400 bg-slate-950 p-2.5 rounded-xl border border-slate-800 break-all select-all">
+                              {img.filename || `stock_${img.id}.png`}
+                            </div>
+                          </div>
+
                           {/* SEO Title */}
                           <div>
                             <div className="flex items-center justify-between mb-1">
