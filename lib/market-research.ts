@@ -31,8 +31,9 @@ CRITICAL ADOBE STOCK REQUIREMENTS:
    - Image 5: Documentary / In-action (3:2) - Candid, dynamic, modern storytelling, authentic cultural or workplace moment.
 4. SEO Metadata per image:
    - SEO Title: 5 to 10 words, clear, concise, descriptive, containing the primary keyword naturally.
-   - Keywords: 40 to 50 curated keywords. Order matters! The first 10 keywords MUST be the most critical, high-intent search terms.
-5. Model Choice: Use 'google/gemini-2.5-flash-image' for highest commercial photographic realism, fast rendering, and cost efficiency.
+5. Model Choice: Choose the most fitting model for each prompt:
+   - 'recraft/recraft-v4.1-flash' (Recraft V4.1 Flash - best for commercial design, flat lay, product aesthetics, clean studio background, modern stock styling)
+   - 'google/gemini-2.5-flash-image' (Gemini 2.5 Flash Image - best for cinematic landscapes, lifestyle, human emotions, realistic outdoor lighting)
 
 OUTPUT FORMAT: Strict JSON matching the requested schema.
 `;
@@ -91,8 +92,8 @@ Return JSON in this exact structure:
       prompt: p.prompt,
       negativePrompt: p.negativePrompt,
       keywords: p.keywords,
-      modelUsed: p.modelSuggestion || "google/gemini-2.5-flash-image",
-      costEstimate: "~$0.00003 / image",
+      modelUsed: p.modelSuggestion || "recraft/recraft-v4.1-flash",
+      costEstimate: (p.modelSuggestion && p.modelSuggestion.includes("recraft")) ? "~$0.007 / image" : "~$0.00003 / image",
     }));
 
     return {

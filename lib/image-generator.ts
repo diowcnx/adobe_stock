@@ -2,22 +2,29 @@ import { StockImageItem } from "./types";
 
 const OPENROUTER_API_BASE = "https://openrouter.ai/api/v1";
 
-// โมเดลสร้างภาพคุณภาพสูงและราคาถูกที่สุดบน OpenRouter
-export const DEFAULT_IMAGE_MODEL = "google/gemini-2.5-flash-image";
+// โมเดลสร้างภาพคุณภาพสูงที่รองรับบน OpenRouter
+export const MODEL_RECRAFT_FLASH = "recraft/recraft-v4.1-flash"; // Recraft V4.1 Flash (Commercial & Design Stock)
+export const MODEL_GEMINI_IMAGE = "google/gemini-2.5-flash-image"; // Gemini 2.5 Flash Image (Photorealistic)
+
+export const DEFAULT_IMAGE_MODEL = MODEL_RECRAFT_FLASH;
 export const BACKUP_IMAGE_MODELS = [
+  MODEL_GEMINI_IMAGE,
   "google/gemini-3.1-flash-image",
   "openai/gpt-5-image-mini",
 ];
 
 /**
- * แปลง Aspect Ratio ให้ตรงกับข้อกำหนดของ OpenRouter Image Models
+ * แปลง Aspect Ratio ให้ตรงกับข้อกำหนดของแต่ละโมเดล
  */
-function normalizeAspectRatio(ratio: string): "16:9" | "4:3" | "3:4" | "1:1" | "9:16" {
+function getAspectRatioForModel(ratio: string, model: string): string {
+  if (model.includes("recraft")) {
+    // Recraft V4.1 Flash รองรับ 16:9, 3:2, 4:5, 1:1 โดยตรง
+    return ratio;
+  }
   switch (ratio) {
     case "16:9":
       return "16:9";
     case "3:2":
-      // โมเดลมาตรฐานรองรับ 4:3 และ 16:9 ได้อย่างสวยงาม
       return "4:3";
     case "4:5":
       return "3:4";
@@ -68,7 +75,7 @@ export async function generateSingleImage(
         ],
         modalities: ["image", "text"],
         image_config: {
-          aspect_ratio: normalizeAspectRatio(item.aspectRatio),
+          aspect_ratio: getAspectRatioForModel(item.aspectRatio, model),
         },
       };
 
