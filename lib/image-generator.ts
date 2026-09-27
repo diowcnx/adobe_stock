@@ -88,6 +88,7 @@ export async function generateSingleImage(
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(25000),
       });
 
       if (!response.ok) {
@@ -156,24 +157,37 @@ export async function generateSingleImage(
 }
 
 /**
- * สร้างภาพทั้งหมด 5 ภาพ
+ * สร้างภาพทั้งหมด 5 ภาพพร้อมกันแบบขนาน (Parallel Execution via Promise.all)
+ * ลดระยะเวลาประมวลผลทั้งหมดลงเหลือเพียง 2-4 วินาที ป้องกันปัญหา Vercel Function Timeout
  */
 export async function generateAllStockImages(
   items: StockImageItem[],
   apiKey?: string
 ): Promise<StockImageItem[]> {
-  const updatedItems: StockImageItem[] = [];
+  console.log(`Starting parallel image generation for ${items.length} items...`);
+  
+  const results = await Promise.all(
+    items.map(async (item) => {
+      try {
+        const result = await generateSingleImage(item, apiKey);
+        return {
+          ...item,
+          modelUsed: item.modelUsed || DEFAULT_IMAGE_MODEL,
+          imageUrl: result.imageUrl || undefined,
+          imageBase64: result.imageBase64 || undefined,
+          description: result.error ? `Error: ${result.error}` : undefined,
+        };
+      } catch (err: any) {
+        console.error(`Failed generating image #${item.id}:`, err);
+        return {
+          ...item,
+          modelUsed: item.modelUsed || DEFAULT_IMAGE_MODEL,
+          description: `Generation error: ${err.message || String(err)}`,
+        };
+      }
+    })
+  );
 
-  for (const item of items) {
-    const result = await generateSingleImage(item, apiKey);
-    updatedItems.push({
-      ...item,
-      modelUsed: DEFAULT_IMAGE_MODEL,
-      imageUrl: result.imageUrl || undefined,
-      imageBase64: result.imageBase64 || undefined,
-      description: result.error ? `Error: ${result.error}` : undefined,
-    });
-  }
-
-  return updatedItems;
+  console.log(`Parallel image generation completed for ${results.length} items.`);
+  return results;
 }

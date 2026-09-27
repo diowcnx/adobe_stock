@@ -52,15 +52,26 @@ export default function Dashboard() {
     setIsRunning(true);
     try {
       const res = await fetch("/api/manual-trigger", { method: "POST" });
-      const data = await res.json();
+      const text = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Server status ${res.status}: ${text.slice(0, 200)}`);
+      }
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `Server responded with status ${res.status}`);
+      }
+
       setLatestResult(data);
       if (data.credits) {
         setCredits(data.credits);
       }
       setActiveTab("images");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Run error:", err);
-      alert("Failed to execute generation: " + (err as Error).message);
+      alert("Failed to execute generation: " + (err.message || String(err)));
     } finally {
       setIsRunning(false);
     }
