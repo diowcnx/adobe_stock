@@ -13,9 +13,14 @@ function sanitizeSlug(text: string): string {
 
 /**
  * สร้างชื่อไฟล์ที่ไม่ซ้ำกันแน่นอน 100% (Unique Filename)
- * รูปแบบ: stock_YYYYMMDD_HHmmss_ID_slug_HEX.png
+ * รูปแบบ: stock_[transparent|regular]_YYYYMMDD_HHmmss_ID_slug_HEX.png
  */
-export function generateUniqueStockFilename(title: string, id: number, date: Date = new Date()): string {
+export function generateUniqueStockFilename(
+  title: string,
+  id: number,
+  date: Date = new Date(),
+  mode?: "transparent_png" | "regular_scene"
+): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   const yyyy = date.getFullYear();
   const mm = pad(date.getMonth() + 1);
@@ -25,8 +30,9 @@ export function generateUniqueStockFilename(title: string, id: number, date: Dat
   const ss = pad(date.getSeconds());
   const randomHex = Math.random().toString(16).substring(2, 6);
   const slug = sanitizeSlug(title) || `image_${id}`;
+  const modePrefix = mode === "transparent_png" ? "stock_transparent" : mode === "regular_scene" ? "stock_regular" : "stock";
 
-  return `stock_${yyyy}${mm}${dd}_${hh}${min}${ss}_${id}_${slug}_${randomHex}.png`;
+  return `${modePrefix}_${yyyy}${mm}${dd}_${hh}${min}${ss}_${id}_${slug}_${randomHex}.png`;
 }
 
 /**

@@ -4,7 +4,9 @@ import { generateAllStockImages } from "./image-generator";
 import { sendDailyStockEmail, sendCreditDepletedEmergencyAlert } from "./smtp2go";
 import { WorkflowResult } from "./types";
 
-export async function executeDailyStockWorkflow(): Promise<WorkflowResult> {
+export async function executeDailyStockWorkflow(
+  forcedMode?: "transparent_png" | "regular_scene"
+): Promise<WorkflowResult> {
   const startTime = Date.now();
   console.log("Starting Adobe Stock daily generation workflow...");
 
@@ -12,12 +14,13 @@ export async function executeDailyStockWorkflow(): Promise<WorkflowResult> {
   const initialCredits = await getOpenRouterCredits();
   console.log(`Initial OpenRouter Credits: $${initialCredits.remainingCredits.toFixed(4)}`);
 
-  // 2. ทำการวิจัยตลาดและสร้าง 5 Prompts พร้อม SEO Metadata
-  console.log("Conducting market research & crafting commercial prompts...");
-  const { trend, items } = await conductMarketResearchAndGeneratePrompts();
+  // 2. ทำการวิจัยตลาดและสร้าง 20 Prompts ตามโหมดของวัน (สลับวันเว้นวันแบบ 100% Homogeneous)
+  console.log(`Conducting market research (mode: ${forcedMode || "auto-scheduled"})...`);
+  const { trend, items, mode } = await conductMarketResearchAndGeneratePrompts(undefined, forcedMode);
+  console.log(`Resolved generation mode: ${mode} (${items.length} items)`);
 
-  // 3. สร้างภาพทั้ง 5 ภาพ
-  console.log("Generating 5 commercial images...");
+  // 3. สร้างภาพทั้ง 20 ภาพ
+  console.log(`Generating ${items.length} commercial images for mode: ${mode}...`);
   const generatedImages = await generateAllStockImages(items);
 
   // 4. ตรวจสอบเครดิตหลังสร้างภาพ
@@ -36,6 +39,7 @@ export async function executeDailyStockWorkflow(): Promise<WorkflowResult> {
     trend,
     images: generatedImages,
     credits: latestCredits,
+    mode,
   });
 
   const durationMs = Date.now() - startTime;
@@ -44,6 +48,7 @@ export async function executeDailyStockWorkflow(): Promise<WorkflowResult> {
   return {
     success: emailResult.success,
     timestamp: new Date().toISOString(),
+    generationMode: mode,
     trend,
     images: generatedImages,
     credits: latestCredits,

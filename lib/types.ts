@@ -16,6 +16,8 @@ export interface StockImageItem {
   keywords: string[];
   modelUsed: string;
   filename?: string;
+  isTransparent?: boolean;
+  generationMode?: "transparent_png" | "regular_scene";
   imageUrl?: string;
   imageBase64?: string;
   costEstimate?: string;
@@ -33,6 +35,7 @@ export interface OpenRouterCreditInfo {
 export interface WorkflowResult {
   success: boolean;
   timestamp: string;
+  generationMode?: "transparent_png" | "regular_scene";
   trend: MarketTrend;
   images: StockImageItem[];
   credits: OpenRouterCreditInfo;

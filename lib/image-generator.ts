@@ -65,12 +65,22 @@ export async function generateSingleImage(
     try {
       console.log(`[Item #${item.id}] Calling OpenRouter model ${model} (ratio: ${item.aspectRatio})...`);
 
-      const payload = {
+      const isTransparent = Boolean(
+        item.isTransparent ||
+        item.generationMode === "transparent_png" ||
+        item.prompt.toLowerCase().includes("transparent")
+      );
+
+      const userContent = isTransparent
+        ? `Create an isolated commercial stock cutout asset on a 100% transparent background (PNG alpha channel). Sharp clean cutout silhouette, no background color, no background gradients, no drop shadows on the background, studio product lighting, 8k resolution. Prompt: ${item.prompt}`
+        : `Create a commercially viable, highly detailed, photorealistic stock photograph for Adobe Stock. High resolution, professional commercial lighting, authentic composition with clean copy space for editorial text. No logos, no brand trademarks, no watermarks, no distorted faces or extra hands. Prompt: ${item.prompt}`;
+
+      const payload: Record<string, any> = {
         model,
         messages: [
           {
             role: "user",
-            content: `Create a commercially viable, highly detailed, photorealistic stock photograph for Adobe Stock. High resolution, professional commercial lighting, authentic composition with clean copy space for editorial text. No logos, no brand trademarks, no watermarks, no distorted faces or extra hands. Prompt: ${item.prompt}`,
+            content: userContent,
           },
         ],
         modalities: ["image", "text"],
@@ -78,6 +88,11 @@ export async function generateSingleImage(
           aspect_ratio: getAspectRatioForModel(item.aspectRatio, model),
         },
       };
+
+      if (isTransparent) {
+        payload.background = "transparent";
+        payload.output_format = "png";
+      }
 
       const response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
         method: "POST",

@@ -30,6 +30,14 @@ export default function Dashboard() {
   const [latestResult, setLatestResult] = useState<WorkflowResult | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "images" | "setup">("overview");
+  const [selectedMode, setSelectedMode] = useState<"auto" | "transparent_png" | "regular_scene">("auto");
+
+  const todayScheduledMode =
+    typeof window !== "undefined"
+      ? Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000) % 2 === 0
+        ? "transparent_png"
+        : "regular_scene"
+      : "transparent_png";
 
   const handleLogout = async () => {
     try {
@@ -64,7 +72,11 @@ export default function Dashboard() {
   const triggerManualRun = async () => {
     setIsRunning(true);
     try {
-      const res = await fetch("/api/manual-trigger", { method: "POST" });
+      const res = await fetch("/api/manual-trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: selectedMode }),
+      });
       const text = await res.text();
       let data: any;
       try {
@@ -149,6 +161,20 @@ export default function Dashboard() {
               </button>
             </div>
 
+            {/* Generation Mode Selector */}
+            <select
+              value={selectedMode}
+              onChange={(e) => setSelectedMode(e.target.value as any)}
+              className="bg-slate-800/90 border border-slate-700/80 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500 font-medium"
+              title="เลือกโหมดการสร้างภาพ (สลับวันต่อวันอัตโนมัติ หรือบังคับโหมดใดโหมดหนึ่ง)"
+            >
+              <option value="auto">
+                🔄 Auto: {todayScheduledMode === "transparent_png" ? "🔲 วันนี้โหมด Transparent PNG" : "🏞️ วันนี้โหมด Regular Scene"}
+              </option>
+              <option value="transparent_png">🔲 Force Transparent PNG Set (พื้นหลังโปร่งใส 100%)</option>
+              <option value="regular_scene">🏞️ Force Regular Stock Set (มีฉากหลังปกติ 100%)</option>
+            </select>
+
             {/* Run Button */}
             <button
               onClick={triggerManualRun}
@@ -163,7 +189,7 @@ export default function Dashboard() {
               ) : (
                 <>
                   <Send className="w-3.5 h-3.5" />
-                  <span>Run Today's Batch Now</span>
+                  <span>Generate Batch Now</span>
                 </>
               )}
             </button>
@@ -248,14 +274,14 @@ export default function Dashboard() {
         {activeTab === "overview" && (
           <div className="space-y-6">
             {/* Quick Stat Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-medium text-slate-400">Scheduled Trigger</span>
                   <Clock className="w-4 h-4 text-emerald-400" />
                 </div>
-                <div className="text-2xl font-bold text-white">18:00 ICT</div>
-                <p className="text-xs text-slate-500 mt-1">Every day (11:00 UTC Cron)</p>
+                <div className="text-xl font-bold text-white">18:00 ICT</div>
+                <p className="text-xs text-slate-500 mt-1">Every day (11:00 UTC)</p>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -263,8 +289,8 @@ export default function Dashboard() {
                   <span className="text-xs font-medium text-slate-400">Target Email</span>
                   <Mail className="w-4 h-4 text-sky-400" />
                 </div>
-                <div className="text-base font-bold text-white truncate">hs5ckt@gmail.com</div>
-                <p className="text-xs text-slate-500 mt-1">SMTP2GO API Dispatcher</p>
+                <div className="text-sm font-bold text-white truncate">hs5ckt@gmail.com</div>
+                <p className="text-xs text-slate-500 mt-1">SMTP2GO Dispatcher</p>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -272,8 +298,8 @@ export default function Dashboard() {
                   <span className="text-xs font-medium text-slate-400">Daily Production</span>
                   <ImageIcon className="w-4 h-4 text-purple-400" />
                 </div>
-                <div className="text-2xl font-bold text-white">20 Images / Day</div>
-                <p className="text-xs text-slate-500 mt-1">16:9, 3:2, 4:5, 1:1 Across 5 Top Niches</p>
+                <div className="text-xl font-bold text-white">20 Images / Day</div>
+                <p className="text-xs text-slate-500 mt-1">100% Homogeneous Set</p>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -281,8 +307,21 @@ export default function Dashboard() {
                   <span className="text-xs font-medium text-slate-400">SEO Keywords</span>
                   <TrendingUp className="w-4 h-4 text-amber-400" />
                 </div>
-                <div className="text-2xl font-bold text-white">25 - 35 Tags</div>
-                <p className="text-xs text-slate-500 mt-1">Single words &amp; Top 10 Prioritized</p>
+                <div className="text-xl font-bold text-white">25 - 35 Tags</div>
+                <p className="text-xs text-slate-500 mt-1">Single words &amp; Top 10</p>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-medium text-slate-400">Today's Mode</span>
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                </div>
+                <div className="text-sm font-bold text-cyan-300 truncate">
+                  {todayScheduledMode === "transparent_png" ? "🔲 Transparent PNG" : "🏞️ Regular Scene"}
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  {todayScheduledMode === "transparent_png" ? "Save as .PNG" : "Save as .JPG/.PNG"}
+                </p>
               </div>
             </div>
 
@@ -397,7 +436,35 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* 5 Cards */}
+                {/* Mode Indicator & Upscale Recommendation */}
+                <div
+                  className={`p-4 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs ${
+                    latestResult.generationMode === "transparent_png"
+                      ? "bg-sky-950/40 border-sky-800/80 text-sky-200"
+                      : "bg-emerald-950/40 border-emerald-800/80 text-emerald-200"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{latestResult.generationMode === "transparent_png" ? "🔲" : "🏞️"}</span>
+                    <div>
+                      <strong className="block text-white text-sm font-bold">
+                        {latestResult.generationMode === "transparent_png"
+                          ? "100% Transparent PNG Set (พื้นหลังโปร่งใสทั้งชุด 20 ภาพ)"
+                          : "100% Regular Commercial Stock Set (ภาพทั่วไปมีฉากหลังทั้งชุด 20 ภาพ)"}
+                      </strong>
+                      <span className="text-slate-300">
+                        {latestResult.generationMode === "transparent_png"
+                          ? "💡 คำแนะนำการ Upscale: บันทึกไฟล์เป็น .PNG เท่านั้น เพื่อรักษาความโปร่งใส (Alpha Transparency) สำหรับส่งขายหมวด Isolated PNG"
+                          : "💡 คำแนะนำการ Upscale: สามารถเลือกบันทึกเป็น .JPG หรือ .PNG ได้ตามสะดวก ทุกภาพมี Negative Copy Space พร้อมใช้งาน"}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="shrink-0 font-mono text-[11px] px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300">
+                    Mode: {latestResult.generationMode === "transparent_png" ? "transparent_png" : "regular_scene"}
+                  </span>
+                </div>
+
+                {/* Generated Cards */}
                 <div className="space-y-6">
                   {latestResult.images.map((img: StockImageItem) => (
                     <div
@@ -417,9 +484,16 @@ export default function Dashboard() {
                             Category: <strong className="text-slate-200">{img.category}</strong>
                           </span>
                         </div>
-                        <span className="text-xs font-mono text-sky-400 bg-sky-950/50 px-2 py-0.5 rounded border border-sky-800/40">
-                          {img.modelUsed}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {(img.isTransparent || latestResult.generationMode === "transparent_png") && (
+                            <span className="text-xs font-mono text-cyan-300 bg-cyan-950/70 px-2.5 py-0.5 rounded border border-cyan-800/50 flex items-center gap-1 font-semibold">
+                              🔲 Transparent PNG
+                            </span>
+                          )}
+                          <span className="text-xs font-mono text-sky-400 bg-sky-950/50 px-2 py-0.5 rounded border border-sky-800/40">
+                            {img.modelUsed}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">

@@ -17,54 +17,130 @@ interface ResearchResponse {
   }>;
 }
 
-const SYSTEM_PROMPT = `
+/**
+ * คำนวณโหมดสลับวันเว้นวันอย่างเที่ยงตรง (100% Homogeneous Daily Alternation)
+ * - วันคู่: 'transparent_png' (ภาพพื้นหลังโปร่งใสทั้งชุด 20 ภาพ)
+ * - วันคี่: 'regular_scene' (ภาพทั่วไปมีฉากหลังและ Copy Space ทั้งชุด 20 ภาพ)
+ * ห้ามสร้างปนกันเด็ดขาด เพื่อความสะดวกในการ Batch Upscale และ Save ไฟล์
+ */
+export function getDailyScheduledMode(date: Date = new Date()): "transparent_png" | "regular_scene" {
+  const startOfYear = new Date(date.getFullYear(), 0, 0);
+  const diff = date.getTime() - startOfYear.getTime();
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay);
+  return dayOfYear % 2 === 0 ? "transparent_png" : "regular_scene";
+}
+
+const SYSTEM_PROMPT_REGULAR = `
 You are the elite Adobe Stock commercial photography strategist specializing in high-volume, top-earning contributor portfolios.
 
-PROVEN PORTFOLIO DATA & CRITICAL RULES FOR THIS ACCOUNT:
-1. STRICTLY NO HUMAN PORTRAITS / NO CLOSE-UP FACES: Historical sales data for this contributor proves that images of people's faces NEVER sell. Do NOT generate portraits, model poses, smiling corporate workers, or close-up human faces.
-2. HUMAN PRESENCE (IF ANY) MUST BE STRICTLY LIMITED TO:
-   - Anonymous back view (e.g., silhouette or back of a person at a multi-monitor workstation, walking away into nature).
-   - Or hands only interacting with conceptual objects (e.g., hands holding balancing scales, coins, sprout, or conceptual emoji stones).
-3. PROVEN TOP-SELLING COMMERCIAL CATEGORIES TO FOCUS ON (Based on actual top download counts):
-   - Category A: Cloud Computing, AI, Cybersecurity & Data Infrastructure (e.g., glowing neon cloud icon in dark high-tech server room, fiber-optic data flow, cyber shield, 5G telecom towers, industrial automated manufacturing). This is the account's #1 top seller with 180+ downloads!
-   - Category B: Modern Interior Architecture & Blank Frame Mockups (e.g., luxury minimalist bathroom with marble sink, chic Scandinavian living room with empty blank picture frame mockup on the wall, modern home office desk with laptop and plant, sleek corporate building lobby).
-   - Category C: Conceptual Metaphors & Business Symbolism (e.g., hands holding happy/sad emotion stones, stack of coins with graduation cap for student finance, one standout colored object in a sea of monochrome items, balancing scales).
-   - Category D: Culinary Spices & Food Flat Lays (e.g., vibrant overhead top-down flat lay of exotic Asian/Indian culinary spices, fresh herbs, or coffee beans arranged around a generous blank slate/marble/rustic wood copy space in the center).
-   - Category E: Seasonal & Nature Banners (e.g., festive Halloween pumpkin banner with copy space, autumn wildlife, pink cherry blossoms isolated on white, crystal clean water droplets on glass bokeh).
-4. MANDATORY COPY SPACE: Every single image MUST feature ample clean negative space (left, right, or center) designed specifically for graphic designers to place marketing copy, headers, or typography.
-5. ZERO LOGOS / IP: Strictly no recognizable brand names, logos, or copyrighted elements.
-6. ADOBE STOCK KEYWORD RULES (CRITICAL FOR SEO & TRANSLATION):
-   - SINGLE WORDS (INDIVIDUAL CONCEPTS): Adobe Stock official contributor guidelines mandate using single words (e.g. "cloud", "server", "neon", "infrastructure", "modern", "blue", "dark", "technology", "abstract", "minimalist") so that Adobe's global engine can accurately translate them into French, German, Japanese, Spanish, etc.
-   - COMPOUND PHRASES: ONLY use 2-word phrases for universal, established concepts that lose meaning if separated (e.g., "copy space", "data center", "cloud computing", "artificial intelligence", "big data", "real estate", "living room", "flat lay"). NEVER use descriptive adjective+noun phrases like "blue neon" or "clean desk" — split them into "blue", "neon", "clean", "desk".
-   - TOP 10 ORDER MATTERS: Adobe Stock algorithm assigns the highest search weight to the FIRST 10 keywords. Place the most direct, descriptive, high-value keywords in slots 1 to 10.
-   - OPTIMAL QUANTITY: Output exactly 25 to 35 high-relevance keywords per image (quality over quantity; avoid low-value dilution).
-7. MODEL SELECTION:
-   - Use 'recraft/recraft-v4.1-flash' for clean product flat lays, interior mockups, isolated assets, and modern design stock.
-   - Use 'google/gemini-2.5-flash-image' for glowing server rooms, atmospheric lighting, and high-tech infrastructure.
+TODAY'S STRICT MANDATE: 100% REGULAR COMMERCIAL SCENES WITH FULL BACKGROUND & MANDATORY COPY SPACE.
+DO NOT GENERATE ISOLATED CUTOUTS TODAY.
+EVERY SINGLE IMAGE IN THIS BATCH MUST FEATURE AMPLE CLEAN NEGATIVE COPY SPACE (40-60%) FOR EDITORIAL & ADVERTISING DESIGNERS.
+
+PROVEN PORTFOLIO RULES:
+1. STRICTLY NO HUMAN PORTRAITS / NO FACES.
+2. 5 PROVEN CATEGORIES:
+   - Category A: Cloud Computing, AI, Cybersecurity & Data Infrastructure (server rooms, fiber optics, tech corridors).
+   - Category B: Modern Interior Architecture & Blank Frame Mockups (living rooms, home office desks).
+   - Category C: Conceptual Metaphors & Business Symbolism (hands holding tokens, coins, balance scale).
+   - Category D: Culinary Spices & Food Flat Lays (overhead table with copy space).
+   - Category E: Seasonal & Nature Banners (autumn marble banner, telecom towers).
+3. KEYWORDS: Single words (individual concepts per Adobe Stock standards), 25-35 keywords, Top 10 prioritized.
+4. MODEL SELECTION: 'recraft/recraft-v4.1-flash' for interiors, mockups, flat lays; 'google/gemini-2.5-flash-image' for glowing server rooms.
+
+OUTPUT FORMAT: Strict JSON matching the requested schema.
+`;
+
+const SYSTEM_PROMPT_TRANSPARENT = `
+You are the elite Adobe Stock commercial strategist specializing in high-volume, top-earning TRANSPARENT BACKGROUND PNG CUTOUT ASSETS.
+
+TODAY'S STRICT MANDATE: 100% ISOLATED OBJECTS / CUTOUT ASSETS ON PURE TRANSPARENT BACKGROUND (ALPHA PNG).
+DO NOT GENERATE ANY FULL BACKGROUND SCENES, INTERIOR ROOMS, WALLS, OR BACKGROUND TEXTURES TODAY.
+EVERY SINGLE IMAGE IN THIS BATCH MUST BE A PURE ISOLATED GRAPHIC/PHOTO ELEMENT FOR DESIGNERS TO DOWNLOAD AS A TRANSPARENT PNG FOR COMPOSITING.
+
+PROVEN TOP-SELLING ISOLATED CATEGORIES FOR THIS ACCOUNT:
+1. Category A: Isolated High-Tech & Telecom Cutouts (5G cell antenna tower, server rack unit, network router, fiber optic bundle, holographic cyber shield icon, 3D cloud computing icon).
+2. Category B: Isolated Modern Furniture, Frames & Decor (floating blank modern wooden picture frame mockup, designer armchair, ceramic vase with pampas, modern desk lamp).
+3. Category C: Isolated Business 3D Metaphors (stack of gold coins with small graduation cap, wooden emoji tokens with happy/sad faces, brass balance scale, single glowing yellow light bulb, green sprout in dirt clump).
+4. Category D: Isolated Culinary Spices & Food Assets (whole star anise cluster, cinnamon sticks tied with twine, golden turmeric root & powder, fresh rosemary sprig, roasted coffee beans cluster).
+5. Category E: Isolated Seasonal & Nature Assets (golden autumn maple leaf, festive Halloween pumpkin, spring cherry blossom branch, pure crystal water droplet cluster).
+
+PROMPT & COMPOSITION RULES FOR TRANSPARENT PNG:
+- Every prompt MUST start with: "Isolated commercial cutout asset on a 100% transparent background (PNG alpha channel), sharp clean edges, studio product lighting, 8k resolution..."
+- SEO Title MUST end with "Isolated on Transparent Background Cutout PNG".
+- Aspect Ratio: use 1:1 or 3:4 for isolated assets.
+- Keywords MUST include: "isolated", "transparent", "cutout", "png", "clipart", "element", "alpha", "object" alongside specific descriptive single words. Top 10 prioritized. 25-35 keywords per item.
+- Model Selection: 'recraft/recraft-v4.1-flash' for clean isolated graphic/product cutouts, or 'google/gemini-2.5-flash-image' for glowing tech icons.
 
 OUTPUT FORMAT: Strict JSON matching the requested schema.
 `;
 
 export async function conductMarketResearchAndGeneratePrompts(
-  currentDate: string = new Date().toISOString()
-): Promise<{ trend: MarketTrend; items: StockImageItem[] }> {
-  const userPrompt = `
+  currentDate: string = new Date().toISOString(),
+  forcedMode?: "transparent_png" | "regular_scene"
+): Promise<{ trend: MarketTrend; items: StockImageItem[]; mode: "transparent_png" | "regular_scene" }> {
+  const mode = forcedMode || getDailyScheduledMode(new Date(currentDate));
+  const isTransparent = mode === "transparent_png";
+
+  const systemPrompt = isTransparent ? SYSTEM_PROMPT_TRANSPARENT : SYSTEM_PROMPT_REGULAR;
+
+  const userPrompt = isTransparent
+    ? `
 Current Date: ${currentDate}.
-Analyze current commercial stock market demand strictly matching the proven high-converting niches of this contributor's portfolio (Cloud/Tech Infrastructure, Interior Mockups, Conceptual Metaphors, Culinary Flat Lays, Seasonal Banners).
-REMEMBER: NO CLOSE-UP HUMAN FACES OR PORTRAITS AT ALL!
+Target: 100% TRANSPARENT BACKGROUND PNG CUTOUT BATCH (20 isolated items).
+CRITICAL: DO NOT MIX! All 20 items MUST be isolated objects on a transparent background (PNG alpha channel).
 
 Generate:
-1. The market trend analysis (theme, target market, commercial reasoning, seasonal relevance, demand rating).
-2. Exactly 20 distinct, high-quality image prompts tailored to this account's proven download patterns with aspect ratios (16:9, 3:2, 4:5, 1:1), SEO titles, categories, and 25-35 keywords each.
-   - Distribute the 20 items evenly across the top 5 proven categories:
-     * 4 items: Cloud Computing, AI, Cybersecurity & Data Infrastructure (IDs 1-4)
-     * 4 items: Modern Interior Architecture & Blank Frame Mockups (IDs 5-8)
-     * 4 items: Conceptual Metaphors & Business Symbolism (IDs 9-12)
-     * 4 items: Culinary Spices & Food Flat Lays (IDs 13-16)
-     * 4 items: Seasonal Banners, Nature & Telecom (IDs 17-20)
-   - Keywords MUST be formatted as single words (individual concepts), with universal compounds only where standard (e.g. "copy space", "cloud computing").
-   - The Top 10 most critical, search-relevant keywords MUST be placed first.
-   - Balance models: 'recraft/recraft-v4.1-flash' for mockups, flat lays, metaphors; 'google/gemini-2.5-flash-image' for glowing data centers, servers, high-tech infrastructure.
+1. Market trend analysis for isolated commercial PNG assets (theme, target market, commercial reasoning, seasonal relevance, demand rating).
+2. Exactly 20 distinct, high-quality isolated cutout prompts distributed across the 5 proven niches (IDs 1 to 20):
+   * 4 items: Isolated High-Tech & Telecom Cutouts (IDs 1-4)
+   * 4 items: Isolated Modern Furniture, Frames & Decor (IDs 5-8)
+   * 4 items: Isolated Business 3D Metaphors (IDs 9-12)
+   * 4 items: Isolated Culinary Spices & Food Assets (IDs 13-16)
+   * 4 items: Isolated Seasonal & Nature Assets (IDs 17-20)
+   - SEO Titles MUST end with "Isolated on Transparent Background Cutout PNG".
+   - Keywords MUST be single words (25-35 tags) with top 10 prioritized, including 'isolated', 'transparent', 'cutout', 'png', 'element'.
+
+Return JSON in this exact structure:
+{
+  "trend": {
+    "theme": "...",
+    "targetMarket": "...",
+    "commercialReasoning": "...",
+    "seasonalRelevance": "...",
+    "buyerDemandRating": "Very High"
+  },
+  "prompts": [
+    {
+      "id": 1,
+      "seoTitle": "... Isolated on Transparent Background Cutout PNG",
+      "category": "...",
+      "aspectRatio": "1:1",
+      "prompt": "Isolated commercial stock cutout asset on a 100% transparent background (PNG alpha channel)...",
+      "negativePrompt": "solid background, color background, human face, portrait, shadows on background",
+      "keywords": ["isolated", "transparent", "cutout", "png", ... 25-35 keywords],
+      "compositionStyle": "Isolated Product Asset / Clipart",
+      "modelSuggestion": "recraft/recraft-v4.1-flash"
+    }
+    ... total 20 items (ids 1 to 20)
+  ]
+}
+`
+    : `
+Current Date: ${currentDate}.
+Target: 100% REGULAR COMMERCIAL SCENES WITH FULL BACKGROUND & COPY SPACE (20 items).
+CRITICAL: DO NOT MIX! All 20 items MUST be full commercial stock scenes with 40-60% clean copy space.
+
+Generate:
+1. Market trend analysis (theme, target market, commercial reasoning, seasonal relevance, demand rating).
+2. Exactly 20 distinct, high-quality image prompts distributed across the 5 proven niches (IDs 1 to 20):
+   * 4 items: Cloud Computing, AI, Cybersecurity & Data Infrastructure (IDs 1-4)
+   * 4 items: Modern Interior Architecture & Blank Frame Mockups (IDs 5-8)
+   * 4 items: Conceptual Metaphors & Business Symbolism (IDs 9-12)
+   * 4 items: Culinary Spices & Food Flat Lays (IDs 13-16)
+   * 4 items: Seasonal Banners, Nature & Telecom (IDs 17-20)
+   - Keywords: 25-35 single words, top 10 prioritized.
 
 Return JSON in this exact structure:
 {
@@ -94,7 +170,7 @@ Return JSON in this exact structure:
 
   try {
     const data = await callOpenRouterJSON<ResearchResponse>(
-      SYSTEM_PROMPT,
+      systemPrompt,
       userPrompt,
       "typesafe/jev-router"
     );
@@ -109,8 +185,10 @@ Return JSON in this exact structure:
         prompt: p.prompt,
         negativePrompt: p.negativePrompt,
         keywords: p.keywords,
-        modelUsed: p.modelSuggestion || "recraft/recraft-v4.1-flash",
-        filename: generateUniqueStockFilename(p.seoTitle, p.id),
+        isTransparent,
+        generationMode: mode,
+        modelUsed: p.modelSuggestion || (isTransparent ? "recraft/recraft-v4.1-flash" : "recraft/recraft-v4.1-flash"),
+        filename: generateUniqueStockFilename(p.seoTitle, p.id, new Date(currentDate), mode),
         costEstimate: isRecraft ? "~$0.007 / image" : "~$0.00003 / image",
       };
     });
@@ -118,26 +196,277 @@ Return JSON in this exact structure:
     return {
       trend: data.trend,
       items,
+      mode,
     };
   } catch (error) {
     console.error("OpenRouter market research error, falling back to account's top-seller dataset:", error);
-    return getFallbackMarketData();
+    return getFallbackMarketData(mode, currentDate);
   }
 }
 
 /**
  * Fallback dataset curated strictly from this account's proven top sellers
  */
-function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] } {
+function getFallbackMarketData(
+  mode: "transparent_png" | "regular_scene" = "regular_scene",
+  currentDate: string = new Date().toISOString()
+): { trend: MarketTrend; items: StockImageItem[]; mode: "transparent_png" | "regular_scene" } {
+  const isTransparent = mode === "transparent_png";
+
+  if (isTransparent) {
+    const trend: MarketTrend = {
+      theme: "Isolated Commercial Cutouts & 3D Design Assets on Transparent Background (Alpha PNG)",
+      targetMarket: "Graphic Designers, App Developers, Digital Marketers & Advertising Agencies",
+      commercialReasoning: "Matches top-selling PNG download pattern: 100% isolated objects on transparent backgrounds ready for drag-and-drop into posters, web layouts, and commercial collages.",
+      seasonalRelevance: "Year-Round Universal Design Demand",
+      buyerDemandRating: "Very High",
+    };
+
+    const rawTransparentItems: Array<Omit<StockImageItem, "filename" | "isTransparent" | "generationMode">> = [
+      {
+        id: 1,
+        seoTitle: "Modern Telecom 5G Cellular Tower Antenna Isolated on Transparent Background Cutout PNG",
+        category: "Technology / Telecom",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial stock cutout asset on a 100% transparent background (PNG alpha channel) of a modern telecommunication cellular antenna mast tower with high-tech transmitters, perfectly cut out, sharp crisp edges, zero background shadows, studio lighting, 8k resolution.",
+        negativePrompt: "solid background, color background, sky, wires mess, blurry, text, logos",
+        keywords: ["isolated", "transparent", "cutout", "png", "telecom", "antenna", "5g", "cellular", "tower", "network", "wireless", "mast", "transmitter", "mobile", "broadband", "station", "receiver", "technology", "communication", "broadcast", "digital", "equipment", "hardware", "satellite"],
+        modelUsed: "google/gemini-2.5-flash-image",
+        costEstimate: "~$0.00003 / image",
+      },
+      {
+        id: 2,
+        seoTitle: "Enterprise Cloud Computing Server Rack Unit Isolated on Transparent Background Cutout PNG",
+        category: "Technology / Hardware",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial stock cutout asset on a 100% transparent background (PNG alpha channel) of an enterprise dark server rack unit with subtle glowing cyan LED indicator lights, sharp clean cutout silhouette, no background color, studio product lighting.",
+        negativePrompt: "solid background, color background, room, floor, blurry, logos, text",
+        keywords: ["isolated", "transparent", "cutout", "png", "server", "rack", "datacenter", "cloud", "hardware", "computer", "hosting", "storage", "technology", "network", "cyber", "internet", "enterprise", "telecom", "database", "digital", "chassis", "equipment"],
+        modelUsed: "google/gemini-2.5-flash-image",
+        costEstimate: "~$0.00003 / image",
+      },
+      {
+        id: 3,
+        seoTitle: "Glowing Holographic Cyber Security Shield Icon Isolated on Transparent Background Cutout PNG",
+        category: "Technology / Cybersecurity",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial 3D graphic asset on a 100% transparent background (PNG alpha channel) of a futuristic glowing blue cyber security shield icon with subtle binary digital circuitry, clean alpha edges, no dark background.",
+        negativePrompt: "solid background, black background, blurry, distorted, watermark",
+        keywords: ["isolated", "transparent", "cutout", "png", "cybersecurity", "shield", "security", "firewall", "protection", "icon", "data", "safety", "network", "encryption", "digital", "cyber", "defense", "privacy", "virtual", "futuristic", "symbol"],
+        modelUsed: "google/gemini-2.5-flash-image",
+        costEstimate: "~$0.00003 / image",
+      },
+      {
+        id: 4,
+        seoTitle: "Artificial Intelligence Glowing Brain Neural Node Icon Isolated on Transparent Background Cutout PNG",
+        category: "Technology / AI",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial 3D icon on a 100% transparent background (PNG alpha channel) of a digital neural network brain silhouette made of interconnected glowing cyan dots and lines, clean cutout, no background.",
+        negativePrompt: "solid background, dark background, blurry, watermark",
+        keywords: ["isolated", "transparent", "cutout", "png", "artificial intelligence", "brain", "neural", "network", "icon", "technology", "smart", "digital", "data", "algorithm", "deep", "learning", "machine", "science", "future", "mind", "concept"],
+        modelUsed: "google/gemini-2.5-flash-image",
+        costEstimate: "~$0.00003 / image",
+      },
+      {
+        id: 5,
+        seoTitle: "Floating Modern Minimalist Blank Wooden Picture Frame Mockup Isolated on Transparent Background Cutout PNG",
+        category: "Interiors / Mockups",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial stock mockup on a 100% transparent background (PNG alpha channel) of a contemporary light oak vertical poster frame mockup with pure white blank inner mat board, clean sharp cutout edges, soft realistic self-shadow only.",
+        negativePrompt: "solid background, wall, room, text in frame, picture in frame, logos",
+        keywords: ["isolated", "transparent", "cutout", "png", "mockup", "frame", "poster", "blank", "wood", "picture", "canvas", "border", "minimalist", "display", "template", "empty", "oak", "photo", "art", "modern", "design", "clean"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 6,
+        seoTitle: "Designer Brown Leather Armchair Furniture Isolated on Transparent Background Cutout PNG",
+        category: "Interiors / Furniture",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial furniture stock photo on a 100% transparent background (PNG alpha channel) of a luxury mid-century modern brown leather armchair with slim black metal legs, sharp cutout silhouette, crisp studio lighting.",
+        negativePrompt: "solid background, floor, living room, wall, blurry, distorted",
+        keywords: ["isolated", "transparent", "cutout", "png", "armchair", "chair", "leather", "furniture", "interior", "brown", "modern", "luxury", "seat", "design", "living room", "decor", "home", "studio", "comfort", "relax", "nordic"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 7,
+        seoTitle: "Elegant Ceramic Ribbed Vase with Dried Pampas Grass Isolated on Transparent Background Cutout PNG",
+        category: "Interiors / Decor",
+        aspectRatio: "1:1",
+        prompt: "Isolated aesthetic home decor cutout on a 100% transparent background (PNG alpha channel) of a beige fluted ceramic vase holding fluffy dried pampas grass stems, sharp clean alpha edges, soft neutral studio lighting.",
+        negativePrompt: "solid background, table, room, wall, blurry",
+        keywords: ["isolated", "transparent", "cutout", "png", "vase", "pampas", "grass", "ceramic", "decor", "interior", "fluffy", "dried", "beige", "neutral", "home", "aesthetic", "minimalist", "boho", "decoration", "plant", "floral"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 8,
+        seoTitle: "Modern Slim Aluminum Laptop with Blank Dark Screen Mockup Isolated on Transparent Background Cutout PNG",
+        category: "Technology / Devices",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial device photo on a 100% transparent background (PNG alpha channel) of a sleek open aluminum laptop seen at a three-quarter angle with a completely blank dark display screen mockup, perfectly clean cutout edges.",
+        negativePrompt: "solid background, desk, hands, brand logos, keyboard text distortion",
+        keywords: ["isolated", "transparent", "cutout", "png", "laptop", "mockup", "screen", "computer", "notebook", "aluminum", "display", "blank", "device", "technology", "office", "work", "business", "modern", "portable", "tech"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 9,
+        seoTitle: "Two Wooden Pebble Tokens with Smiling Happy and Frowning Sad Emoji Faces Isolated on Transparent Background Cutout PNG",
+        category: "Concepts / Feedback",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial 3D concept photo on a 100% transparent background (PNG alpha channel) of two rounded smooth natural wood pebble tokens side-by-side, one engraved with a happy smiling face and one with a sad frowning face, clean alpha cutout.",
+        negativePrompt: "solid background, hands, table, blurry, logos",
+        keywords: ["isolated", "transparent", "cutout", "png", "feedback", "rating", "emoji", "token", "wood", "happy", "sad", "review", "satisfaction", "customer", "sentiment", "choice", "emotion", "service", "score", "survey", "opinion"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 10,
+        seoTitle: "Stack of Shiny Gold Coins with Miniature Graduation Cap Isolated on Transparent Background Cutout PNG",
+        category: "Concepts / Finance",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial 3D conceptual photo on a 100% transparent background (PNG alpha channel) of a neat rising stack of shiny gold coins topped with a small black academic graduation mortarboard cap, clean cutout silhouette.",
+        negativePrompt: "solid background, surface, shadow, blurry, text",
+        keywords: ["isolated", "transparent", "cutout", "png", "coins", "gold", "graduation", "cap", "finance", "education", "scholarship", "loan", "investment", "money", "student", "savings", "wealth", "tuition", "success", "future"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 11,
+        seoTitle: "Vintage Brass Justice Balance Scale in Equilibrium Isolated on Transparent Background Cutout PNG",
+        category: "Concepts / Law",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial stock object on a 100% transparent background (PNG alpha channel) of an antique polished brass justice balance scale hanging perfectly level in equilibrium, sharp clean cutout edges, studio lighting.",
+        negativePrompt: "solid background, table, wall, distorted chains",
+        keywords: ["isolated", "transparent", "cutout", "png", "justice", "scale", "balance", "brass", "law", "legal", "court", "equality", "equity", "ethics", "judgment", "lawyer", "attorney", "judge", "fairness", "weight", "symbol"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 12,
+        seoTitle: "Single Glowing Warm Yellow Light Bulb Isolated on Transparent Background Cutout PNG",
+        category: "Concepts / Ideas",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial concept image on a 100% transparent background (PNG alpha channel) of an upright traditional glass incandescent light bulb with glowing golden-yellow filament, sharp glass cutout edges, no solid background.",
+        negativePrompt: "solid background, black background, socket, wires, blurry",
+        keywords: ["isolated", "transparent", "cutout", "png", "light bulb", "bulb", "idea", "innovation", "creativity", "glow", "energy", "bright", "inspiration", "thinking", "solution", "genius", "brainstorm", "concept", "electricity", "invention"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 13,
+        seoTitle: "Small Green Plant Sprout Growing from Dark Organic Soil Clump Isolated on Transparent Background Cutout PNG",
+        category: "Concepts / Environment",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial nature cutout on a 100% transparent background (PNG alpha channel) of a vibrant green young sprout seedling growing out of a compact rounded clump of rich dark fertile soil, crisp alpha edges, fresh dewy leaf texture.",
+        negativePrompt: "solid background, pot, garden, blurry, watermark",
+        keywords: ["isolated", "transparent", "cutout", "png", "sprout", "plant", "seedling", "growth", "soil", "green", "nature", "sustainability", "environment", "esg", "earth", "organic", "eco", "agriculture", "spring", "life", "invest"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 14,
+        seoTitle: "Whole Exotic Star Anise Spice Pods Cluster Isolated on Transparent Background Cutout PNG",
+        category: "Food & Beverage / Spices",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial food photography asset on a 100% transparent background (PNG alpha channel) of a cluster of dry natural star anise pods, rich textured brown woody petals, sharp studio focus, zero background shadows.",
+        negativePrompt: "solid background, table, bowl, blurry, watermark",
+        keywords: ["isolated", "transparent", "cutout", "png", "star anise", "anise", "spice", "culinary", "ingredient", "seasoning", "herb", "organic", "cooking", "aromatic", "kitchen", "asian", "dry", "flavor", "gourmet", "natural", "seed"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 15,
+        seoTitle: "Cinnamon Sticks Bundle Tied with Natural Twine Isolated on Transparent Background Cutout PNG",
+        category: "Food & Beverage / Spices",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial culinary asset on a 100% transparent background (PNG alpha channel) of five real Ceylon cinnamon bark quills bundled together and neatly tied with rustic natural jute string, sharp cutout silhouette.",
+        negativePrompt: "solid background, wood surface, cloth, blurry",
+        keywords: ["isolated", "transparent", "cutout", "png", "cinnamon", "stick", "twine", "spice", "culinary", "baking", "aromatic", "ingredient", "bark", "flavor", "organic", "natural", "cooking", "gourmet", "kitchen", "seasoning"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 16,
+        seoTitle: "Fresh Vibrant Green Rosemary Herb Sprig Isolated on Transparent Background Cutout PNG",
+        category: "Food & Beverage / Herbs",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial culinary photograph on a 100% transparent background (PNG alpha channel) of a single fresh culinary rosemary sprig with needle-like green leaves, clean alpha channel cutout, crisp detailed botanical texture.",
+        negativePrompt: "solid background, chopping board, dish, blurry, watermark",
+        keywords: ["isolated", "transparent", "cutout", "png", "rosemary", "herb", "sprig", "fresh", "green", "culinary", "leaf", "cooking", "seasoning", "organic", "ingredient", "aromatic", "kitchen", "natural", "healthy", "food", "gourmet"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 17,
+        seoTitle: "Dark Roasted Arabica Coffee Beans Pile Isolated on Transparent Background Cutout PNG",
+        category: "Food & Beverage / Coffee",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial product asset on a 100% transparent background (PNG alpha channel) of a neat small mound of glossy dark roasted Arabica coffee beans, rich brown color, detailed oily bean texture, sharp cutout boundary.",
+        negativePrompt: "solid background, sack, cup, table, blurry",
+        keywords: ["isolated", "transparent", "cutout", "png", "coffee", "bean", "roasted", "arabica", "espresso", "caffeine", "pile", "aroma", "grain", "brown", "beverage", "cafe", "kitchen", "ingredient", "food", "organic", "natural"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 18,
+        seoTitle: "Fresh Golden Turmeric Root and Sliced Pieces Isolated on Transparent Background Cutout PNG",
+        category: "Food & Beverage / Spices",
+        aspectRatio: "1:1",
+        prompt: "Isolated commercial botanical food photo on a 100% transparent background (PNG alpha channel) of a fresh knobby turmeric rhizome root alongside several cut circular orange slices, clean alpha cutout, vibrant golden color.",
+        negativePrompt: "solid background, plate, soil, blurry, watermark",
+        keywords: ["isolated", "transparent", "cutout", "png", "turmeric", "root", "spice", "orange", "sliced", "curry", "culinary", "healthy", "organic", "ingredient", "herb", "kitchen", "seasoning", "ayurveda", "fresh", "natural", "superfood"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 19,
+        seoTitle: "Vibrant Autumn Golden Maple Leaf with Dew Drops Isolated on Transparent Background Cutout PNG",
+        category: "Seasonal / Nature",
+        aspectRatio: "1:1",
+        prompt: "Isolated seasonal botanical element on a 100% transparent background (PNG alpha channel) of a single real Canadian maple leaf in rich golden-orange autumn colors with tiny crystal water dew drops on surface, crisp alpha edges.",
+        negativePrompt: "solid background, tree, branch, blurry, fake leaf",
+        keywords: ["isolated", "transparent", "cutout", "png", "leaf", "autumn", "fall", "maple", "orange", "gold", "seasonal", "october", "november", "nature", "thanksgiving", "foliage", "dew", "drop", "water", "botanical", "vibrant"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+      {
+        id: 20,
+        seoTitle: "Decorative Carved Festive Halloween Pumpkin Isolated on Transparent Background Cutout PNG",
+        category: "Seasonal / Holidays",
+        aspectRatio: "1:1",
+        prompt: "Isolated holiday commercial asset on a 100% transparent background (PNG alpha channel) of a vibrant round orange pumpkin with natural textured green stem, perfectly cut out, studio flash lighting, crisp clean silhouette edges.",
+        negativePrompt: "solid background, field, porch, dirty, blurry, text",
+        keywords: ["isolated", "transparent", "cutout", "png", "pumpkin", "halloween", "autumn", "fall", "orange", "seasonal", "october", "harvest", "thanksgiving", "vegetable", "gourd", "holiday", "celebration", "food", "farm", "clean"],
+        modelUsed: "recraft/recraft-v4.1-flash",
+        costEstimate: "~$0.007 / image",
+      },
+    ];
+
+    return {
+      trend,
+      items: rawTransparentItems.map((item) => ({
+        ...item,
+        isTransparent: true,
+        generationMode: "transparent_png",
+        filename: generateUniqueStockFilename(item.seoTitle, item.id, new Date(currentDate), "transparent_png"),
+      })),
+      mode: "transparent_png",
+    };
+  }
+
+  // Regular Commercial Scene Fallback
   const trend: MarketTrend = {
-    theme: "Cloud Computing, Cyber Security & Modern Interior Mockups",
+    theme: "Cloud Computing, Cyber Security & Modern Interior Mockups with Copy Space",
     targetMarket: "Global Enterprise IT, FinTech, Modern Architecture & Commercial Advertising",
     commercialReasoning: "Matches the account's historical top earners: High-demand tech infrastructure, data server rooms, interior frame mockups, and conceptual business metaphors with proven 180+ downloads.",
     seasonalRelevance: "Year-Round Evergreen Commercial Demand + Q4 Enterprise Budget Planning",
     buyerDemandRating: "Very High",
   };
 
-  const rawItems: Array<Omit<StockImageItem, "filename">> = [
+  const rawItems: Array<Omit<StockImageItem, "filename" | "isTransparent" | "generationMode">> = [
     {
       id: 1,
       seoTitle: "Cloud Computing Data Center with Glowing Blue Neon Server Racks",
@@ -146,10 +475,8 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
       prompt: "Ultra-wide 16:9 commercial shot of an enterprise cloud data center corridor with rows of sleek dark server racks, vibrant glowing neon blue and orange fiber optic light trails flowing into a central holographic cloud icon, cinematic symmetry, vast dark negative copy space on the right side for tech banner headlines, 8k resolution, shot on Sony A7R IV, clean photorealistic focus, no people.",
       negativePrompt: "people, human face, blurry, text, watermark, logo",
       keywords: [
-        // Top 10 most critical keywords
         "cloud computing", "datacenter", "server", "cybersecurity", "infrastructure",
         "database", "network", "technology", "hosting", "storage",
-        // Supporting single words & essential concepts
         "copy space", "neon", "blue", "digital", "futuristic",
         "internet", "hardware", "rack", "connection", "information",
         "telecom", "cyber", "virtual", "speed", "fiber",
@@ -166,10 +493,8 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
       prompt: "Clean commercial 3:2 interior photograph of a modern aesthetic living room with a large vertical blank wooden picture frame mockup hanging on a textured warm white wall, elegant brown leather armchair, minimalist ceramic vase with dried pampas grass, soft diffused morning window light casting gentle shadows, high-end architectural digest styling, ample copy space, no people.",
       negativePrompt: "people, human face, cluttered, messy, distorted, text in frame, logos",
       keywords: [
-        // Top 10 most critical keywords
         "mockup", "frame", "interior", "poster", "wall",
         "minimalist", "scandinavian", "living room", "blank", "canvas",
-        // Supporting single words & essential concepts
         "copy space", "leather", "armchair", "furniture", "modern",
         "aesthetic", "home", "architecture", "design", "decor",
         "indoor", "wooden", "neutral", "daylight", "apartment",
@@ -186,10 +511,8 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
       prompt: "Overhead 1:1 top-down flat lay photograph of colorful exotic culinary spices (star anise, cinnamon sticks, golden turmeric, crushed red chili, cardamom pods, black peppercorns) arranged in bowls in an organic circle around a large empty black slate stone copy space in the center, professional food photography lighting, rich textures, no people.",
       negativePrompt: "people, human face, hand, blurry, watermark, text, dirty slate",
       keywords: [
-        // Top 10 most critical keywords
         "spice", "culinary", "seasoning", "flat lay", "slate",
         "herb", "ingredient", "organic", "anise", "cinnamon",
-        // Supporting single words & essential concepts
         "copy space", "turmeric", "peppercorn", "cardamom", "cooking",
         "flavor", "kitchen", "aromatic", "gourmet", "overhead",
         "healthy", "natural", "seed", "powder", "table",
@@ -206,10 +529,8 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
       prompt: "Conceptual 4:5 portrait composition focusing exclusively on two hands holding two rounded smooth wooden pebble tokens, one carved with a smiling happy emoji face and the other with a frowning sad face, clean blurred warm neutral studio background, symbol of customer satisfaction, mental health, feedback rating and emotion choice, soft daylight, no visible human face.",
       negativePrompt: "human face, full body, distorted fingers, extra hands, logos, watermark",
       keywords: [
-        // Top 10 most critical keywords
         "feedback", "satisfaction", "rating", "review", "emotion",
         "hand", "customer", "choice", "psychology", "experience",
-        // Supporting single words & essential concepts
         "copy space", "cube", "wooden", "happy", "sad",
         "sentiment", "service", "evaluation", "score", "survey",
         "opinion", "client", "concept", "balance", "decision",
@@ -512,7 +833,10 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
     trend,
     items: rawItems.map((item) => ({
       ...item,
-      filename: generateUniqueStockFilename(item.seoTitle, item.id),
+      isTransparent: false,
+      generationMode: "regular_scene",
+      filename: generateUniqueStockFilename(item.seoTitle, item.id, new Date(currentDate), "regular_scene"),
     })),
+    mode: "regular_scene",
   };
 }

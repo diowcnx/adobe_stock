@@ -1,12 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { executeDailyStockWorkflow } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    const result = await executeDailyStockWorkflow();
+    let mode: "transparent_png" | "regular_scene" | undefined;
+    try {
+      const body = await request.json();
+      if (body?.mode === "transparent_png" || body?.mode === "regular_scene") {
+        mode = body.mode;
+      }
+    } catch {
+      // Body may be empty, which is totally normal
+    }
+
+    const result = await executeDailyStockWorkflow(mode);
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("Manual workflow trigger error:", error);

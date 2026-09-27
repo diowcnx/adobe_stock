@@ -15,6 +15,7 @@ export async function sendDailyStockEmail({
   trend,
   images,
   credits,
+  mode = "regular_scene",
   recipientEmail,
   senderEmail,
   apiKey,
@@ -22,6 +23,7 @@ export async function sendDailyStockEmail({
   trend: MarketTrend;
   images: StockImageItem[];
   credits: OpenRouterCreditInfo;
+  mode?: "transparent_png" | "regular_scene";
   recipientEmail?: string;
   senderEmail?: string;
   apiKey?: string;
@@ -44,12 +46,12 @@ export async function sendDailyStockEmail({
   // ตรวจสอบให้ทุกภาพมีชื่อไฟล์เฉพาะตัวที่ไม่ซ้ำกัน
   images.forEach((img) => {
     if (!img.filename) {
-      img.filename = generateUniqueStockFilename(img.seoTitle, img.id);
+      img.filename = generateUniqueStockFilename(img.seoTitle, img.id, now, mode);
     }
   });
 
-  const htmlBody = generateEmailHtml(todayStr, trend, images, credits, csvFilename);
-  const textBody = generateEmailPlainText(todayStr, trend, images, credits, csvFilename);
+  const htmlBody = generateEmailHtml(todayStr, trend, images, credits, csvFilename, mode);
+  const textBody = generateEmailPlainText(todayStr, trend, images, credits, csvFilename, mode);
 
   // แนบไฟล์ CSV ที่มีเฉพาะ Filename,Title,Keywords เสมอ
   const csvContent = generateMetadataCsv(images);
@@ -95,11 +97,12 @@ export async function sendDailyStockEmail({
       ? `🚨 [แจ้งเตือนด่วน: เครดิต OpenRouter เหลือ $${credits.remainingCredits.toFixed(4)}] `
       : "";
 
+    const modeTag = mode === "transparent_png" ? "[🔲 Transparent PNG Set]" : "[🏞️ Regular Scene Set]";
     const payload = {
       api_key: key,
       to: [toEmail],
       sender: fromEmail,
-      subject: `${subjectPrefix}📸 [Adobe Stock Daily] ${images.length} New Commercial Images & SEO Keywords - ${todayStr}`,
+      subject: `${subjectPrefix}📸 ${modeTag} ${images.length} New Adobe Stock Assets & SEO Keywords - ${todayStr}`,
       html_body: htmlBody,
       text_body: textBody,
       attachments: attachments.length > 0 ? attachments : undefined,
@@ -144,7 +147,8 @@ function generateEmailHtml(
   trend: MarketTrend,
   images: StockImageItem[],
   credits: OpenRouterCreditInfo,
-  csvFilename: string = "adobe_stock_metadata.csv"
+  csvFilename: string = "adobe_stock_metadata.csv",
+  mode: "transparent_png" | "regular_scene" = "regular_scene"
 ): string {
   const imagesHtml = images
     .map((img) => {
@@ -297,6 +301,24 @@ function generateEmailHtml(
         : ""
     }
 
+    <!-- Daily Mode & Upscale Recommendation Callout -->
+    <div style="background-color: #0f172a; border: 2px solid ${mode === "transparent_png" ? "#38bdf8" : "#10b981"}; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <div style="color: ${mode === "transparent_png" ? "#38bdf8" : "#34d399"}; font-size: 15px; font-weight: 800; margin-bottom: 5px;">
+              ${mode === "transparent_png" ? "🔲 โหมดวันนี้: ชุดภาพ PNG พื้นหลังโปร่งใส (Transparent Background Set - 20 ภาพ)" : "🏞️ โหมดวันนี้: ชุดภาพทั่วไปมีฉากหลังและ Copy Space (Regular Commercial Stock Set - 20 ภาพ)"}
+            </div>
+            <div style="color: #e2e8f0; font-size: 13px; line-height: 1.5;">
+              ${mode === "transparent_png"
+                ? "💡 <strong>คำแนะนำการ Upscale:</strong> ชุดนี้เป็นภาพ Isolated Cutout ทั้งหมด กรุณาเลือกบันทึกผลลัพธ์เป็น <strong>.PNG (เพื่อรักษาความโปร่งใส Alpha Channel)</strong> สำหรับส่งขึ้น Adobe Stock ในหมวด Isolated / Transparent PNG"
+                : "💡 <strong>คำแนะนำการ Upscale:</strong> ชุดนี้เป็นภาพ Commercial Scene มีฉากหลังทั้งหมด สามารถเลือกบันทึกเป็น <strong>.JPG หรือ .PNG</strong> ได้ตามสะดวก ภาพทุกภาพมี Copy Space พร้อมสำหรับงานออกแบบโฆษณา"}
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
     <!-- Market Research Card -->
     <div style="background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
       <div style="display: inline-block; background-color: #dcfce7; color: #15803d; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-bottom: 10px; text-transform: uppercase;">
@@ -353,10 +375,16 @@ function generateEmailPlainText(
   trend: MarketTrend,
   images: StockImageItem[],
   credits: OpenRouterCreditInfo,
-  csvFilename: string = "adobe_stock_metadata.csv"
+  csvFilename: string = "adobe_stock_metadata.csv",
+  mode: "transparent_png" | "regular_scene" = "regular_scene"
 ): string {
   const appUrl = process.env.APP_URL || "https://adobe-stock-lovat.vercel.app";
+  const modeLabel = mode === "transparent_png"
+    ? "🔲 ชุดภาพ PNG พื้นหลังโปร่งใส (แนะนำ Save เป็น .PNG เพื่อรักษา Alpha Transparency)"
+    : "🏞️ ชุดภาพทั่วไปมีฉากหลังและ Copy Space (แนะนำ Save เป็น .JPG หรือ .PNG)";
+
   let text = `📸 Adobe Stock Daily Dispatch - ${todayStr}\n`;
+  text += `🎯 โหมดวันนี้: ${modeLabel}\n`;
   text += `🔗 Web Dashboard: ${appUrl}\n`;
   text += `OpenRouter Remaining Credit: $${credits.remainingCredits.toFixed(4)}\n`;
   text += `📄 Attached Metadata CSV: ${csvFilename} (Columns: Filename,Title,Keywords)\n\n`;
