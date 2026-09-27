@@ -58,17 +58,18 @@ function escapeCsvField(field: string): string {
 }
 
 /**
- * สร้างเนื้อหาไฟล์ CSV ที่มีเฉพาะคอลัมน์: Filename,Title,Keywords
- * ตามมาตรฐานการอัปโหลดข้อมูลของ Adobe Stock Contributor
+ * สร้างเนื้อหาไฟล์ CSV ตามมาตรฐานทางการของ Adobe Stock:
+ * Header: Filename,Title,Keywords,Category,Releases
+ * โดย 2 คอลัมน์หลัง (Category, Releases) ปล่อยว่างไว้ตามข้อกำหนด
  */
 export function generateMetadataCsv(images: StockImageItem[]): string {
-  const header = "Filename,Title,Keywords";
+  const header = "Filename,Title,Keywords,Category,Releases";
   const rows = images.map((img) => {
     const filename = img.filename || `stock_image_${img.id}.png`;
     const title = img.seoTitle || "";
     const keywords = (img.keywords || []).join(", ");
 
-    return `${escapeCsvField(filename)},${escapeCsvField(title)},${escapeCsvField(keywords)}`;
+    return `${escapeCsvField(filename)},${escapeCsvField(title)},${escapeCsvField(keywords)},,`;
   });
 
   return [header, ...rows].join("\r\n");
