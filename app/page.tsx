@@ -31,6 +31,28 @@ export default function Dashboard() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "images" | "setup">("overview");
   const [selectedMode, setSelectedMode] = useState<"auto" | "transparent_png" | "regular_scene">("auto");
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<any>(null);
+
+  const handleTestEmail = async () => {
+    setTestingEmail(true);
+    setTestEmailResult(null);
+    try {
+      const res = await fetch("/api/test-email");
+      const json = await res.json();
+      setTestEmailResult(json);
+      if (json.success) {
+        alert("✅ ส่งอีเมลทดสอบไปยัง " + (json.recipientEmail || "hs5ckt@gmail.com") + " สำเร็จเรียบร้อยแล้ว! โปรดตรวจสอบใน Inbox หรือ Spam");
+      } else {
+        const errorDetail = json.error || json.smtpResponse?.errors?.join(", ") || json.smtpResponse?.data?.failures?.join(", ") || `HTTP ${json.httpStatus || 500}`;
+        alert("❌ ส่งอีเมลไม่สำเร็จ:\n" + errorDetail + "\n\nคำแนะนำ: ตรวจสอบ SMTP2GO_API_KEY หรือตั้งค่า SENDER_EMAIL ให้ตรงกับ Verified Senders ในบัญชี SMTP2GO");
+      }
+    } catch (e: any) {
+      alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: " + (e.message || String(e)));
+    } finally {
+      setTestingEmail(false);
+    }
+  };
 
   const todayScheduledMode =
     typeof window !== "undefined"
@@ -410,8 +432,10 @@ export default function Dashboard() {
                     </span>
                     <span className="text-xs text-slate-400">
                       Duration: {(latestResult.durationMs / 1000).toFixed(1)}s &bull; Email:{" "}
-                      <span className={latestResult.emailDelivery.success ? "text-emerald-400" : "text-amber-400"}>
-                        {latestResult.emailDelivery.success ? "Sent to hs5ckt@gmail.com" : "Simulation Mode"}
+                      <span className={latestResult.emailDelivery.success ? "text-emerald-400 font-semibold" : "text-amber-400 font-semibold"}>
+                        {latestResult.emailDelivery.success
+                          ? "Sent to hs5ckt@gmail.com"
+                          : `Delivery Failed (${latestResult.emailDelivery.error || "Simulation"})`}
                       </span>
                     </span>
                   </div>
@@ -435,6 +459,31 @@ export default function Dashboard() {
                     </button>
                   </div>
                 </div>
+
+                {/* Email Delivery Warning Banner if failed */}
+                {!latestResult.emailDelivery.success && (
+                  <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/80 text-amber-200 text-xs flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+                      <div>
+                        <strong className="block text-amber-300 text-sm font-bold">
+                          ⚠️ อีเมลยังไม่ถูกส่งไปยัง hs5ckt@gmail.com
+                        </strong>
+                        <span className="text-slate-300">
+                          สาเหตุ: {latestResult.emailDelivery.error || "ไม่ได้ตั้งค่า SMTP2GO_API_KEY หรือ SENDER_EMAIL ไม่ได้รับการ Verify ในระบบ SMTP2GO"}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleTestEmail}
+                      disabled={testingEmail}
+                      className="shrink-0 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      {testingEmail ? "Testing..." : "ทดสอบส่ง Email ทันที"}
+                    </button>
+                  </div>
+                )}
 
                 {/* Mode Indicator & Upscale Recommendation */}
                 <div
@@ -702,6 +751,56 @@ export default function Dashboard() {
                     Token สุ่มสำหรับป้องกันคนภายนอกยิงเรียก Endpoint <code>/api/cron/daily-stock</code> โดยตรง
                   </p>
                 </div>
+              </div>
+
+              {/* Interactive Email Diagnostic Card */}
+              <div className="mt-6 p-5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-sky-400" />
+                      ทดสอบการส่งอีเมลผ่าน SMTP2GO (Live Diagnostic Tool)
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      กดปุ่มนี้เพื่อยิงส่งอีเมลทดสอบไปยัง <strong>hs5ckt@gmail.com</strong> และตรวจสอบ Error ที่ SMTP2GO ตอบกลับมาแบบเรียลไทม์
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleTestEmail}
+                    disabled={testingEmail}
+                    className="bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-md shadow-sky-600/20 shrink-0"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    {testingEmail ? "Sending Test..." : "Send Test Email"}
+                  </button>
+                </div>
+
+                {testEmailResult && (
+                  <div
+                    className={`p-4 rounded-xl text-xs font-mono border ${
+                      testEmailResult.success
+                        ? "bg-emerald-950/40 border-emerald-800 text-emerald-200"
+                        : "bg-rose-950/40 border-rose-800 text-rose-200"
+                    }`}
+                  >
+                    <div className="font-bold mb-2 flex items-center gap-2">
+                      {testEmailResult.success ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>✅ ส่งอีเมลสำเร็จ (Email Sent Successfully)!</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="w-4 h-4 text-rose-400" />
+                          <span>❌ ส่งไม่สำเร็จ (Delivery Failed)</span>
+                        </>
+                      )}
+                    </div>
+                    <pre className="whitespace-pre-wrap break-all text-[11px] overflow-x-auto bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+                      {JSON.stringify(testEmailResult, null, 2)}
+                    </pre>
+                  </div>
+                )}
               </div>
             </div>
           </div>

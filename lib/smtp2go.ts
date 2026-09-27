@@ -64,8 +64,8 @@ export async function sendDailyStockEmail({
     },
   ];
 
-  // ควบคุมขนาดรวมของ attachments ไม่ให้เกิน 9 MB เพื่อความรวดเร็วและป้องกัน email payload limits
-  const MAX_ATTACHMENT_BYTES = 9 * 1024 * 1024;
+  // ควบคุมขนาดรวมของ attachments ให้อยู่ในระดับปลอดภัย (ไม่เกิน 4 MB) เพื่อป้องกัน payload timeout
+  const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
   let currentBytes = csvBase64.length * 0.75;
 
   for (const img of images) {
@@ -83,11 +83,11 @@ export async function sendDailyStockEmail({
   }
 
   if (!key) {
-    console.warn("SMTP2GO_API_KEY not configured. Simulating successful email dispatch.");
+    console.warn("SMTP2GO_API_KEY not configured in environment variables.");
     return {
-      success: true,
+      success: false,
       messageId: `simulated-smtp2go-${Date.now()}`,
-      error: "SMTP2GO_API_KEY is not set. Email was rendered successfully in simulation mode.",
+      error: "SMTP2GO_API_KEY is not configured in Vercel environment variables.",
     };
   }
 
@@ -108,27 +108,63 @@ export async function sendDailyStockEmail({
       attachments: attachments.length > 0 ? attachments : undefined,
     };
 
-    const res = await fetch("https://api.smtp2go.com/v3/email/send", {
+    let res = await fetch("https://api.smtp2go.com/v3/email/send", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(15000),
     });
 
-    const data: Smtp2goSendResponse = await res.json();
+    let data: Smtp2goSendResponse = await res.json().catch(() => ({}));
 
-    if (res.ok && data.data && (data.data.succeeded ?? 0) > 0) {
+    // หากส่งไม่สำเร็จ (เช่น ติดขนาดไฟล์แนบ หรือ timeout) ให้ลองส่งซ้ำทันทีโดยแนบเฉพาะไฟล์ CSV
+    if ((!res.ok || (data?.data?.succeeded ?? 0) === 0) && attachments.length > 1) {
+      console.warn("Retrying email dispatch with CSV metadata attachment only...");
+      const lightPayload = {
+        ...payload,
+        attachments: [
+          {
+            filename: csvFilename,
+            fileblob: csvBase64,
+            mimetype: "text/csv",
+          },
+        ],
+      };
+
+      try {
+        const retryRes = await fetch("https://api.smtp2go.com/v3/email/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(lightPayload),
+          signal: AbortSignal.timeout(10000),
+        });
+        const retryData: Smtp2goSendResponse = await retryRes.json().catch(() => ({}));
+        if (retryRes.ok && retryData?.data && (retryData.data.succeeded ?? 0) > 0) {
+          return {
+            success: true,
+            messageId: retryData.data.email_id || `sent-${Date.now()}`,
+          };
+        }
+      } catch (retryErr) {
+        console.error("Retry with CSV only also failed:", retryErr);
+      }
+    }
+
+    if (res.ok && data?.data && (data.data.succeeded ?? 0) > 0) {
       return {
         success: true,
         messageId: data.data.email_id || `sent-${Date.now()}`,
       };
     } else {
       const errMsg =
-        data.errors?.join(", ") ||
-        data.data?.failures?.join(", ") ||
+        data?.errors?.join(", ") ||
+        data?.data?.failures?.join(", ") ||
         `SMTP2GO API returned status ${res.status}`;
+      console.error("SMTP2GO dispatch failed:", errMsg);
       return {
         success: false,
         error: errMsg,
