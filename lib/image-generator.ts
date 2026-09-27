@@ -179,14 +179,17 @@ export async function generateSingleImage(
     try {
       console.log(`[Item #${item.id}] Calling OpenRouter model ${model} (mode: ${isTransparent ? "transparent_png" : "regular_scene"})...`);
 
-      const sanitizedPrompt = item.prompt
-        .replace(/isolated commercial cutout asset on a 100% transparent background \(png alpha channel\) of/gi, "Commercial studio product shot of")
-        .replace(/on a 100% transparent background \(png alpha channel\)/gi, "completely isolated, clean backdrop")
-        .replace(/transparent background/gi, "clean solid white backdrop")
-        .replace(/png alpha transparency/gi, "clean silhouette edges");
+      const sanitizedPrompt = isTransparent
+        ? item.prompt
+            .replace(/isolated commercial cutout asset on a 100% transparent background \(png alpha channel\) of/gi, "Commercial studio product shot of floating")
+            .replace(/on a 100% transparent background \(png alpha channel\)/gi, "completely floating, clean backdrop")
+            .replace(/transparent background/gi, "pure solid white backdrop")
+            .replace(/png alpha transparency/gi, "clean silhouette edges")
+            .replace(/\b(soft realistic self-shadow only|self-shadow|with shadow|soft shadow|subtle shadow|drop shadow|contact shadow|ground shadow|floor shadow|cast shadow|shadows?)\b/gi, "zero shadows")
+        : item.prompt;
 
       const userContent = isTransparent
-        ? `Create an isolated commercial stock element on a solid clean white studio background. Centered subject, razor-sharp clean silhouette cutout edges, studio key lighting with soft rim accent, authentic tactile physical materials, no floor, no shadows, no checkerboard grid. Subject: ${sanitizedPrompt}`
+        ? `Create an isolated commercial stock element on a pure solid white studio background. Centered floating subject, razor-sharp clean silhouette cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic tactile physical materials, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}`
         : `Create an elite, high-converting commercial stock photograph for Adobe Stock. Authentic materiality, tactile textures, natural directional lighting (Leica/Hasselblad aesthetic, subtle depth of field), strictly leaving 50-60% clean uncluttered negative copy space for designer typography. No plastic AI glossiness, no human faces or distorted portraits, no brand logos or text. Commercial art directed scene: ${sanitizedPrompt}`;
 
       const payload: Record<string, any> = {

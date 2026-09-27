@@ -65,7 +65,10 @@ DO NOT GENERATE FULL BACKGROUND SCENES, INTERIOR ROOMS, WALLS, OR BACKGROUND TEX
 
 THE PNG CONVERSION SECRET: RAZOR-SHARP ALPHA ISOLATION FOR DESIGNERS
 Art directors and web developers buy PNG cutouts for immediate drag-and-drop into posters, web hero headers, and UI mockups.
-1. ZERO FRINGE / CLEAN EDGES: Flawless edge separation, crisp silhouette, zero dark outlines, zero baked shadows on the alpha channel.
+1. ABSOLUTELY ZERO SHADOWS / FLAWLESS CLEAN EDGES:
+   - STRICT MANDATE: ABSOLUTELY ZERO SHADOWS (NO ground shadow, NO drop shadow, NO cast shadow, NO contact shadow, NO floor shadow, NO table shadow, NO ambient occlusion shadow).
+   - Soft or blurry shadows ruin alpha channels and make background isolation muddy and fuzzy.
+   - The subject MUST appear completely floating in space, evenly illuminated by bright omnidirectional 5600K studio lights with razor-sharp silhouette boundaries against a pure clean white background.
 2. 5 PROVEN HIGH-VALUE CUTOUT MICRO-NICHES:
    - Category 1 (Isolated High-Tech & Telecom): 6G phased array antenna mast, enterprise liquid cooling blade module, glowing 3D quantum holographic node, cybersecurity biometric shield.
    - Category 2 (Isolated Modern Decor & Mockups): Floating minimalist light oak frame mockup, modern boucle curved armchair, sculptural fluted ceramic vase, matte aluminum laptop mockup with blank black screen.
@@ -73,8 +76,8 @@ Art directors and web developers buy PNG cutouts for immediate drag-and-drop int
    - Category 4 (Isolated Premium Botanicals & Food): Whole star anise cluster, cinnamon sticks tied with raw jute twine, raw turmeric root, dried lion's mane adaptogenic mushroom, whole roasted espresso coffee beans.
    - Category 5 (Isolated Seasonal & Nature Elements): Single golden sugar maple leaf with crystal dewdrop, heirloom white pumpkin, cherry blossom twig with buds, pure crystal water droplet cluster.
 3. PROMPT DIRECTIVE:
-   - Every prompt MUST describe the isolated subject clearly: "Commercial studio product shot of centered [subject], razor-sharp clean silhouette cutout edges, studio key and rim lighting, pure solid isolation, no background, no shadow, no floor, no textures."
-   - CRITICAL ANTI-CHECKERBOARD MANDATE: NEVER write "transparent background", "checkerboard", "alpha channel", or "PNG cutout" inside the prompt text. Diffusion models erroneously interpret those words as an instruction to draw a fake gray-and-white checkered grid! Real alpha transparency is handled via the native API parameter and post-processing pipeline.
+   - Every prompt MUST describe the isolated floating subject clearly: "Commercial studio product shot of centered floating [subject], completely floating in space, razor-sharp clean silhouette cutout edges, uniform bright omnidirectional studio lighting from all angles, pure solid isolation, zero cast shadow, zero drop shadow, zero contact shadow, zero ground shadow, absolutely no shadows, no floor, no table, no surface, pure solid white background."
+   - CRITICAL ANTI-CHECKERBOARD MANDATE: NEVER write "transparent background", "checkerboard", "alpha channel", or "PNG cutout" inside the prompt text. Real alpha transparency is handled via post-processing pipeline.
    - SEO Title MUST end with "Isolated on Transparent Background Cutout PNG".
    - Aspect Ratio: use 1:1 or 4:5 for isolated assets.
    - Keywords MUST include: "isolated", "transparent", "cutout", "png", "clipart", "element", "alpha" alongside specific micro-niche single words. Top 10 prioritized.
@@ -210,29 +213,29 @@ function expandCategoriesToTwentyItems(
   const variationsConfigTransparent = [
     {
       ratio: "1:1" as const,
-      anglePrefix: "Commercial studio product shot of a centered",
-      styleSuffix: "completely isolated subject, razor-sharp clean silhouette cutout edges, zero background shadows or color fringe, 5600K studio strobe lighting, hyper-detailed tactile surface, 8k resolution, no background.",
+      anglePrefix: "Commercial studio product shot of a centered floating",
+      styleSuffix: "completely floating in space, razor-sharp clean silhouette cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, bright omnidirectional 5600K studio strobe lighting from all angles, hyper-detailed tactile surface, 8k resolution, pure solid white background, no floor, no table, no shadows.",
       titleSuffix: "Isolated on Transparent Background Cutout PNG",
       extraTags: ["isolated", "transparent", "cutout", "png", "element", "alpha", "clipart", "object", "graphic", "studio", "clean"],
     },
     {
       ratio: "1:1" as const,
-      anglePrefix: "Commercial 3D design studio asset of an isometric three-quarter perspective of",
-      styleSuffix: "dynamic isometric angle, cleanly isolated subject, crisp cutout edges, subtle ambient rim lighting, premium graphic design element, no background.",
+      anglePrefix: "Commercial 3D design studio asset of an isometric three-quarter perspective of floating",
+      styleSuffix: "dynamic isometric angle, cleanly isolated floating subject, crisp razor-sharp cutout edges, absolutely zero cast shadow, zero floor shadow, zero ambient shadow, uniform bright studio lighting, premium graphic design element, pure solid white background, no floor, no table, no shadows.",
       titleSuffix: "Isometric 3D Cutout Isolated on Transparent Background PNG",
       extraTags: ["isometric", "isolated", "transparent", "cutout", "png", "3d", "render", "design", "asset", "angle", "perspective"],
     },
     {
       ratio: "4:5" as const,
-      anglePrefix: "Commercial studio stock element of an elegant vertical upright",
-      styleSuffix: "vertical tall silhouette, flawless edge separation, studio product lighting, ideal for poster and mobile layout drag-and-drop, no background.",
+      anglePrefix: "Commercial studio stock element of an elegant vertical upright floating",
+      styleSuffix: "vertical tall silhouette, flawless razor-sharp edge separation, absolutely zero ground shadow, zero drop shadow, zero contact shadow, bright uniform studio lighting, floating cutout asset, pure solid white background, no floor, no table, no shadows.",
       titleSuffix: "Vertical Commercial Asset Isolated on Transparent Background Cutout PNG",
       extraTags: ["vertical", "isolated", "transparent", "cutout", "png", "upright", "element", "product", "studio", "poster"],
     },
     {
       ratio: "16:9" as const,
-      anglePrefix: "Commercial studio wide multi-element horizontal composition of",
-      styleSuffix: "horizontal panoramic layout, perfectly isolated subject, studio lighting, premium stock element collection, no background.",
+      anglePrefix: "Commercial studio wide multi-element horizontal composition of floating",
+      styleSuffix: "horizontal panoramic layout, perfectly isolated floating elements, razor-sharp silhouette edges, absolutely zero cast shadows, zero drop shadow, zero table shadow, uniform bright studio lighting, pure solid white background, no floor, no table, no shadows.",
       titleSuffix: "Banner Asset Isolated on Transparent Background Cutout PNG",
       extraTags: ["banner", "isolated", "transparent", "cutout", "png", "wide", "composition", "cluster", "collection", "set"],
     },
@@ -284,7 +287,7 @@ function expandCategoriesToTwentyItems(
       const seoTitle = `${cat.conceptTitle} ${v.titleSuffix}`.trim();
       const prompt = `${v.anglePrefix} ${cat.subjectDescription}, ${v.styleSuffix}`;
       const negativePrompt = isTransparent
-        ? "checkerboard, checkered grid, fake transparency, grid pattern, background texture, wall, floor, solid color background, human face, portrait, shadows on background, blurry, watermark, logos, text"
+        ? "shadow, shadows, drop shadow, cast shadow, contact shadow, ground shadow, ambient shadow, floor shadow, table shadow, surface shadow, blurry shadow edges, gradient background, dark edges, checkerboard, checkered grid, fake transparency, grid pattern, background texture, wall, floor, table, surface, reflection, solid color background, human face, portrait, blurry, watermark, logos, text"
         : "human face, portrait, blurry, distorted, logos, watermark, text, crowded center without copy space";
 
       // รวบรวมคำสำคัญให้เป็น single words 25-35 คำ
@@ -385,7 +388,7 @@ function getFallbackMarketData(
         seoTitle: "Floating Modern Minimalist Blank Wooden Picture Frame Mockup Isolated on Transparent Background Cutout PNG",
         category: "Interiors / Mockups",
         aspectRatio: "1:1",
-        prompt: "Commercial studio mockup of a contemporary light oak vertical poster frame mockup with pure white blank inner mat board, completely isolated, clean sharp cutout edges, soft realistic self-shadow only, no background.",
+        prompt: "Commercial studio mockup of a contemporary light oak vertical poster frame mockup with pure white blank inner mat board, completely isolated floating frame, clean sharp cutout edges, razor-sharp silhouette, absolutely zero shadows, zero cast shadow, zero ground shadow, pure solid white background, no floor, no shadows.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, wall, room, text in frame, picture in frame, logos",
         keywords: ["isolated", "transparent", "cutout", "png", "mockup", "frame", "poster", "blank", "wood", "picture", "canvas", "border", "minimalist", "display", "template", "empty", "oak", "photo", "art", "modern", "design", "clean"],
         modelUsed: "openai/gpt-5-image-mini",
