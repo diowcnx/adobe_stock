@@ -51,24 +51,34 @@ export async function sendDailyStockEmail({
   const htmlBody = generateEmailHtml(todayStr, trend, images, credits, csvFilename);
   const textBody = generateEmailPlainText(todayStr, trend, images, credits, csvFilename);
 
-  // เตรียม attachments สำหรับภาพ PNG ทั้งหมด
-  const attachments: Array<{ filename: string; fileblob: string; mimetype: string }> = images
-    .filter((img) => img.imageBase64 && img.filename)
-    .map((img) => {
-      return {
-        filename: img.filename!,
-        fileblob: img.imageBase64!,
-        mimetype: "image/png",
-      };
-    });
-
-  // แนบไฟล์ CSV ที่มีเฉพาะ Filename,Title,Keywords สำหรับนำไปอัปโหลดต่อได้ทันที
+  // แนบไฟล์ CSV ที่มีเฉพาะ Filename,Title,Keywords เสมอ
   const csvContent = generateMetadataCsv(images);
-  attachments.push({
-    filename: csvFilename,
-    fileblob: Buffer.from(csvContent, "utf-8").toString("base64"),
-    mimetype: "text/csv",
-  });
+  const csvBase64 = Buffer.from(csvContent, "utf-8").toString("base64");
+  const attachments: Array<{ filename: string; fileblob: string; mimetype: string }> = [
+    {
+      filename: csvFilename,
+      fileblob: csvBase64,
+      mimetype: "text/csv",
+    },
+  ];
+
+  // ควบคุมขนาดรวมของ attachments ไม่ให้เกิน 18 MB เพื่อป้องกัน email payload limits
+  const MAX_ATTACHMENT_BYTES = 18 * 1024 * 1024;
+  let currentBytes = csvBase64.length * 0.75;
+
+  for (const img of images) {
+    if (img.imageBase64 && img.filename) {
+      const imgBytes = img.imageBase64.length * 0.75;
+      if (currentBytes + imgBytes < MAX_ATTACHMENT_BYTES) {
+        attachments.push({
+          filename: img.filename,
+          fileblob: img.imageBase64,
+          mimetype: "image/png",
+        });
+        currentBytes += imgBytes;
+      }
+    }
+  }
 
   if (!key) {
     console.warn("SMTP2GO_API_KEY not configured. Simulating successful email dispatch.");
@@ -89,7 +99,7 @@ export async function sendDailyStockEmail({
       api_key: key,
       to: [toEmail],
       sender: fromEmail,
-      subject: `${subjectPrefix}📸 [Adobe Stock Daily] 5 New Commercial Images & SEO Keywords - ${todayStr}`,
+      subject: `${subjectPrefix}📸 [Adobe Stock Daily] ${images.length} New Commercial Images & SEO Keywords - ${todayStr}`,
       html_body: htmlBody,
       text_body: textBody,
       attachments: attachments.length > 0 ? attachments : undefined,
@@ -356,7 +366,7 @@ function generateEmailPlainText(
   text += `Commercial Reasoning: ${trend.commercialReasoning}\n`;
   text += `Seasonal Relevance: ${trend.seasonalRelevance}\n\n`;
 
-  text += `--- 5 COMMERCIAL IMAGES & METADATA ---\n\n`;
+  text += `--- ${images.length} COMMERCIAL IMAGES & METADATA ---\n\n`;
   for (const img of images) {
     text += `[Image #${img.id}] (Ratio: ${img.aspectRatio}, Model: ${img.modelUsed})\n`;
     text += `📁 Filename: ${img.filename}\n`;

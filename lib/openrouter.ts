@@ -119,6 +119,7 @@ export async function callOpenRouterJSON<T>(
       ],
       response_format: { type: "json_object" },
       temperature: 0.7,
+      max_tokens: 8000,
     }),
   });
 
@@ -140,6 +141,7 @@ export async function callOpenRouterJSON<T>(
           { role: "user", content: userPrompt },
         ],
         temperature: 0.7,
+        max_tokens: 8000,
       }),
     });
   }

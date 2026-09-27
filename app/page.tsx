@@ -272,8 +272,8 @@ export default function Dashboard() {
                   <span className="text-xs font-medium text-slate-400">Daily Production</span>
                   <ImageIcon className="w-4 h-4 text-purple-400" />
                 </div>
-                <div className="text-2xl font-bold text-white">5 Images / Day</div>
-                <p className="text-xs text-slate-500 mt-1">16:9, 3:2, 4:5, 1:1 Stock Ratios</p>
+                <div className="text-2xl font-bold text-white">20 Images / Day</div>
+                <p className="text-xs text-slate-500 mt-1">16:9, 3:2, 4:5, 1:1 Across 5 Top Niches</p>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -281,8 +281,8 @@ export default function Dashboard() {
                   <span className="text-xs font-medium text-slate-400">SEO Keywords</span>
                   <TrendingUp className="w-4 h-4 text-amber-400" />
                 </div>
-                <div className="text-2xl font-bold text-white">40 - 50 Tags</div>
-                <p className="text-xs text-slate-500 mt-1">Per image with Adobe Stock SEO Title</p>
+                <div className="text-2xl font-bold text-white">25 - 35 Tags</div>
+                <p className="text-xs text-slate-500 mt-1">Single words &amp; Top 10 Prioritized</p>
               </div>
             </div>
 
@@ -296,17 +296,17 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center">1</div>
                   <div className="font-semibold text-white">Market Research</div>
-                  <p className="text-slate-400">Scans seasonal cycles (1-3 months ahead) &amp; global buyer demand (APAC, EU, US, LATAM).</p>
+                  <p className="text-slate-400">Scans seasonal cycles &amp; proven winner niches (Cloud, Mockup, Metaphor, Food, Telecom).</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
-                  <div className="font-semibold text-white">5 Stock Prompts</div>
-                  <p className="text-slate-400">Creates 5 diverse angles: Wide Banner, Commercial Lifestyle, Portrait, Flat Lay, and In-action.</p>
+                  <div className="font-semibold text-white">20 Stock Prompts</div>
+                  <p className="text-slate-400">Creates 20 diverse items with commercial copy space across 5 high-converting niches.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
                   <div className="font-semibold text-white">Image Generation</div>
-                  <p className="text-slate-400">Generates photorealistic images using cost-effective FLUX models via OpenRouter.</p>
+                  <p className="text-slate-400">Generates photorealistic images using Recraft V4.1 &amp; Gemini Flash via OpenRouter.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center">4</div>

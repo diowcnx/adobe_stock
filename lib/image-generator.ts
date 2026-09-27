@@ -166,28 +166,37 @@ export async function generateAllStockImages(
 ): Promise<StockImageItem[]> {
   console.log(`Starting parallel image generation for ${items.length} items...`);
   
-  const results = await Promise.all(
-    items.map(async (item) => {
-      try {
-        const result = await generateSingleImage(item, apiKey);
-        return {
-          ...item,
-          modelUsed: item.modelUsed || DEFAULT_IMAGE_MODEL,
-          imageUrl: result.imageUrl || undefined,
-          imageBase64: result.imageBase64 || undefined,
-          description: result.error ? `Error: ${result.error}` : undefined,
-        };
-      } catch (err: any) {
-        console.error(`Failed generating image #${item.id}:`, err);
-        return {
-          ...item,
-          modelUsed: item.modelUsed || DEFAULT_IMAGE_MODEL,
-          description: `Generation error: ${err.message || String(err)}`,
-        };
-      }
-    })
-  );
+  const chunkSize = 10;
+  const results: StockImageItem[] = [];
 
-  console.log(`Parallel image generation completed for ${results.length} items.`);
+  for (let i = 0; i < items.length; i += chunkSize) {
+    const chunk = items.slice(i, i + chunkSize);
+    console.log(`Processing image chunk ${Math.floor(i / chunkSize) + 1} (${chunk.length} items)...`);
+
+    const chunkResults = await Promise.all(
+      chunk.map(async (item) => {
+        try {
+          const result = await generateSingleImage(item, apiKey);
+          return {
+            ...item,
+            modelUsed: item.modelUsed || DEFAULT_IMAGE_MODEL,
+            imageUrl: result.imageUrl || undefined,
+            imageBase64: result.imageBase64 || undefined,
+            description: result.error ? `Error: ${result.error}` : undefined,
+          };
+        } catch (err: any) {
+          console.error(`Failed generating image #${item.id}:`, err);
+          return {
+            ...item,
+            modelUsed: item.modelUsed || DEFAULT_IMAGE_MODEL,
+            description: `Generation error: ${err.message || String(err)}`,
+          };
+        }
+      })
+    );
+    results.push(...chunkResults);
+  }
+
+  console.log(`Image generation completed for all ${results.length} items.`);
   return results;
 }
