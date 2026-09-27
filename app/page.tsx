@@ -393,17 +393,17 @@ export default function Dashboard() {
             <button
               onClick={triggerManualRun}
               disabled={isRunning}
-              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white font-medium px-4 py-2 rounded-xl text-xs transition shadow-md shadow-indigo-600/20 active:scale-95"
+              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-md shadow-indigo-600/20 active:scale-95 cursor-pointer"
             >
               {isRunning ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Researching &amp; Generating...</span>
+                  <span>กำลังวิจัยและสร้างภาพ 20 ภาพ...</span>
                 </>
               ) : (
                 <>
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Generate Batch Now</span>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>⚡ สั่งสร้างชุดภาพ 20 ภาพทันที</span>
                 </>
               )}
             </button>
@@ -507,31 +507,31 @@ export default function Dashboard() {
               onClick={() => setActiveTab("overview")}
               className={`pb-3 text-sm font-medium transition relative whitespace-nowrap ${
                 activeTab === "overview"
-                  ? "text-sky-400 border-b-2 border-sky-400"
+                  ? "text-sky-400 border-b-2 border-sky-400 font-bold"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              System Status &amp; Daily Schedule
+              📊 สถานะระบบ &amp; เวลาทำงาน
             </button>
             <button
               onClick={() => setActiveTab("images")}
               className={`pb-3 text-sm font-medium transition relative whitespace-nowrap ${
                 activeTab === "images"
-                  ? "text-sky-400 border-b-2 border-sky-400"
+                  ? "text-sky-400 border-b-2 border-sky-400 font-bold"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              Generated Batches ({latestResult ? latestResult.images.length : 0})
+              🖼️ ภาพสต็อกที่สร้างเสร็จแล้ว ({latestResult ? latestResult.images.length : 0} ภาพ)
             </button>
             <button
               onClick={() => setActiveTab("setup")}
               className={`pb-3 text-sm font-medium transition relative whitespace-nowrap ${
                 activeTab === "setup"
-                  ? "text-sky-400 border-b-2 border-sky-400"
+                  ? "text-sky-400 border-b-2 border-sky-400 font-bold"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              Environment &amp; Setup Guide
+              ⚙️ ตั้งค่า &amp; ทดสอบระบบ
             </button>
           </div>
 
@@ -655,18 +655,18 @@ export default function Dashboard() {
             {!latestResult && (
               <div className="bg-gradient-to-r from-slate-900 to-indigo-950/40 border border-indigo-500/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <h3 className="font-bold text-white text-base">Ready to test today's stock batch?</h3>
+                  <h3 className="font-bold text-white text-base">พร้อมทดลองสร้างชุดภาพสต็อกใหม่หรือไม่?</h3>
                   <p className="text-xs text-slate-400">
-                    Click the button to test market research, prompt crafting, and email delivery right now.
+                    กดปุ่มเพื่อเริ่มวิจัยตลาด ออกแบบ Prompt และสั่งสร้างภาพสต็อก 20 ภาพ พร้อมดาวน์โหลดไฟล์ ZIP + CSV ทันที
                   </p>
                 </div>
                 <button
                   onClick={triggerManualRun}
                   disabled={isRunning}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-lg shadow-indigo-600/30"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-lg shadow-indigo-600/30 cursor-pointer"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  {isRunning ? "Running Batch..." : "Trigger Test Run Now"}
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  {isRunning ? "กำลังสร้างชุดภาพ..." : "⚡ สั่งสร้างชุดภาพ 20 ภาพทันที"}
                 </button>
               </div>
             )}
