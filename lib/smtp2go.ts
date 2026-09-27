@@ -39,15 +39,14 @@ export async function sendDailyStockEmail({
   const htmlBody = generateEmailHtml(todayStr, trend, images, credits);
   const textBody = generateEmailPlainText(todayStr, trend, images, credits);
 
-  // เตรียม attachments
+  // เตรียม attachments เป็น PNG เสมอ
   const attachments = images
     .filter((img) => img.imageBase64)
     .map((img) => {
-      const isSvg = img.imageUrl?.includes("svg") || false;
       return {
-        filename: `adobe_stock_${img.id}_${img.aspectRatio.replace(":", "x")}.${isSvg ? "svg" : "jpg"}`,
+        filename: `adobe_stock_${img.id}_${img.aspectRatio.replace(":", "x")}.png`,
         fileblob: img.imageBase64!,
-        mimetype: isSvg ? "image/svg+xml" : "image/jpeg",
+        mimetype: "image/png",
       };
     });
 
@@ -131,6 +130,16 @@ function generateEmailHtml(
         </div>
 
         <div style="padding: 20px;">
+          ${
+            img.imageUrl
+              ? `
+          <!-- Image Preview -->
+          <div style="text-align: center; margin-bottom: 20px; background-color: #0f172a; border-radius: 8px; overflow: hidden; padding: 10px;">
+            <img src="${img.imageUrl}" alt="${escapeHtml(img.seoTitle)}" style="max-width: 100%; max-height: 380px; height: auto; border-radius: 6px; display: inline-block; vertical-align: middle;" />
+          </div>`
+              : ""
+          }
+
           <!-- SEO Title -->
           <div style="margin-bottom: 16px;">
             <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">📌 Adobe Stock SEO Title (Copy &amp; Paste)</div>
