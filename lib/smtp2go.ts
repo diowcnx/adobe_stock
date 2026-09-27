@@ -1,5 +1,6 @@
 import { MarketTrend, OpenRouterCreditInfo, StockImageItem } from "./types";
 import { generateMetadataCsv, generateUniqueStockFilename } from "./csv";
+import { compressBatch } from "./batch-store";
 
 interface Smtp2goSendResponse {
   data?: {
@@ -62,11 +63,21 @@ export async function sendDailyStockEmail({
     }
   });
 
-  const htmlBody = generateEmailHtml(todayStr, trend, images, credits, csvFilename, mode);
-  const textBody = generateEmailPlainText(todayStr, trend, images, credits, csvFilename, mode);
+  // สร้าง Direct Download URL ที่ฝังข้อมูลชุดภาพ 20 ภาพไปด้วย เพื่อให้เปิดแล้วดาวน์โหลดได้ทันที
+  const appUrl = process.env.APP_URL || "https://adobe-stock-lovat.vercel.app";
+  let downloadUrl = appUrl;
+  try {
+    const batchParam = compressBatch(images);
+    downloadUrl = `${appUrl}/?batch=${batchParam}&tab=images`;
+  } catch (e) {
+    downloadUrl = `${appUrl}/?tab=images`;
+  }
 
-  // แนบเฉพาะไฟล์ CSV (Filename,Title,Keywords) เบาเพียง ~10KB เพื่อความรวดเร็วและแน่นอน 100%
-  // ผู้ใช้สามารถคลิกลิงก์บนอีเมลเพื่อไปดาวน์โหลดชุดภาพทั้งหมด (ZIP) ได้ที่หน้าเว็บทันที
+  // สร้างเนื้อหาอีเมลแบบแจ้งเตือนสั้นกระชับ (ตัดรายละเอียด Title และ Keywords ออกตามคำขอของผู้ใช้)
+  const htmlBody = generateNotificationEmailHtml(todayStr, trend, images.length, credits, csvFilename, mode, downloadUrl);
+  const textBody = generateNotificationEmailPlainText(todayStr, trend, images.length, credits, csvFilename, mode, downloadUrl);
+
+  // แนบไฟล์ CSV ข้อมูล Metadata (Filename, Title, Keywords)
   const csvContent = generateMetadataCsv(images);
   const csvBase64 = Buffer.from(csvContent, "utf-8").toString("base64");
   const attachments: Array<{ filename: string; fileblob: string; mimetype: string }> = [
@@ -89,7 +100,7 @@ export async function sendDailyStockEmail({
   try {
     const isLowCredit = credits.remainingCredits <= 0.05;
     const subjectPrefix = isLowCredit
-      ? `🚨 [แจ้งเตือนด่วน: เครดิต OpenRouter เหลือ $${credits.remainingCredits.toFixed(4)}] `
+      ? `🚨 [แจ้งเตือน: เครดิตเหลือ $${credits.remainingCredits.toFixed(4)}] `
       : "";
 
     const modeTag = mode === "transparent_png" ? "[🔲 Transparent PNG Set]" : "[🏞️ Regular Scene Set]";
@@ -97,7 +108,7 @@ export async function sendDailyStockEmail({
       api_key: key,
       to: [toEmail],
       sender: fromEmail,
-      subject: `${subjectPrefix}📸 ${modeTag} ${images.length} New Adobe Stock Assets Ready for Download - ${todayStr}`,
+      subject: `${subjectPrefix}📸 ${modeTag} ชุดภาพใหม่ ${images.length} ภาพพร้อมดาวน์โหลดแล้ว (${todayStr})`,
       html_body: htmlBody,
       text_body: textBody,
       attachments,
@@ -139,228 +150,116 @@ export async function sendDailyStockEmail({
   }
 }
 
-function generateEmailHtml(
+/**
+ * สร้าง HTML สำหรับอีเมลแจ้งเตือนสั้นกระชับ เน้นปุ่มและ URL ดาวน์โหลด (ไม่มีรายละเอียด Title/Keywords ที่รกตา)
+ */
+function generateNotificationEmailHtml(
   todayStr: string,
   trend: MarketTrend,
-  images: StockImageItem[],
+  imageCount: number,
   credits: OpenRouterCreditInfo,
-  csvFilename: string = "adobe_stock_metadata.csv",
-  mode: "transparent_png" | "regular_scene" = "regular_scene"
+  csvFilename: string,
+  mode: "transparent_png" | "regular_scene",
+  downloadUrl: string
 ): string {
-  const imagesHtml = images
-    .map((img) => {
-      const keywordsString = img.keywords.join(", ");
-      return `
-      <div style="background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 28px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; color: #ffffff;">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td>
-                <span style="background-color: #3b82f6; color: #ffffff; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase;">Image #${img.id}</span>
-                <span style="color: #94a3b8; font-size: 13px; margin-left: 10px;">Ratio: <strong>${img.aspectRatio}</strong></span>
-              </td>
-              <td align="right">
-                <span style="color: #38bdf8; font-size: 12px; font-family: monospace;">Model: ${img.modelUsed}</span>
-              </td>
-            </tr>
-          </table>
-        </div>
-
-        <div style="padding: 20px;">
-          <!-- Associated Image Filename Reference -->
-          <div style="margin-bottom: 16px; background-color: #f1f5f9; padding: 12px 14px; border-radius: 8px; border-left: 4px solid #0f172a;">
-            <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
-              📁 ชื่อไฟล์รูปภาพ (Associated Image Filename):
-            </div>
-            <div style="font-size: 14px; font-weight: 700; color: #0f172a; font-family: monospace; word-break: break-all;">
-              ${escapeHtml(img.filename || `stock_image_${img.id}.png`)}
-            </div>
-          </div>
-
-          ${
-            img.imageUrl
-              ? `
-          <!-- Image Preview -->
-          <div style="text-align: center; margin-bottom: 20px; background-color: #0f172a; border-radius: 8px; overflow: hidden; padding: 10px;">
-            <img src="${img.imageUrl}" alt="${escapeHtml(img.seoTitle)}" style="max-width: 100%; max-height: 380px; height: auto; border-radius: 6px; display: inline-block; vertical-align: middle;" />
-          </div>`
-              : ""
-          }
-
-          <!-- SEO Title -->
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">📌 Adobe Stock SEO Title (Copy &amp; Paste)</div>
-            <div style="font-size: 16px; font-weight: 700; color: #0f172a; background-color: #f8fafc; padding: 10px 14px; border-radius: 8px; border-left: 4px solid #3b82f6;">
-              ${escapeHtml(img.seoTitle)}
-            </div>
-          </div>
-
-          <!-- Category -->
-          <div style="margin-bottom: 14px; font-size: 13px; color: #475569;">
-            <strong>Category:</strong> <span style="background-color: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${escapeHtml(img.category)}</span>
-          </div>
-
-          <!-- Prompt -->
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">💡 Full Generation Prompt</div>
-            <div style="font-size: 12px; color: #334155; line-height: 1.5; background-color: #f8fafc; padding: 10px 12px; border-radius: 6px; font-family: monospace; border: 1px dashed #cbd5e1;">
-              ${escapeHtml(img.prompt)}
-            </div>
-          </div>
-
-          <!-- Keywords Ready to Paste -->
-          <div>
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-              🏷️ Adobe Stock Optimized Keywords (Single Words / Top 10 Prioritized)
-            </div>
-            <div style="font-size: 12px; color: #1e293b; line-height: 1.6; background-color: #f1f5f9; padding: 12px; border-radius: 8px; word-break: break-word;">
-              ${escapeHtml(keywordsString)}
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    })
-    .join("");
-
-  const appUrl = process.env.APP_URL || "https://adobe-stock-lovat.vercel.app";
+  const isTransparent = mode === "transparent_png";
 
   return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Adobe Stock Daily Dispatch</title>
+  <title>Adobe Stock Daily Production Notification</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #0f172a;">
-  <div style="max-width: 680px; margin: 0 auto;">
+  <div style="max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
     
-    <!-- Top Action Card: Download All Images & Metadata on Web -->
-    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); border: 2px solid #3b82f6; border-radius: 16px; padding: 18px 22px; margin-bottom: 22px; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);">
-      <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td>
-            <div style="color: #38bdf8; font-size: 16px; font-weight: 800; margin-bottom: 4px;">
-              📥 ภาพชุดใหม่ 20 ภาพพร้อมดาวน์โหลดแล้ว!
-            </div>
-            <div style="color: #cbd5e1; font-size: 13px; line-height: 1.4;">
-              คลิกปุ่มเพื่อเปิดหน้าเว็บและกดดาวน์โหลดไฟล์ภาพทั้งหมดแบบ <strong>ZIP Archive</strong> (พร้อมชื่อไฟล์แยกเฉพาะตัว) และไฟล์ <strong>CSV</strong> ทันที
-            </div>
-          </td>
-          <td align="right" valign="middle" style="padding-left: 16px;">
-            <a href="${appUrl}" style="background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: #ffffff; padding: 12px 22px; border-radius: 12px; font-size: 13px; font-weight: 800; text-decoration: none; display: inline-block; white-space: nowrap; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4);">
-              ดาวน์โหลดภาพบนเว็บ &rarr;
-            </a>
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    <!-- Header Banner -->
-    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #ffffff; padding: 26px 24px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-      <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td>
-            <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">📸 Adobe Stock Daily Dispatch</h1>
-            <p style="margin: 0; color: #cbd5e1; font-size: 13px;">${todayStr} | Automated AI Stock Production</p>
-          </td>
-          <td align="right" valign="top">
-            <div style="background-color: ${credits.remainingCredits <= 0.05 ? "rgba(239, 68, 68, 0.3)" : "rgba(255, 255, 255, 0.15)"}; backdrop-filter: blur(8px); border-radius: 12px; padding: 10px 14px; text-align: center; border: 1px solid ${credits.remainingCredits <= 0.05 ? "#ef4444" : "rgba(255,255,255,0.2)"};">
-              <div style="font-size: 10px; text-transform: uppercase; color: ${credits.remainingCredits <= 0.05 ? "#fca5a5" : "#a5b4fc"}; font-weight: 700;">OpenRouter Credit</div>
-              <div style="font-size: 18px; font-weight: 800; color: ${credits.remainingCredits <= 0.05 ? "#ef4444" : "#38bdf8"};">$${credits.remainingCredits.toFixed(4)}</div>
-            </div>
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    ${
-      credits.remainingCredits <= 0.05
-        ? `
-    <!-- Low / Depleted Credit Urgent Banner -->
-    <div style="background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 14px; padding: 18px 20px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.15);">
-      <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td>
-            <div style="color: #991b1b; font-size: 16px; font-weight: 800; margin-bottom: 4px;">
-              🚨 แจ้งเตือน: เครดิต OpenRouter ของคุณใกล้หมดหรือหมดแล้ว ($${credits.remainingCredits.toFixed(4)})
-            </div>
-            <div style="color: #b91c1c; font-size: 13px; line-height: 1.4;">
-              ยอดเงินคงเหลือไม่เพียงพอต่อการสร้างภาพในรอบถัดไป กรุณากดปุ่มเพื่อเติมเครดิตบน OpenRouter
-            </div>
-          </td>
-          <td align="right" valign="middle" style="padding-left: 16px;">
-            <a href="https://openrouter.ai/credits" style="background-color: #dc2626; color: #ffffff; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-block; white-space: nowrap; box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);">
-              เติมเครดิตทันที &rarr;
-            </a>
-          </td>
-        </tr>
-      </table>
-    </div>`
-        : ""
-    }
-
-    <!-- Daily Mode & Upscale Recommendation Callout -->
-    <div style="background-color: #0f172a; border: 2px solid ${mode === "transparent_png" ? "#38bdf8" : "#10b981"}; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-      <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td>
-            <div style="color: ${mode === "transparent_png" ? "#38bdf8" : "#34d399"}; font-size: 15px; font-weight: 800; margin-bottom: 5px;">
-              ${mode === "transparent_png" ? "🔲 โหมดวันนี้: ชุดภาพ PNG พื้นหลังโปร่งใส (Transparent Background Set - 20 ภาพ)" : "🏞️ โหมดวันนี้: ชุดภาพทั่วไปมีฉากหลังและ Copy Space (Regular Commercial Stock Set - 20 ภาพ)"}
-            </div>
-            <div style="color: #e2e8f0; font-size: 13px; line-height: 1.5;">
-              ${mode === "transparent_png"
-                ? "💡 <strong>คำแนะนำการ Upscale:</strong> ชุดนี้เป็นภาพ Isolated Cutout ทั้งหมด กรุณาเลือกบันทึกผลลัพธ์เป็น <strong>.PNG (เพื่อรักษาความโปร่งใส Alpha Channel)</strong> สำหรับส่งขึ้น Adobe Stock ในหมวด Isolated / Transparent PNG"
-                : "💡 <strong>คำแนะนำการ Upscale:</strong> ชุดนี้เป็นภาพ Commercial Scene มีฉากหลังทั้งหมด สามารถเลือกบันทึกเป็น <strong>.JPG หรือ .PNG</strong> ได้ตามสะดวก ภาพทุกภาพมี Copy Space พร้อมสำหรับงานออกแบบโฆษณา"}
-            </div>
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    <!-- Market Research Card -->
-    <div style="background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-      <div style="display: inline-block; background-color: #dcfce7; color: #15803d; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-bottom: 10px; text-transform: uppercase;">
-        🎯 High-Demand Winning Niche
+    <!-- Top Header Card -->
+    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: #ffffff; padding: 28px 24px; text-align: center;">
+      <div style="display: inline-block; background-color: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; border: 1px solid rgba(56, 189, 248, 0.3);">
+        Daily Production Ready
       </div>
-      <h2 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #0f172a;">${escapeHtml(trend.theme)}</h2>
-      <p style="margin: 0 0 12px 0; color: #475569; font-size: 14px; line-height: 1.5;">${escapeHtml(trend.commercialReasoning)}</p>
-      
-      <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 12px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 10px;">
-        <tr>
-          <td><strong>Target Market:</strong> ${escapeHtml(trend.targetMarket)}</td>
-          <td align="right"><strong>Seasonal Target:</strong> ${escapeHtml(trend.seasonalRelevance)}</td>
-        </tr>
-      </table>
+      <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
+        📸 ภาพชุดใหม่ ${imageCount} ภาพสร้างเสร็จแล้ว!
+      </h1>
+      <p style="margin: 0; color: #94a3b8; font-size: 13px;">
+        ${todayStr} &bull; ระบบสร้างภาพและเตรียมไฟล์เรียบร้อยแล้ว
+      </p>
     </div>
 
-    <!-- Attached CSV Banner Notice -->
-    <div style="background-color: #f0fdf4; border: 1.5px solid #22c55e; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.1);">
+    <!-- Main Action: Download Button -->
+    <div style="padding: 28px 24px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+      <p style="margin: 0 0 20px 0; font-size: 15px; color: #334155; line-height: 1.5;">
+        สามารถกดปุ่มด้านล่างเพื่อเปิดหน้าเว็บและ <strong>ดาวน์โหลดทั้ง ${imageCount} ภาพ (ZIP Archive + CSV)</strong> ได้ทันที
+      </p>
+
+      <a href="${downloadUrl}" style="background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: #ffffff; padding: 15px 32px; border-radius: 12px; font-size: 15px; font-weight: 800; text-decoration: none; display: inline-block; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.35); letter-spacing: 0.2px;">
+        🚀 ดาวน์โหลดภาพทั้งชุดบนหน้าเว็บ &rarr;
+      </a>
+
+      <div style="margin-top: 18px; font-size: 12px; color: #64748b;">
+        หรือคัดลอกลิงก์ตรงไปยังเบราว์เซอร์:
+        <div style="margin-top: 6px; padding: 8px 12px; background-color: #f1f5f9; border-radius: 8px; font-family: monospace; font-size: 11px; word-break: break-all; color: #2563eb;">
+          <a href="${downloadUrl}" style="color: #2563eb; text-decoration: underline;">${downloadUrl}</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details Summary Grid -->
+    <div style="padding: 24px; background-color: #f8fafc;">
+      <!-- Mode & Upscale Recommendation -->
+      <div style="background-color: #ffffff; border: 1.5px solid ${isTransparent ? "#38bdf8" : "#10b981"}; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+        <div style="color: ${isTransparent ? "#0284c7" : "#059669"}; font-size: 14px; font-weight: 800; margin-bottom: 4px;">
+          ${isTransparent ? "🔲 โหมดวันนี้: ชุดภาพ PNG พื้นหลังโปร่งใส (100% Alpha Cutout)" : "🏞️ โหมดวันนี้: ชุดภาพทั่วไปมีฉากหลัง (พร้อม Copy Space 50-60%)"}
+        </div>
+        <div style="color: #475569; font-size: 13px; line-height: 1.4;">
+          ${isTransparent
+            ? "ชุดนี้เป็นภาพ Isolated Cutout ทั้งหมด กรุณาเลือกบันทึกผลลัพธ์เป็น <strong>.PNG</strong> เพื่อรักษาความโปร่งใส"
+            : "ชุดนี้เป็นภาพ Commercial Scene สามารถบันทึกเป็น <strong>.JPG หรือ .PNG</strong> ได้ตามสะดวก"}
+        </div>
+      </div>
+
+      <!-- Balance & Attached CSV Info -->
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td>
-            <div style="color: #15803d; font-size: 15px; font-weight: 800; margin-bottom: 4px;">
-              📄 แนบไฟล์ CSV ข้อมูลภาพเรียบร้อยแล้ว: <span style="font-family: monospace; background-color: #dcfce7; padding: 2px 8px; border-radius: 6px;">${escapeHtml(csvFilename)}</span>
+          <td width="48%" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; vertical-align: top;">
+            <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 4px;">เครดิต OpenRouter</div>
+            <div style="font-size: 18px; font-weight: 800; color: ${credits.remainingCredits <= 0.05 ? "#ef4444" : "#0284c7"}; font-family: monospace;">
+              $${credits.remainingCredits.toFixed(4)}
             </div>
-            <div style="color: #166534; font-size: 13px; line-height: 1.4;">
-              ประกอบด้วยคอลัมน์ <strong>Filename, Title, Keywords</strong> เท่านั้น สามารถนำไปใช้จับคู่ภาพหรือ Bulk Upload บน Adobe Stock Contributor ได้ทันที
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
+              ${credits.remainingCredits <= 0.05 ? "⚠️ กรุณาเติมเครดิต" : "สถานะพร้อมใช้งาน"}
+            </div>
+          </td>
+          <td width="4%"></td>
+          <td width="48%" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; vertical-align: top;">
+            <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 4px;">ไฟล์แนบ Metadata</div>
+            <div style="font-size: 12px; font-weight: 700; color: #15803d; font-family: monospace; word-break: break-all;">
+              📎 ${escapeHtml(csvFilename)}
+            </div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+              (Filename, Title, Keywords)
             </div>
           </td>
         </tr>
       </table>
+
+      <!-- Topic / Winning Niche -->
+      <div style="margin-top: 16px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+        <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 4px;">ธีมและตลาดเป้าหมายวันนี้</div>
+        <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">
+          ${escapeHtml(trend.theme)}
+        </div>
+        <div style="font-size: 12px; color: #64748b; line-height: 1.4;">
+          ${escapeHtml(trend.commercialReasoning)}
+        </div>
+      </div>
     </div>
-
-    <!-- Generated Images Section -->
-    <h3 style="font-size: 16px; font-weight: 700; color: #334155; margin: 0 0 16px 4px;">
-      🎨 5 Curated Commercial Prompts &amp; Metadata
-    </h3>
-
-    ${imagesHtml}
 
     <!-- Footer -->
-    <div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 20px 0;">
-      <p style="margin: 0 0 6px 0;">This email was generated automatically by your <strong>adobe_stock</strong> system on Vercel.</p>
-      <p style="margin: 0;">Recipient: <strong>hs5ckt@gmail.com</strong> | Repository: github.com/diowcnx/adobe_stock</p>
+    <div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 20px 24px; border-top: 1px solid #f1f5f9;">
+      <p style="margin: 0 0 4px 0;">ระบบอัตโนมัติ Adobe Stock Daily Dispatcher บน Vercel</p>
+      <p style="margin: 0;">hs5ckt@gmail.com &bull; github.com/diowcnx/adobe_stock</p>
     </div>
 
   </div>
@@ -369,54 +268,38 @@ function generateEmailHtml(
   `;
 }
 
-function generateEmailPlainText(
+/**
+ * สร้าง Plain Text สำหรับอีเมลแจ้งเตือนสั้นกระชับ
+ */
+function generateNotificationEmailPlainText(
   todayStr: string,
   trend: MarketTrend,
-  images: StockImageItem[],
+  imageCount: number,
   credits: OpenRouterCreditInfo,
-  csvFilename: string = "adobe_stock_metadata.csv",
-  mode: "transparent_png" | "regular_scene" = "regular_scene"
+  csvFilename: string,
+  mode: "transparent_png" | "regular_scene",
+  downloadUrl: string
 ): string {
-  const appUrl = process.env.APP_URL || "https://adobe-stock-lovat.vercel.app";
   const modeLabel = mode === "transparent_png"
-    ? "🔲 ชุดภาพ PNG พื้นหลังโปร่งใส (แนะนำ Save เป็น .PNG เพื่อรักษา Alpha Transparency)"
+    ? "🔲 ชุดภาพ PNG พื้นหลังโปร่งใส (แนะนำ Save เป็น .PNG)"
     : "🏞️ ชุดภาพทั่วไปมีฉากหลังและ Copy Space (แนะนำ Save เป็น .JPG หรือ .PNG)";
 
-  let text = `📸 Adobe Stock Daily Dispatch - ${todayStr}\n`;
+  let text = `📸 Adobe Stock Daily Dispatch - ${todayStr}\n\n`;
+  text += `ภาพชุดใหม่ ${imageCount} ภาพสร้างเสร็จสมบูรณ์แล้ว!\n\n`;
+  text += `🔗 ลิงก์ดาวน์โหลดทั้งชุดบนหน้าเว็บ (ZIP + CSV):\n`;
+  text += `${downloadUrl}\n\n`;
   text += `🎯 โหมดวันนี้: ${modeLabel}\n`;
-  text += `🔗 Web Dashboard: ${appUrl}\n`;
-  text += `OpenRouter Remaining Credit: $${credits.remainingCredits.toFixed(4)}\n`;
-  text += `📄 Attached Metadata CSV: ${csvFilename} (Columns: Filename,Title,Keywords)\n\n`;
-  text += `--- MARKET TREND ---\n`;
-  text += `Theme: ${trend.theme}\n`;
-  text += `Target Market: ${trend.targetMarket}\n`;
-  text += `Commercial Reasoning: ${trend.commercialReasoning}\n`;
-  text += `Seasonal Relevance: ${trend.seasonalRelevance}\n\n`;
-
-  text += `--- ${images.length} COMMERCIAL IMAGES & METADATA ---\n\n`;
-  for (const img of images) {
-    text += `[Image #${img.id}] (Ratio: ${img.aspectRatio}, Model: ${img.modelUsed})\n`;
-    text += `📁 Filename: ${img.filename}\n`;
-    text += `SEO Title: ${img.seoTitle}\n`;
-    text += `Category: ${img.category}\n`;
-    text += `Prompt: ${img.prompt}\n`;
-    text += `Keywords: ${img.keywords.join(", ")}\n\n`;
-  }
+  text += `💰 เครดิต OpenRouter คงเหลือ: $${credits.remainingCredits.toFixed(4)}\n`;
+  text += `📎 ไฟล์แนบ: ${csvFilename} (สำหรับอัปโหลดข้อมูล Title/Keywords ขึ้น Adobe Stock)\n\n`;
+  text += `ธีมวันนี้: ${trend.theme}\n`;
+  text += `${trend.commercialReasoning}\n\n`;
+  text += `เปิดหน้าเว็บด้านบนเพื่อเริ่มดาวน์โหลดภาพทั้งหมดทันทีครับ`;
 
   return text;
 }
 
-function escapeHtml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 /**
- * ส่งอีเมลแจ้งเตือนฉุกเฉินเมื่อเครดิต OpenRouter หมดหรือเหลือน้อยมาก
+ * แจ้งเตือนฉุกเฉินเมื่อเครดิต OpenRouter หมด
  */
 export async function sendCreditDepletedEmergencyAlert({
   credits,
@@ -428,74 +311,48 @@ export async function sendCreditDepletedEmergencyAlert({
   recipientEmail?: string;
   senderEmail?: string;
   apiKey?: string;
-}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+}): Promise<boolean> {
   const toEmail = recipientEmail || process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
   const fromEmail = senderEmail || process.env.SENDER_EMAIL || "stock-alerts@notify.diowcnx.com";
   const key = apiKey || process.env.SMTP2GO_API_KEY;
 
-  const nowStr = new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" });
+  if (!key) return false;
 
   const html = `
-  <!DOCTYPE html>
-  <html>
-  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; padding: 24px;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 2px solid #ef4444; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.2);">
-      <div style="background-color: #ef4444; color: #ffffff; padding: 24px; text-align: center;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 800;">🚨 เครดิต OpenRouter ของคุณหมดแล้ว!</h1>
-        <p style="margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;">ระบบผลิตภาพขาย Adobe Stock อัตโนมัติหยุดชั่วคราว</p>
+    <div style="font-family: sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; border: 2px solid #ef4444; border-radius: 12px; background: #fff5f5;">
+      <h2 style="color: #dc2626; margin-top: 0;">🚨 แจ้งเตือนด่วน: เครดิต OpenRouter หมดแล้ว</h2>
+      <p style="color: #374151;">ยอดเงินคงเหลือของคุณคือ <strong>$${credits.remainingCredits.toFixed(4)}</strong> ซึ่งไม่เพียงพอต่อการสร้างภาพในรอบถัดไป</p>
+      <div style="margin: 20px 0;">
+        <a href="https://openrouter.ai/credits" style="background: #dc2626; color: #fff; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">เติมเครดิต OpenRouter ทันที &rarr;</a>
       </div>
-
-      <div style="padding: 28px;">
-        <div style="background-color: #fef2f2; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; border-left: 5px solid #dc2626;">
-          <div style="font-size: 12px; color: #7f1d1d; text-transform: uppercase; font-weight: 700;">สถานะเครดิตปัจจุบัน</div>
-          <div style="font-size: 28px; font-weight: 900; color: #dc2626; margin: 4px 0;">$${credits.remainingCredits.toFixed(4)}</div>
-          <div style="font-size: 12px; color: #991b1b;">บันทึกเวลา: ${nowStr} (เวลาประเทศไทย)</div>
-        </div>
-
-        <p style="color: #334155; font-size: 14px; line-height: 1.6;">
-          ระบบ <strong>adobe_stock</strong> ได้ทำการตรวจสอบยอดคงเหลือ และพบว่าเครดิตของคุณไม่เพียงพอสำหรับการสร้างภาพขายใน Adobe Stock
-        </p>
-
-        <p style="color: #334155; font-size: 14px; line-height: 1.6;">
-          เมื่อคุณทำการเติมเครดิตเรียบร้อยแล้ว ระบบจะกลับมาทำงานตามรอบปกติเวลา 18:00 น. หรือคุณสามารถกดสั่งสร้างภาพรอบใหม่ได้ทันทีผ่านหน้า Dashboard
-        </p>
-
-        <div style="text-align: center; margin: 32px 0 16px 0;">
-          <a href="https://openrouter.ai/credits" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; border-radius: 12px; font-size: 15px; font-weight: 800; text-decoration: none; display: inline-block; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);">
-            💳 เติมเงิน OpenRouter ทันที &rarr;
-          </a>
-        </div>
-      </div>
-
-      <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8;">
-        ส่งถึง: ${toEmail} &bull; ระบบอัตโนมัติ diowcnx/adobe_stock
-      </div>
+      <p style="font-size: 12px; color: #6b7280;">อีเมลนี้ส่งอัตโนมัติจากระบบ adobe_stock บน Vercel</p>
     </div>
-  </body>
-  </html>
   `;
 
-  if (!key) {
-    console.warn("SMTP2GO_API_KEY not configured. Simulated emergency credit alert.");
-    return { success: true, messageId: `simulated-alert-${Date.now()}` };
-  }
-
   try {
-    const res = await fetch("https://api.smtp2go.com/v3/email/send", {
+    await fetch("https://api.smtp2go.com/v3/email/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         api_key: key,
         to: [toEmail],
         sender: fromEmail,
-        subject: `🚨 [ด่วนที่สุด] เครดิต OpenRouter ของคุณหมดแล้ว ($${credits.remainingCredits.toFixed(4)}) - กรุณาเติมเครดิต`,
+        subject: `🚨 [ด่วน] เครดิต OpenRouter หมดแล้ว ($${credits.remainingCredits.toFixed(4)}) - กรุณาเติมเงิน`,
         html_body: html,
-        text_body: `🚨 เครดิต OpenRouter ของคุณหมดแล้ว ($${credits.remainingCredits.toFixed(4)})\nกรุณาเติมเงินที่ https://openrouter.ai/credits เพื่อให้ระบบทำงานต่อ`,
+        text_body: `แจ้งเตือนด่วน: เครดิต OpenRouter ของคุณหมดแล้ว ($${credits.remainingCredits.toFixed(4)}) กรุณาเติมเงินที่: https://openrouter.ai/credits`,
       }),
     });
-    const data: Smtp2goSendResponse = await res.json();
-    return { success: res.ok && (data.data?.succeeded ?? 0) > 0 };
-  } catch (e: any) {
-    return { success: false, error: e.message };
+    return true;
+  } catch {
+    return false;
   }
+}
+
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }

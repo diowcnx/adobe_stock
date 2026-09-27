@@ -90,8 +90,39 @@ export default function Dashboard() {
     }
   };
 
+  const [loadingBatch, setLoadingBatch] = useState(false);
+
+  // ดึงชุดภาพล่าสุดอัตโนมัติ (จาก URL Query หรือจาก Cache บนเซิร์ฟเวอร์)
+  const fetchLatestBatch = async () => {
+    setLoadingBatch(true);
+    try {
+      let queryParam = "";
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        const batch = urlParams.get("batch");
+        if (batch) {
+          queryParam = `?batch=${encodeURIComponent(batch)}`;
+        }
+      }
+
+      const res = await fetch(`/api/latest-batch${queryParam}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.images && data.images.length > 0) {
+          setLatestResult(data);
+          setActiveTab("images");
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load latest batch:", e);
+    } finally {
+      setLoadingBatch(false);
+    }
+  };
+
   useEffect(() => {
     fetchCredits();
+    fetchLatestBatch();
   }, []);
 
   // กดเริ่มกระบวนการทันที
@@ -362,6 +393,56 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Hero Download Banner: เด่นชัด 100% เห็นทันทีที่เปิดหน้าเว็บ */}
+        {latestResult && latestResult.images && latestResult.images.length > 0 && (
+          <div className="bg-gradient-to-r from-blue-950/90 via-indigo-950/90 to-slate-900 border-2 border-sky-500/80 rounded-2xl p-5 mb-6 shadow-2xl shadow-sky-500/15 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in duration-300">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 border border-sky-400/30 shadow-inner">
+                <FolderArchive className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-bold text-base text-white">
+                    🎉 ภาพชุดล่าสุดพร้อมดาวน์โหลดแล้ว ({latestResult.images.length} ภาพ)
+                  </h2>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 font-bold">
+                    {latestResult.generationMode === "transparent_png" ? "🔲 PNG โปร่งใส (Alpha Cutout)" : "🏞️ ฉากทั่วไป (Copy Space)"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-1">
+                  ไฟล์ภาพทั้งหมดพร้อมชื่อไฟล์เฉพาะตัวและไฟล์ CSV จัดเตรียมเรียบร้อยแล้ว กดปุ่มสีฟ้านี้เพื่อดาวน์โหลดทันที
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
+              <button
+                onClick={downloadAllImagesZip}
+                disabled={isZipping}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm px-6 py-3 rounded-xl transition shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 flex-1 md:flex-initial cursor-pointer"
+              >
+                {isZipping ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{zipProgress || "กำลังบีบอัด ZIP..."}</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowDownToLine className="w-4 h-4" />
+                    <span>ดาวน์โหลดทั้ง 20 ภาพ (ZIP + CSV)</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={downloadMetadataCsv}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-4 py-3 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                <span>CSV</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Navigation Tabs */}
         <div className="flex items-center border-b border-slate-800 space-x-4">
           <button
@@ -511,19 +592,25 @@ export default function Dashboard() {
         {/* Tab 2: Generated Images & Metadata */}
         {activeTab === "images" && (
           <div className="space-y-6">
-            {!latestResult ? (
+            {loadingBatch && !latestResult ? (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center space-y-4">
+                <Loader2 className="w-10 h-10 text-sky-400 animate-spin mx-auto" />
+                <h3 className="font-semibold text-white text-base">กำลังโหลดชุดภาพล่าสุดจากระบบ...</h3>
+                <p className="text-xs text-slate-400">กรุณารอสักครู่ ระบบกำลังจัดเตรียมข้อมูลภาพและไฟล์ CSV</p>
+              </div>
+            ) : !latestResult ? (
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center space-y-4">
                 <ImageIcon className="w-12 h-12 text-slate-600 mx-auto" />
-                <h3 className="font-semibold text-white text-base">No batch generated in this session yet</h3>
+                <h3 className="font-semibold text-white text-base">ยังไม่มีชุดภาพที่สร้างในระบบ</h3>
                 <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  Click the button below to generate today's 5 commercial prompts, SEO titles, and keywords.
+                  กดปุ่มด้านล่างเพื่อเริ่มสร้างชุดภาพสต็อกประจำวันทันที หรือรอระบบอัตโนมัติทำงานเวลา 18:00 น.
                 </p>
                 <button
                   onClick={triggerManualRun}
                   disabled={isRunning}
-                  className="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition"
+                  className="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition cursor-pointer"
                 >
-                  Generate Batch Now
+                  สร้างภาพสต็อกประจำวันทันที
                 </button>
               </div>
             ) : (

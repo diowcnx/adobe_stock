@@ -45,7 +45,7 @@ export async function executeDailyStockWorkflow(
   const durationMs = Date.now() - startTime;
   console.log(`Workflow completed in ${durationMs}ms with email success: ${emailResult.success}`);
 
-  return {
+  const workflowResult: WorkflowResult = {
     success: emailResult.success,
     timestamp: new Date().toISOString(),
     generationMode: mode,
@@ -60,4 +60,10 @@ export async function executeDailyStockWorkflow(
     },
     durationMs,
   };
+
+  // บันทึกชุดภาพล่าสุดลงในระบบ เพื่อให้ผู้ใช้เปิดดาวน์โหลดบนหน้าเว็บได้ทันที
+  const { saveLatestBatch } = await import("./batch-store");
+  await saveLatestBatch(workflowResult);
+
+  return workflowResult;
 }
