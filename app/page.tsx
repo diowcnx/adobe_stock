@@ -58,6 +58,15 @@ export default function Dashboard() {
       const json = await res.json();
       setTestEmailResult(json);
       if (json.success) {
+        if (latestResult) {
+          setLatestResult({
+            ...latestResult,
+            emailDelivery: {
+              success: true,
+              recipient: json.recipientEmail || "hs5ckt@gmail.com",
+            },
+          });
+        }
         alert("✅ ส่งอีเมลทดสอบไปยัง " + (json.recipientEmail || "hs5ckt@gmail.com") + " สำเร็จเรียบร้อยแล้ว! โปรดตรวจสอบใน Inbox หรือ Spam");
       } else {
         const errorDetail = json.error || json.smtpResponse?.errors?.join(", ") || json.smtpResponse?.data?.failures?.join(", ") || `HTTP ${json.httpStatus || 500}`;
@@ -266,7 +275,29 @@ export default function Dashboard() {
         ...initialBatch,
         images: updatedImages,
       };
-      setLatestResult(finalResult);
+
+      // 4. ส่งอีเมลแจ้งเตือนพร้อมไฟล์ CSV และลิงก์ดาวน์โหลดไปยัง hs5ckt@gmail.com ผ่าน SMTP2GO
+      setRunProgress("กำลังส่งอีเมลแจ้งเตือนไปยัง hs5ckt@gmail.com...");
+      try {
+        const emailRes = await fetch("/api/dispatch-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(finalResult),
+        });
+        if (emailRes.ok) {
+          const emailData = await emailRes.json();
+          finalResult.emailDelivery = {
+            success: Boolean(emailData.success),
+            recipient: "hs5ckt@gmail.com",
+            messageId: emailData.messageId,
+            error: emailData.error,
+          };
+        }
+      } catch (e: any) {
+        console.warn("Could not dispatch email:", e);
+      }
+
+      setLatestResult({ ...finalResult });
       saveBatchToHistory(finalResult);
 
       try {

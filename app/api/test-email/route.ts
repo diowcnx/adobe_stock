@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const apiKey = process.env.SMTP2GO_API_KEY;
-  const senderEmail = process.env.SENDER_EMAIL || "stock-alerts@notify.diowcnx.com";
+  const senderEmail = process.env.SENDER_EMAIL || "fms@ptis.ac.th";
   const recipientEmail = process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
 
   if (!apiKey) {

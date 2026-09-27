@@ -30,7 +30,7 @@ export async function sendDailyStockEmail({
   apiKey?: string;
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const toEmail = recipientEmail || process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
-  const fromEmail = senderEmail || process.env.SENDER_EMAIL || "stock-alerts@notify.diowcnx.com";
+  const fromEmail = senderEmail || process.env.SENDER_EMAIL || "fms@ptis.ac.th";
   const key = apiKey || process.env.SMTP2GO_API_KEY;
 
   const now = new Date();
@@ -313,7 +313,7 @@ export async function sendCreditDepletedEmergencyAlert({
   apiKey?: string;
 }): Promise<boolean> {
   const toEmail = recipientEmail || process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
-  const fromEmail = senderEmail || process.env.SENDER_EMAIL || "stock-alerts@notify.diowcnx.com";
+  const fromEmail = senderEmail || process.env.SENDER_EMAIL || "fms@ptis.ac.th";
   const key = apiKey || process.env.SMTP2GO_API_KEY;
 
   if (!key) return false;
