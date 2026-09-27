@@ -32,15 +32,27 @@ export async function sendDailyStockEmail({
   const fromEmail = senderEmail || process.env.SENDER_EMAIL || "stock-alerts@notify.diowcnx.com";
   const key = apiKey || process.env.SMTP2GO_API_KEY;
 
-  const todayStr = new Date().toLocaleDateString("en-US", {
+  const now = new Date();
+  const todayStr = now.toLocaleDateString("en-US", {
+    timeZone: "Asia/Bangkok",
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
-  const now = new Date();
-  const dateSlug = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  // ใช้รูปแบบวันที่ตามเวลาประเทศไทย (Asia/Bangkok) สำหรับชื่อไฟล์ CSV
+  const bangkokDateParts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  const yyyy = bangkokDateParts.find((p) => p.type === "year")?.value || String(now.getFullYear());
+  const mm = bangkokDateParts.find((p) => p.type === "month")?.value || String(now.getMonth() + 1).padStart(2, "0");
+  const dd = bangkokDateParts.find((p) => p.type === "day")?.value || String(now.getDate()).padStart(2, "0");
+  const dateSlug = `${yyyy}${mm}${dd}`;
   const csvFilename = `adobe_stock_metadata_${dateSlug}.csv`;
 
   // ตรวจสอบให้ทุกภาพมีชื่อไฟล์เฉพาะตัวที่ไม่ซ้ำกัน

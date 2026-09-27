@@ -21,13 +21,26 @@ export function generateUniqueStockFilename(
   date: Date = new Date(),
   mode?: "transparent_png" | "regular_scene"
 ): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const yyyy = date.getFullYear();
-  const mm = pad(date.getMonth() + 1);
-  const dd = pad(date.getDate());
-  const hh = pad(date.getHours());
-  const min = pad(date.getMinutes());
-  const ss = pad(date.getSeconds());
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const getPart = (type: string, fallback: string) => parts.find((p) => p.type === type)?.value || fallback;
+
+  const yyyy = getPart("year", String(date.getFullYear()));
+  const mm = getPart("month", String(date.getMonth() + 1).padStart(2, "0"));
+  const dd = getPart("day", String(date.getDate()).padStart(2, "0"));
+  const hh = getPart("hour", String(date.getHours()).padStart(2, "0"));
+  const min = getPart("minute", String(date.getMinutes()).padStart(2, "0"));
+  const ss = getPart("second", String(date.getSeconds()).padStart(2, "0"));
+
   const randomHex = Math.random().toString(16).substring(2, 6);
   const slug = sanitizeSlug(title) || `image_${id}`;
   const modePrefix = mode === "transparent_png" ? "stock_transparent" : mode === "regular_scene" ? "stock_regular" : "stock";
