@@ -1,6 +1,5 @@
 import { MarketTrend, OpenRouterCreditInfo, StockImageItem } from "./types";
 import { generateMetadataCsv, generateUniqueStockFilename } from "./csv";
-import { compressBatch } from "./batch-store";
 
 interface Smtp2goSendResponse {
   data?: {
@@ -63,15 +62,9 @@ export async function sendDailyStockEmail({
     }
   });
 
-  // สร้าง Direct Download URL ที่ฝังข้อมูลชุดภาพ 20 ภาพไปด้วย เพื่อให้เปิดแล้วดาวน์โหลดได้ทันที
+  // อ้างอิงชุดล่าสุดบนเซิร์ฟเวอร์ โดยไม่ฝังข้อมูลภาพลงใน URL
   const appUrl = process.env.APP_URL || "https://adobe-stock-lovat.vercel.app";
-  let downloadUrl = appUrl;
-  try {
-    const batchParam = compressBatch(images);
-    downloadUrl = `${appUrl}/?batch=${batchParam}&tab=images`;
-  } catch (e) {
-    downloadUrl = `${appUrl}/?tab=images`;
-  }
+  const downloadUrl = `${appUrl}/?tab=images`;
 
   // สร้างเนื้อหาอีเมลแบบแจ้งเตือนสั้นกระชับ (ตัดรายละเอียด Title และ Keywords ออกตามคำขอของผู้ใช้)
   const htmlBody = generateNotificationEmailHtml(todayStr, trend, images.length, credits, csvFilename, mode, downloadUrl);
@@ -141,11 +134,11 @@ export async function sendDailyStockEmail({
         error: errMsg,
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to send email via SMTP2GO:", error);
     return {
       success: false,
-      error: error.message || "Unknown error sending email via SMTP2GO",
+      error: "Unknown error sending email via SMTP2GO",
     };
   }
 }
@@ -330,7 +323,7 @@ export async function sendCreditDepletedEmergencyAlert({
   `;
 
   try {
-    await fetch("https://api.smtp2go.com/v3/email/send", {
+    const response = await fetch("https://api.smtp2go.com/v3/email/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -341,8 +334,9 @@ export async function sendCreditDepletedEmergencyAlert({
         html_body: html,
         text_body: `แจ้งเตือนด่วน: เครดิต OpenRouter ของคุณหมดแล้ว ($${credits.remainingCredits.toFixed(4)}) กรุณาเติมเงินที่: https://openrouter.ai/credits`,
       }),
+      signal: AbortSignal.timeout(12_000),
     });
-    return true;
+    return response.ok;
   } catch {
     return false;
   }

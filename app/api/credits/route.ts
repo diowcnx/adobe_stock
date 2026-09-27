@@ -10,11 +10,12 @@ export async function GET() {
       success: true,
       data: credits,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    console.error("Credit lookup failed:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
+        error: "Unable to retrieve credits",
       },
       { status: 500 }
     );

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdminPassword, createSessionToken, COOKIE_NAME } from "@/lib/auth";
+import { readJsonBody, validationErrorResponse } from "@/lib/request";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await readJsonBody(request, 2_048);
     const { password } = body;
 
-    if (!password || !checkAdminPassword(password)) {
+    if (typeof password !== "string" || !(await checkAdminPassword(password))) {
       return NextResponse.json(
         { success: false, error: "รหัสผ่านไม่ถูกต้อง (Invalid password)" },
         { status: 401 }
@@ -26,15 +27,18 @@ export async function POST(request: NextRequest) {
     response.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "strict",
       path: "/",
-      maxAge: 7 * 24 * 60 * 60, // 7 วัน
+      maxAge: 12 * 60 * 60,
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const validationResponse = validationErrorResponse(error);
+    if (validationResponse) return validationResponse;
+    console.error("Login failed:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ" },
+      { success: false, error: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ" },
       { status: 500 }
     );
   }

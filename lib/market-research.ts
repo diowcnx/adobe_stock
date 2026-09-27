@@ -2,21 +2,6 @@ import { callOpenRouterJSON } from "./openrouter";
 import { MarketTrend, StockImageItem } from "./types";
 import { generateUniqueStockFilename } from "./csv";
 
-interface ResearchResponse {
-  trend: MarketTrend;
-  prompts: Array<{
-    id: number;
-    seoTitle: string;
-    category: string;
-    aspectRatio: "16:9" | "3:2" | "4:5" | "1:1";
-    prompt: string;
-    negativePrompt?: string;
-    keywords: string[];
-    compositionStyle: string;
-    modelSuggestion: string;
-  }>;
-}
-
 /**
  * คำนวณโหมดสลับวันเว้นวันอย่างเที่ยงตรง (100% Homogeneous Daily Alternation)
  * - วันคู่: 'transparent_png' (ภาพพื้นหลังโปร่งใสทั้งชุด 20 ภาพ)

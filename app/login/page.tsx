@@ -2,8 +2,10 @@
 
 import React, { useState } from "react";
 import { Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,8 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        window.location.href = "/";
+        router.replace("/");
+        router.refresh();
       } else {
         setError(data.error || "รหัสผ่านไม่ถูกต้อง");
       }
@@ -56,12 +59,15 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
+              aria-label="Admin password"
+              autoComplete="current-password"
               autoFocus
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-400 transition pr-10"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

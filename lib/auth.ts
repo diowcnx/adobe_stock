@@ -1,7 +1,13 @@
 import { cookies } from "next/headers";
 
 export const COOKIE_NAME = "adobe_stock_admin_session";
-const DEFAULT_SECRET = "adobe_stock_secure_key_2026";
+const SESSION_MAX_AGE_SECONDS = 12 * 60 * 60;
+const MAX_CLOCK_SKEW_MS = 60_000;
+
+function getSessionSecret(): string | null {
+  const secret = process.env.SESSION_SECRET;
+  return secret && secret.length >= 32 ? secret : null;
+}
 
 /**
  * สร้าง HMAC-SHA256 Signature ด้วย Web Crypto API
@@ -21,11 +27,27 @@ async function signMessage(message: string, secret: string): Promise<string> {
     .join("");
 }
 
+export async function secureCompare(left: string, right: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode("adobe-stock-constant-time-comparison"),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(left));
+  return crypto.subtle.verify("HMAC", key, signature, encoder.encode(right));
+}
+
 /**
  * สร้าง Session Token ที่ลงลายมือชื่อดิจิทัล (Signed Token)
  */
 export async function createSessionToken(username: string = "diowcnx"): Promise<string> {
-  const secret = process.env.ADMIN_PASSWORD || process.env.SESSION_SECRET || DEFAULT_SECRET;
+  const secret = getSessionSecret();
+  if (!secret) {
+    throw new Error("SESSION_SECRET must be configured with at least 32 characters");
+  }
   const timestamp = Date.now();
   const payload = `${username}:${timestamp}`;
   const signature = await signMessage(payload, secret);
@@ -46,24 +68,41 @@ export async function verifySessionToken(token: string | undefined): Promise<boo
 
   if (isNaN(timestamp)) return false;
 
-  // อายุ Session: 7 วัน (7 * 24 * 60 * 60 * 1000)
-  const maxAgeMs = 7 * 24 * 60 * 60 * 1000;
-  if (Date.now() - timestamp > maxAgeMs) {
-    return false; // หมดอายุ
-  }
+  const now = Date.now();
+  const maxAgeMs = SESSION_MAX_AGE_SECONDS * 1000;
+  if (timestamp > now + MAX_CLOCK_SKEW_MS || now - timestamp > maxAgeMs) return false;
 
-  const secret = process.env.ADMIN_PASSWORD || process.env.SESSION_SECRET || DEFAULT_SECRET;
-  const expectedSignature = await signMessage(`${username}:${timestampStr}`, secret);
+  const secret = getSessionSecret();
+  if (!secret) return false;
 
-  return signature === expectedSignature;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
+  if (!/^[a-f0-9]{64}$/.test(signature)) return false;
+  const signatureBytes = Uint8Array.from(
+    signature.match(/.{2}/g) ?? [],
+    (byte) => Number.parseInt(byte, 16),
+  );
+  return crypto.subtle.verify(
+    "HMAC",
+    key,
+    signatureBytes,
+    encoder.encode(`${username}:${timestampStr}`),
+  );
 }
 
 /**
  * ตรวจสอบรหัสผ่าน Admin
  */
-export function checkAdminPassword(password: string): boolean {
-  const adminPassword = process.env.ADMIN_PASSWORD || "diowcnx1234";
-  return password.trim() === adminPassword.trim();
+export async function checkAdminPassword(password: string): Promise<boolean> {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword || adminPassword.length < 12 || password.length > 256) return false;
+  return secureCompare(password, adminPassword);
 }
 
 /**

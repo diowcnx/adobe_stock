@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { fetchAllowlistedImage } from "@/lib/remote-image";
 
 export const dynamic = "force-dynamic";
 
@@ -10,26 +11,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(10000),
-    });
+    const { body, contentType } = await fetchAllowlistedImage(url);
 
-    if (!response.ok) {
-      return new NextResponse(`Failed to fetch image: ${response.status}`, { status: response.status });
-    }
-
-    const contentType = response.headers.get("content-type") || "image/png";
-    const arrayBuffer = await response.arrayBuffer();
-
-    return new NextResponse(arrayBuffer, {
+    return new NextResponse(body, {
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=86400",
-        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-store",
+        "Content-Disposition": "attachment",
+        "X-Content-Type-Options": "nosniff",
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Proxy image error:", error);
-    return new NextResponse(error.message || "Proxy error", { status: 500 });
+    return new NextResponse("Image could not be fetched", { status: 400 });
   }
 }

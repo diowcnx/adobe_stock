@@ -1,21 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { conductMarketResearchAndGeneratePrompts } from "@/lib/market-research";
 import { getOpenRouterCredits } from "@/lib/openrouter";
+import { readJsonBody, validationErrorResponse } from "@/lib/request";
+import { parseGenerationMode } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 export async function POST(request: NextRequest) {
   try {
-    let mode: "transparent_png" | "regular_scene" | undefined;
-    try {
-      const body = await request.json();
-      if (body?.mode === "transparent_png" || body?.mode === "regular_scene") {
-        mode = body.mode;
-      }
-    } catch {
-      // empty body is ok
-    }
+    const body = await readJsonBody(request, 1_024);
+    const mode = parseGenerationMode(body.mode);
 
     const { trend, items, mode: resolvedMode } = await conductMarketResearchAndGeneratePrompts(undefined, mode);
     const credits = await getOpenRouterCredits();
@@ -27,10 +22,12 @@ export async function POST(request: NextRequest) {
       mode: resolvedMode,
       credits,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const validationResponse = validationErrorResponse(error);
+    if (validationResponse) return validationResponse;
     console.error("prepare-batch error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to prepare batch" },
+      { success: false, error: "Failed to prepare batch" },
       { status: 500 }
     );
   }

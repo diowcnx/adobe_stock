@@ -1,54 +1,11 @@
-import zlib from "zlib";
 import fs from "fs";
 import path from "path";
-import { StockImageItem, WorkflowResult } from "./types";
+import { WorkflowResult } from "./types";
 
 const TMP_BATCH_FILE = path.join("/tmp", "latest_adobe_stock_batch.json");
 
 declare global {
-  // eslint-disable-next-line no-var
   var __latestAdobeStockBatch: WorkflowResult | undefined;
-}
-
-/**
- * บีบอัดรายการภาพ 20 ภาพให้อยู่ในรูปแบบ base64url สั้น เพื่อส่งผ่าน URL Query ได้อย่างปลอดภัย
- */
-export function compressBatch(items: StockImageItem[]): string {
-  const minimal = items.map((img) => ({
-    id: img.id,
-    t: img.seoTitle,
-    r: img.aspectRatio,
-    u: img.imageUrl,
-    f: img.filename,
-    k: img.keywords,
-    c: img.category,
-    m: img.generationMode || "stock",
-  }));
-  return zlib.deflateSync(JSON.stringify(minimal)).toString("base64url");
-}
-
-/**
- * ถอดรหัสชุดภาพจาก base64url query parameter กลับมาเป็นรายการภาพพร้อมดาวน์โหลด
- */
-export function decompressBatch(str: string): StockImageItem[] {
-  try {
-    const buf = Buffer.from(str, "base64url");
-    const json = JSON.parse(zlib.inflateSync(buf).toString("utf-8"));
-    return json.map((item: any) => ({
-      id: item.id,
-      seoTitle: item.t,
-      aspectRatio: item.r,
-      imageUrl: item.u,
-      filename: item.f,
-      keywords: item.k,
-      category: item.c,
-      generationMode: item.m,
-      isTransparent: item.m === "transparent_png",
-    }));
-  } catch (e) {
-    console.error("Failed to decompress batch string:", e);
-    return [];
-  }
 }
 
 /**
@@ -60,7 +17,11 @@ export async function saveLatestBatch(result: WorkflowResult): Promise<void> {
     // บันทึกเฉพาะข้อมูลที่จำเป็นโดยตัด base64 หนักๆ ออก เพื่อประหยัดพื้นที่และเร็วสูงสุด
     const lightweightResult = {
       ...result,
-      images: result.images.map(({ imageBase64, ...rest }) => rest),
+      images: result.images.map((image) => {
+        const { imageBase64: _imageBase64, ...rest } = image;
+        void _imageBase64;
+        return rest;
+      }),
     };
     fs.writeFileSync(TMP_BATCH_FILE, JSON.stringify(lightweightResult), "utf-8");
   } catch (err) {
@@ -86,4 +47,14 @@ export async function getLatestBatch(): Promise<WorkflowResult | null> {
     console.warn("Could not read latest batch from /tmp:", err);
   }
   return null;
+}
+
+/**
+ * ลบชุดล่าสุดหลังผู้ใช้ยืนยันว่าดาวน์โหลดเรียบร้อยแล้ว
+ */
+export async function clearLatestBatch(): Promise<void> {
+  globalThis.__latestAdobeStockBatch = undefined;
+  if (fs.existsSync(TMP_BATCH_FILE)) {
+    fs.unlinkSync(TMP_BATCH_FILE);
+  }
 }

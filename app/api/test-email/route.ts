@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+export async function POST() {
   const apiKey = process.env.SMTP2GO_API_KEY;
   const senderEmail = process.env.SENDER_EMAIL || "fms@ptis.ac.th";
   const recipientEmail = process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
@@ -46,19 +46,23 @@ export async function GET(request: NextRequest) {
     });
 
     const data = await res.json();
+    const succeeded = typeof data?.data?.succeeded === "number" ? data.data.succeeded : 0;
+
+    if (!res.ok || succeeded <= 0) {
+      console.error("SMTP2GO test email failed with status", res.status);
+    }
 
     return NextResponse.json({
-      success: res.ok && data?.data?.succeeded > 0,
+      success: res.ok && succeeded > 0,
       httpStatus: res.status,
-      smtpResponse: data,
       senderEmail,
       recipientEmail,
-      keyPrefix: apiKey.slice(0, 8) + "...",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    console.error("SMTP2GO test email failed:", error);
     return NextResponse.json({
       success: false,
-      error: error.message || String(error),
+      error: "Unable to send test email",
       senderEmail,
       recipientEmail,
     }, { status: 500 });

@@ -1,7 +1,25 @@
 import sharp from "sharp";
 import { StockImageItem } from "./types";
+import { getErrorMessage } from "./errors";
+import { fetchAllowlistedImage, validateRemoteImageUrl } from "./remote-image";
 
 const OPENROUTER_API_BASE = "https://openrouter.ai/api/v1";
+const MAX_INPUT_PIXELS = 40_000_000;
+const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+
+interface OpenRouterImageResponse {
+  choices?: Array<{
+    message?: {
+      images?: Array<{ image_url?: { url?: string }; url?: string; b64_json?: string }>;
+      content?: string | Array<{
+        type?: string;
+        image_url?: { url?: string };
+        b64_json?: string;
+      }>;
+      parts?: Array<{ inline_data?: { data?: string } }>;
+    };
+  }>;
+}
 
 // โมเดลสร้างภาพที่เปิดให้บริการจริงและเสถียรที่สุดบน OpenRouter
 export const MODEL_GEMINI_IMAGE = "google/gemini-2.5-flash-image";
@@ -37,18 +55,18 @@ function getAspectRatioForModel(ratio: string): string {
  */
 export async function ensureGenuineAlphaTransparency(inputBuffer: Buffer): Promise<Buffer> {
   try {
-    const meta = await sharp(inputBuffer).metadata();
+    const meta = await sharp(inputBuffer, { limitInputPixels: MAX_INPUT_PIXELS }).metadata();
 
     // 1. ตรวจสอบว่ามี Alpha Channel อยู่แล้ว และมีพิกเซลโปร่งใสจริงหรือไม่
     if (meta.hasAlpha) {
-      const { data } = await sharp(inputBuffer).raw().toBuffer({ resolveWithObject: true });
+      const { data } = await sharp(inputBuffer, { limitInputPixels: MAX_INPUT_PIXELS }).raw().toBuffer({ resolveWithObject: true });
       let transparentPixels = 0;
       for (let i = 3; i < data.length; i += 4) {
         if (data[i] < 25) transparentPixels++;
       }
       // ถ้ามีพิกเซลโปร่งใสมากกว่า 5% ของภาพ แสดงว่าเป็นภาพโปร่งใสแท้จริงแล้ว
       if (transparentPixels > ((meta.width || 1024) * (meta.height || 1024) * 0.05)) {
-        return await sharp(inputBuffer)
+        return await sharp(inputBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
           .png({ compressionLevel: 9, adaptiveFiltering: true })
           .toBuffer();
       }
@@ -56,7 +74,7 @@ export async function ensureGenuineAlphaTransparency(inputBuffer: Buffer): Promi
 
     // 2. หากไม่มี Alpha หรือเป็นภาพที่ติดลายตารางหมากรุก/พื้นขาว
     // ดำเนินการลบลายตารางหมากรุกและพื้นหลังด้วย BFS Flood-Fill ร่วมกับ Internal Cavity Cleaning
-    const { data, info } = await sharp(inputBuffer)
+    const { data, info } = await sharp(inputBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
@@ -148,7 +166,7 @@ export async function ensureGenuineAlphaTransparency(inputBuffer: Buffer): Promi
 export async function generateSingleImage(
   item: StockImageItem,
   apiKey?: string
-): Promise<{ imageUrl: string; imageBase64: string; error?: string }> {
+): Promise<{ imageUrl: string; error?: string }> {
   const key = apiKey || process.env.OPENROUTER_API_KEY;
 
   if (!key) {
@@ -156,7 +174,6 @@ export async function generateSingleImage(
     console.error(`[Item #${item.id}] ${errorMsg}`);
     return {
       imageUrl: "",
-      imageBase64: "",
       error: errorMsg,
     };
   }
@@ -192,7 +209,7 @@ export async function generateSingleImage(
         ? `Create an isolated commercial stock element on a pure solid white studio background. Centered floating subject, razor-sharp clean silhouette cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic tactile physical materials, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}`
         : `Create an elite, high-converting commercial stock photograph for Adobe Stock. Authentic materiality, tactile textures, natural directional lighting (Leica/Hasselblad aesthetic, subtle depth of field), strictly leaving 50-60% clean uncluttered negative copy space for designer typography. No plastic AI glossiness, no human faces or distorted portraits, no brand logos or text. Commercial art directed scene: ${sanitizedPrompt}`;
 
-      const payload: Record<string, any> = {
+      const payload: Record<string, unknown> = {
         model,
         messages: [
           {
@@ -219,13 +236,13 @@ export async function generateSingleImage(
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        lastError = `OpenRouter API returned ${response.status}: ${errorText.slice(0, 150)}`;
+        lastError = `OpenRouter API returned ${response.status}`;
         console.error(`[Item #${item.id}] ${lastError}`);
+        if (![408, 429, 500, 502, 503, 504].includes(response.status)) break;
         continue;
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as OpenRouterImageResponse;
       const message = result.choices?.[0]?.message;
 
       let directUrl: string | undefined;
@@ -279,13 +296,25 @@ export async function generateSingleImage(
         directUrl = undefined;
       }
 
+      if (directUrl) {
+        try {
+          directUrl = validateRemoteImageUrl(directUrl).toString();
+        } catch {
+          lastError = "Generated image URL is not from an allowlisted host";
+          continue;
+        }
+      }
+
+      if (extractedBuffer && extractedBuffer.byteLength > MAX_IMAGE_BYTES) {
+        lastError = "Generated image exceeds the size limit";
+        continue;
+      }
+
       // ถ้าเป็นโหมดโปร่งใสและได้เป็น hosted URL ให้ดึง Buffer มาทำ True Alpha
       if (isTransparent && directUrl && !extractedBuffer) {
         try {
-          const fetchRes = await fetch(directUrl, { signal: AbortSignal.timeout(6000) });
-          if (fetchRes.ok) {
-            extractedBuffer = Buffer.from(await fetchRes.arrayBuffer());
-          }
+          const remoteImage = await fetchAllowlistedImage(directUrl, 6_000);
+          extractedBuffer = Buffer.from(remoteImage.body);
         } catch {
           // หาก fetch buffer ไม่สำเร็จ ให้ fallback ใช้ directUrl โดยตรง
         }
@@ -299,16 +328,14 @@ export async function generateSingleImage(
           const base64 = transparentPngBuffer.toString("base64");
           return {
             imageUrl: `data:image/png;base64,${base64}`,
-            imageBase64: base64,
           };
         } else {
-          const compressedBuffer = await sharp(extractedBuffer)
+          const compressedBuffer = await sharp(extractedBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
             .jpeg({ quality: 85 })
             .toBuffer();
           const base64 = compressedBuffer.toString("base64");
           return {
             imageUrl: `data:image/jpeg;base64,${base64}`,
-            imageBase64: base64,
           };
         }
       }
@@ -316,20 +343,18 @@ export async function generateSingleImage(
       if (directUrl) {
         return {
           imageUrl: directUrl,
-          imageBase64: "",
         };
       }
 
       lastError = `No image data in response from ${model}`;
-    } catch (e: any) {
-      lastError = e.message || String(e);
+    } catch (error: unknown) {
+      lastError = getErrorMessage(error, "Image generation failed");
       console.warn(`[Item #${item.id}] Error with ${model}:`, lastError);
     }
   }
 
   return {
     imageUrl: "",
-    imageBase64: "",
     error: lastError || "Failed to generate image via OpenRouter",
   };
 }
@@ -355,15 +380,14 @@ export async function generateAllStockImages(
             ...item,
             modelUsed: item.modelUsed || (item.isTransparent ? MODEL_TRANSPARENT_PRIMARY : DEFAULT_IMAGE_MODEL),
             imageUrl: result.imageUrl || undefined,
-            imageBase64: result.imageBase64 || undefined,
             description: result.error ? `Error: ${result.error}` : undefined,
           };
-        } catch (err: any) {
-          console.error(`Failed generating image #${item.id}:`, err);
+        } catch (error: unknown) {
+          console.error(`Failed generating image #${item.id}:`, error);
           return {
             ...item,
             modelUsed: item.modelUsed || (item.isTransparent ? MODEL_TRANSPARENT_PRIMARY : DEFAULT_IMAGE_MODEL),
-            description: `Generation error: ${err.message || String(err)}`,
+            description: `Generation error: ${getErrorMessage(error, "Unknown error")}`,
           };
         }
       })

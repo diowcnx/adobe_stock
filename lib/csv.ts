@@ -52,8 +52,11 @@ export function generateUniqueStockFilename(
  * Escape ข้อความสำหรับ CSV format
  */
 function escapeCsvField(field: string): string {
+  const safeField = /^[\s]*[=+\-@]/.test(field) || /^[\t\r]/.test(field)
+    ? `'${field}`
+    : field;
   // หากมี quote หรือ comma หรือ newline ให้ครอบด้วย quote และ double quote ข้างใน
-  const escaped = field.replace(/"/g, '""');
+  const escaped = safeField.replace(/"/g, '""');
   return `"${escaped}"`;
 }
 

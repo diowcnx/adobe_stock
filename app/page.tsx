@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import NextImage from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   RefreshCw,
@@ -17,7 +19,6 @@ import {
   CheckCircle2,
   AlertCircle,
   LogOut,
-  Download,
   FileSpreadsheet,
   FolderArchive,
   ArrowDownToLine,
@@ -27,6 +28,35 @@ import {
 import JSZip from "jszip";
 import { WorkflowResult, OpenRouterCreditInfo, StockImageItem } from "@/lib/types";
 import { generateMetadataCsv } from "@/lib/csv";
+import { getErrorMessage, isRecord } from "@/lib/errors";
+import { isWorkflowResult } from "@/lib/validation";
+
+type GenerationModeSelection = "auto" | "transparent_png" | "regular_scene";
+type DashboardTab = "overview" | "images" | "setup";
+
+interface UiNotice {
+  tone: "success" | "error" | "info";
+  message: string;
+}
+
+interface TestEmailResult {
+  success: boolean;
+  configured?: boolean;
+  error?: string;
+  httpStatus?: number;
+  senderEmail?: string;
+  recipientEmail?: string;
+}
+
+function getScheduledModeForToday(): "transparent_png" | "regular_scene" {
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  return Math.floor((now.getTime() - startOfYear.getTime()) / 86_400_000) % 2 === 0
+    ? "transparent_png"
+    : "regular_scene";
+}
+
+const TODAY_SCHEDULED_MODE = getScheduledModeForToday();
 
 interface SavedBatch {
   id: string;
@@ -38,6 +68,7 @@ interface SavedBatch {
 }
 
 export default function Dashboard() {
+  const router = useRouter();
   const [credits, setCredits] = useState<OpenRouterCreditInfo | null>(null);
   const [loadingCredits, setLoadingCredits] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -45,17 +76,36 @@ export default function Dashboard() {
   const [latestResult, setLatestResult] = useState<WorkflowResult | null>(null);
   const [savedBatches, setSavedBatches] = useState<SavedBatch[]>([]);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "images" | "setup">("overview");
-  const [selectedMode, setSelectedMode] = useState<"auto" | "transparent_png" | "regular_scene">("auto");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
+  const [selectedMode, setSelectedMode] = useState<GenerationModeSelection>("auto");
   const [testingEmail, setTestingEmail] = useState(false);
-  const [testEmailResult, setTestEmailResult] = useState<any>(null);
+  const [testEmailResult, setTestEmailResult] = useState<TestEmailResult | null>(null);
+  const [notice, setNotice] = useState<UiNotice | null>(null);
+
+  const showNotice = useCallback((message: string, tone: UiNotice["tone"] = "info") => {
+    setNotice({ message, tone });
+  }, []);
+
+  const selectTab = useCallback((tab: DashboardTab) => {
+    setActiveTab(tab);
+    const url = new URL(window.location.href);
+    if (tab === "overview") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", tab);
+    window.history.replaceState(window.history.state, "", url);
+  }, []);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 4_000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   const handleTestEmail = async () => {
     setTestingEmail(true);
     setTestEmailResult(null);
     try {
-      const res = await fetch("/api/test-email");
-      const json = await res.json();
+      const res = await fetch("/api/test-email", { method: "POST" });
+      const json = (await res.json()) as TestEmailResult;
       setTestEmailResult(json);
       if (json.success) {
         if (latestResult) {
@@ -69,52 +119,50 @@ export default function Dashboard() {
         }
         alert("✅ ส่งอีเมลทดสอบไปยัง " + (json.recipientEmail || "hs5ckt@gmail.com") + " สำเร็จเรียบร้อยแล้ว! โปรดตรวจสอบใน Inbox หรือ Spam");
       } else {
-        const errorDetail = json.error || json.smtpResponse?.errors?.join(", ") || json.smtpResponse?.data?.failures?.join(", ") || `HTTP ${json.httpStatus || 500}`;
+        const errorDetail = json.error || `HTTP ${json.httpStatus || 500}`;
         alert("❌ ส่งอีเมลไม่สำเร็จ:\n" + errorDetail + "\n\nคำแนะนำ: ตรวจสอบ SMTP2GO_API_KEY หรือตั้งค่า SENDER_EMAIL ให้ตรงกับ Verified Senders ในบัญชี SMTP2GO");
       }
-    } catch (e: any) {
-      alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: " + (e.message || String(e)));
+    } catch (error: unknown) {
+      alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: " + getErrorMessage(error, "Unknown error"));
     } finally {
       setTestingEmail(false);
     }
   };
 
-  const todayScheduledMode =
-    typeof window !== "undefined"
-      ? Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000) % 2 === 0
-        ? "transparent_png"
-        : "regular_scene"
-      : "transparent_png";
+  const todayScheduledMode = TODAY_SCHEDULED_MODE;
 
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = "/login";
-    } catch (e) {
-      window.location.href = "/login";
+      localStorage.removeItem("adobe_stock_history");
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      router.replace("/login");
     }
   };
 
   // ดึงเครดิต OpenRouter เมื่อโหลดหน้าเว็บ
-  const fetchCredits = async () => {
+  const fetchCredits = useCallback(async (announce = false) => {
     setLoadingCredits(true);
     try {
       const res = await fetch("/api/credits");
       const json = await res.json();
-      if (json.success && json.data) {
-        setCredits(json.data);
-      }
+      if (!res.ok || !json.success || !json.data) throw new Error(json.error || "ไม่สามารถโหลดเครดิตได้");
+      setCredits(json.data);
+      if (announce) showNotice("อัปเดตยอดเครดิตเรียบร้อยแล้ว", "success");
     } catch (e) {
       console.error("Failed to load credits:", e);
+      if (announce) showNotice(getErrorMessage(e, "ไม่สามารถโหลดเครดิตได้"), "error");
     } finally {
       setLoadingCredits(false);
     }
-  };
+  }, [showNotice]);
 
   const [loadingBatch, setLoadingBatch] = useState(false);
 
   // บันทึกชุดภาพลงใน Local History เพื่อให้เปิดดูย้อนหลังได้ตลอดเวลา
-  const saveBatchToHistory = (batchData: WorkflowResult) => {
+  const saveBatchToHistory = useCallback((batchData: WorkflowResult) => {
     if (!batchData || !batchData.images || batchData.images.length === 0) return;
     try {
       const existing: SavedBatch[] = JSON.parse(localStorage.getItem("adobe_stock_history") || "[]");
@@ -127,7 +175,12 @@ export default function Dashboard() {
       const filtered = existing.filter((b) => b.id !== batchId);
       const cleanData: WorkflowResult = {
         ...batchData,
-        images: batchData.images.map(({ imageBase64, ...rest }) => rest),
+        images: batchData.images.map((image) => {
+          const cleanImage = { ...image };
+          delete cleanImage.imageBase64;
+          if (cleanImage.imageUrl?.startsWith("data:")) delete cleanImage.imageUrl;
+          return cleanImage;
+        }),
       };
       const newEntry: SavedBatch = {
         id: batchId,
@@ -143,28 +196,19 @@ export default function Dashboard() {
     } catch (e) {
       console.warn("Could not save to history:", e);
     }
-  };
+  }, []);
 
   // ดึงชุดภาพล่าสุดอัตโนมัติ (จาก URL Query หรือจาก Cache บนเซิร์ฟเวอร์)
-  const fetchLatestBatch = async () => {
+  const fetchLatestBatch = useCallback(async () => {
     setLoadingBatch(true);
     try {
-      let queryParam = "";
-      if (typeof window !== "undefined") {
-        const urlParams = new URLSearchParams(window.location.search);
-        const batch = urlParams.get("batch");
-        if (batch) {
-          queryParam = `?batch=${encodeURIComponent(batch)}`;
-        }
-      }
-
-      const res = await fetch(`/api/latest-batch${queryParam}`);
+      const res = await fetch("/api/latest-batch");
       if (res.ok) {
         const data = await res.json();
-        if (data.success && data.images && data.images.length > 0) {
+        if (data.success && isWorkflowResult(data)) {
           setLatestResult(data);
           saveBatchToHistory(data);
-          setActiveTab("images");
+          selectTab("images");
         }
       }
     } catch (e) {
@@ -172,24 +216,41 @@ export default function Dashboard() {
     } finally {
       setLoadingBatch(false);
     }
-  };
+  }, [saveBatchToHistory, selectTab]);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("adobe_stock_history");
-      if (stored) {
-        const parsed: SavedBatch[] = JSON.parse(stored);
-        setSavedBatches(parsed);
-        if (parsed.length > 0) {
-          setLatestResult(parsed[0].data);
+    let cancelled = false;
+    const hydrate = async () => {
+      await Promise.resolve();
+      try {
+        const requestedTab = new URLSearchParams(window.location.search).get("tab");
+        if (requestedTab === "overview" || requestedTab === "images" || requestedTab === "setup") {
+          setActiveTab(requestedTab);
         }
+        const stored = localStorage.getItem("adobe_stock_history");
+        const parsed: unknown = stored ? JSON.parse(stored) : [];
+        if (!cancelled && Array.isArray(parsed)) {
+          const valid = parsed.filter((entry): entry is SavedBatch =>
+            isRecord(entry) &&
+            typeof entry.id === "string" &&
+            typeof entry.dateStr === "string" &&
+            typeof entry.theme === "string" &&
+            typeof entry.imageCount === "number" &&
+            isWorkflowResult(entry.data),
+          );
+          setSavedBatches(valid);
+          if (valid.length > 0) setLatestResult(valid[0].data);
+        }
+      } catch (error) {
+        console.warn("Could not parse history:", error);
       }
-    } catch (e) {
-      console.warn("Could not parse history:", e);
-    }
-    fetchCredits();
-    fetchLatestBatch();
-  }, []);
+      if (!cancelled) {
+        await Promise.all([fetchCredits(), fetchLatestBatch()]);
+      }
+    };
+    void hydrate();
+    return () => { cancelled = true; };
+  }, [fetchCredits, fetchLatestBatch]);
 
   // กดเริ่มกระบวนการทันทีด้วยระบบ Progressive Generation (ป้องกัน 504 Timeout เด็ดขาด และเห็นผลสดทันที)
   const triggerManualRun = async () => {
@@ -224,7 +285,7 @@ export default function Dashboard() {
 
       // นำ 20 การ์ดขึ้นจอทันที ผู้ใช้จะเห็น Title, Keywords และคิวสร้างภาพทันที!
       setLatestResult(initialBatch);
-      setActiveTab("images");
+      selectTab("images");
 
       // 2. สร้างภาพทั้ง 20 ภาพแบบต่อเนื่องในพื้นหลัง (สร้างทีละ 3 ภาพพร้อมกัน)
       let completedCount = 0;
@@ -293,8 +354,8 @@ export default function Dashboard() {
             error: emailData.error,
           };
         }
-      } catch (e: any) {
-        console.warn("Could not dispatch email:", e);
+      } catch (error: unknown) {
+        console.warn("Could not dispatch email:", error);
       }
 
       setLatestResult({ ...finalResult });
@@ -308,24 +369,31 @@ export default function Dashboard() {
         });
       } catch {}
 
-      fetchCredits();
-    } catch (err: any) {
-      console.error("Run error:", err);
-      alert("เกิดข้อผิดพลาดในการสร้างภาพ: " + (err.message || String(err)));
+      void fetchCredits();
+    } catch (error: unknown) {
+      console.error("Run error:", error);
+      alert("เกิดข้อผิดพลาดในการสร้างภาพ: " + getErrorMessage(error, "Unknown error"));
     } finally {
       setIsRunning(false);
       setRunProgress("");
     }
   };
 
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
+  const copyToClipboard = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      window.setTimeout(() => setCopiedKey(null), 2000);
+    } catch (error: unknown) {
+      showNotice(getErrorMessage(error, "เบราว์เซอร์ไม่อนุญาตให้คัดลอกข้อความ"), "error");
+    }
   };
 
   const downloadMetadataCsv = () => {
-    if (!latestResult || !latestResult.images || latestResult.images.length === 0) return;
+    if (!latestResult || !latestResult.images || latestResult.images.length === 0) {
+      showNotice("ยังไม่มีข้อมูลภาพสำหรับดาวน์โหลด CSV", "error");
+      return;
+    }
     const csvContent = generateMetadataCsv(latestResult.images);
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -337,13 +405,40 @@ export default function Dashboard() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    showNotice("เริ่มดาวน์โหลดไฟล์ CSV แล้ว", "success");
   };
 
   const [isZipping, setIsZipping] = useState(false);
   const [zipProgress, setZipProgress] = useState<string>("");
 
+  const deleteDownloadedBatch = async (batch: WorkflowResult) => {
+    const confirmed = window.confirm(
+      "ดาวน์โหลด ZIP เริ่มต้นแล้ว\n\nต้องการลบชุดภาพนี้ออกจากระบบและประวัติในเบราว์เซอร์หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้",
+    );
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch("/api/latest-batch", { method: "DELETE" });
+      if (!response.ok) throw new Error("Server rejected batch deletion");
+
+      const remaining = savedBatches.filter((saved) => saved.id !== batch.timestamp);
+      localStorage.setItem("adobe_stock_history", JSON.stringify(remaining));
+      setSavedBatches(remaining);
+      setLatestResult(remaining[0]?.data ?? null);
+      if (remaining.length === 0) selectTab("overview");
+      alert("✅ ลบชุดภาพที่ดาวน์โหลดแล้วออกจากระบบเรียบร้อย");
+    } catch (error: unknown) {
+      console.error("Batch deletion failed:", error);
+      alert("❌ ลบชุดภาพไม่สำเร็จ ระบบยังเก็บข้อมูลชุดนี้ไว้");
+    }
+  };
+
   const downloadAllImagesZip = async () => {
-    if (!latestResult || !latestResult.images || latestResult.images.length === 0) return;
+    if (!latestResult || !latestResult.images || latestResult.images.length === 0) {
+      showNotice("ยังไม่มีภาพสำหรับสร้างไฟล์ ZIP", "error");
+      return;
+    }
+    const batch = latestResult;
     setIsZipping(true);
     setZipProgress("กำลังเริ่มเตรียมแพ็กเกจ ZIP...");
     try {
@@ -351,20 +446,23 @@ export default function Dashboard() {
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
       // 1. แนบไฟล์ CSV เข้าไปใน ZIP เพื่อความสะดวกในการใช้งานทันที
-      const csvContent = generateMetadataCsv(latestResult.images);
+      const csvContent = generateMetadataCsv(batch.images);
       zip.file(`adobe_stock_metadata_${dateStr}.csv`, csvContent);
 
       // 2. ดึงภาพทั้ง 20 ภาพ
       let count = 0;
-      for (const img of latestResult.images) {
+      let addedImageCount = 0;
+      const expectedImageCount = batch.images.filter((image) => Boolean(image.imageUrl)).length;
+      for (const img of batch.images) {
         if (img.imageUrl) {
           count++;
-          setZipProgress(`กำลังโหลดภาพที่ ${count}/${latestResult.images.length}...`);
+          setZipProgress(`กำลังโหลดภาพที่ ${count}/${batch.images.length}...`);
           try {
             const filename = img.filename || `stock_image_${img.id}.png`;
             if (img.imageUrl.startsWith("data:")) {
               const base64Data = img.imageUrl.split(",")[1];
               zip.file(filename, base64Data, { base64: true });
+              addedImageCount++;
             } else {
               let blob: Blob | null = null;
               try {
@@ -385,6 +483,7 @@ export default function Dashboard() {
 
               if (blob) {
                 zip.file(filename, blob);
+                addedImageCount++;
               }
             }
           } catch (fetchErr) {
@@ -393,20 +492,30 @@ export default function Dashboard() {
         }
       }
 
+      if (addedImageCount === 0) {
+        throw new Error("ไม่มีภาพที่ดาวน์โหลดได้ในชุดนี้");
+      }
+
       setZipProgress("กำลังสร้างและบีบอัดไฟล์ ZIP ทั้งหมด...");
       const content = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(content);
       const link = document.createElement("a");
       link.href = url;
-      const modeSlug = latestResult.generationMode || "stock";
+      const modeSlug = batch.generationMode || "stock";
       link.download = `adobe_stock_batch_${modeSlug}_${dateStr}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    } catch (err: any) {
-      console.error("ZIP creation error:", err);
-      alert("ไม่สามารถสร้างไฟล์ ZIP ได้: " + (err.message || String(err)));
+
+      if (addedImageCount === expectedImageCount) {
+        await deleteDownloadedBatch(batch);
+      } else {
+        alert(`⚠️ ZIP มีภาพ ${addedImageCount}/${expectedImageCount} ภาพ ระบบจึงยังไม่ลบชุดภาพนี้`);
+      }
+    } catch (error: unknown) {
+      console.error("ZIP creation error:", error);
+      alert("ไม่สามารถสร้างไฟล์ ZIP ได้: " + getErrorMessage(error, "Unknown error"));
     } finally {
       setIsZipping(false);
       setZipProgress("");
@@ -414,7 +523,10 @@ export default function Dashboard() {
   };
 
   const downloadSingleImage = async (img: StockImageItem) => {
-    if (!img.imageUrl) return;
+    if (!img.imageUrl) {
+      showNotice("ภาพนี้ยังสร้างไม่เสร็จ จึงยังดาวน์โหลดไม่ได้", "error");
+      return;
+    }
     try {
       const filename = img.filename || `stock_image_${img.id}.png`;
       if (img.imageUrl.startsWith("data:")) {
@@ -424,6 +536,7 @@ export default function Dashboard() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        showNotice(`เริ่มดาวน์โหลด ${filename} แล้ว`, "success");
         return;
       }
 
@@ -447,11 +560,18 @@ export default function Dashboard() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        showNotice(`เริ่มดาวน์โหลด ${filename} แล้ว`, "success");
       } else {
-        window.open(img.imageUrl, "_blank");
+        const remoteUrl = new URL(img.imageUrl);
+        if (remoteUrl.protocol === "https:") {
+          window.open(remoteUrl.toString(), "_blank", "noopener,noreferrer");
+          showNotice("เปิดภาพต้นฉบับในแท็บใหม่แล้ว", "info");
+        } else {
+          throw new Error("URL ของภาพไม่ปลอดภัยหรือไม่รองรับ");
+        }
       }
-    } catch (e) {
-      window.open(img.imageUrl, "_blank");
+    } catch (error: unknown) {
+      showNotice(getErrorMessage(error, "ดาวน์โหลดภาพไม่สำเร็จ"), "error");
     }
   };
 
@@ -484,7 +604,8 @@ export default function Dashboard() {
                 {credits ? `$${credits.remainingCredits.toFixed(4)}` : "Loading..."}
               </span>
               <button
-                onClick={fetchCredits}
+                type="button"
+                onClick={() => void fetchCredits(true)}
                 disabled={loadingCredits}
                 title="Refresh Credit"
                 className="hover:text-white text-slate-400 p-0.5 rounded hover:bg-slate-700 transition"
@@ -496,7 +617,12 @@ export default function Dashboard() {
             {/* Generation Mode Selector */}
             <select
               value={selectedMode}
-              onChange={(e) => setSelectedMode(e.target.value as any)}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (value === "auto" || value === "transparent_png" || value === "regular_scene") {
+                  setSelectedMode(value);
+                }
+              }}
               className="bg-slate-800/90 border border-slate-700/80 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500 font-medium"
               title="เลือกโหมดการสร้างภาพ (สลับวันต่อวันอัตโนมัติ หรือบังคับโหมดใดโหมดหนึ่ง)"
             >
@@ -509,6 +635,7 @@ export default function Dashboard() {
 
             {/* Run Button */}
             <button
+              type="button"
               onClick={triggerManualRun}
               disabled={isRunning}
               className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-md shadow-indigo-600/20 active:scale-95 cursor-pointer"
@@ -528,6 +655,7 @@ export default function Dashboard() {
 
             {/* Logout Button */}
             <button
+              type="button"
               onClick={handleLogout}
               title="ออกจากระบบ"
               className="p-2 rounded-xl bg-slate-800/80 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-slate-700/60 transition"
@@ -540,6 +668,21 @@ export default function Dashboard() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+        {notice && (
+          <div
+            role={notice.tone === "error" ? "alert" : "status"}
+            aria-live="polite"
+            className={`fixed right-4 top-20 z-[60] max-w-sm rounded-xl border px-4 py-3 text-sm font-medium shadow-2xl ${
+              notice.tone === "success"
+                ? "border-emerald-700 bg-emerald-950 text-emerald-200"
+                : notice.tone === "error"
+                  ? "border-rose-700 bg-rose-950 text-rose-200"
+                  : "border-sky-700 bg-sky-950 text-sky-200"
+            }`}
+          >
+            {notice.message}
+          </div>
+        )}
         {/* Live Generation Progress Banner */}
         {isRunning && runProgress && (
           <div className="bg-sky-950/80 border-2 border-sky-400 rounded-2xl p-5 mb-4 shadow-xl shadow-sky-500/10 flex items-center justify-between gap-4 animate-in fade-in">
@@ -584,61 +727,15 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Hero Download Banner: เด่นชัด 100% เห็นทันทีที่เปิดหน้าเว็บ */}
-        {latestResult && latestResult.images && latestResult.images.length > 0 && (
-          <div className="bg-gradient-to-r from-blue-950/90 via-indigo-950/90 to-slate-900 border-2 border-sky-500/80 rounded-2xl p-5 mb-6 shadow-2xl shadow-sky-500/15 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in duration-300">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 border border-sky-400/30 shadow-inner">
-                <FolderArchive className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="font-bold text-base text-white">
-                    🎉 ภาพชุดล่าสุดพร้อมดาวน์โหลดแล้ว ({latestResult.images.length} ภาพ)
-                  </h2>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 font-bold">
-                    {latestResult.generationMode === "transparent_png" ? "🔲 PNG โปร่งใส (Alpha Cutout)" : "🏞️ ฉากทั่วไป (Copy Space)"}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-300 mt-1">
-                  ไฟล์ภาพทั้งหมดพร้อมชื่อไฟล์เฉพาะตัวและไฟล์ CSV จัดเตรียมเรียบร้อยแล้ว กดปุ่มสีฟ้านี้เพื่อดาวน์โหลดทันที
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
-              <button
-                onClick={downloadAllImagesZip}
-                disabled={isZipping}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm px-6 py-3 rounded-xl transition shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 flex-1 md:flex-initial cursor-pointer"
-              >
-                {isZipping ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{zipProgress || "กำลังบีบอัด ZIP..."}</span>
-                  </>
-                ) : (
-                  <>
-                    <ArrowDownToLine className="w-4 h-4" />
-                    <span>ดาวน์โหลดทั้ง 20 ภาพ (ZIP + CSV)</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={downloadMetadataCsv}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-4 py-3 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                <span>CSV</span>
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Navigation Tabs & History Selector */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 gap-3 pb-1">
-          <div className="flex items-center space-x-4 overflow-x-auto">
+          <div className="flex items-center space-x-4 overflow-x-auto" role="tablist" aria-label="ส่วนต่าง ๆ ของแดชบอร์ด">
             <button
-              onClick={() => setActiveTab("overview")}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "overview"}
+              aria-controls="tab-panel-overview"
+              onClick={() => selectTab("overview")}
               className={`pb-3 text-sm font-medium transition relative whitespace-nowrap ${
                 activeTab === "overview"
                   ? "text-sky-400 border-b-2 border-sky-400 font-bold"
@@ -648,7 +745,11 @@ export default function Dashboard() {
               📊 สถานะระบบ &amp; เวลาทำงาน
             </button>
             <button
-              onClick={() => setActiveTab("images")}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "images"}
+              aria-controls="tab-panel-images"
+              onClick={() => selectTab("images")}
               className={`pb-3 text-sm font-medium transition relative whitespace-nowrap ${
                 activeTab === "images"
                   ? "text-sky-400 border-b-2 border-sky-400 font-bold"
@@ -658,7 +759,11 @@ export default function Dashboard() {
               🖼️ ภาพสต็อกที่สร้างเสร็จแล้ว ({latestResult ? latestResult.images.length : 0} ภาพ)
             </button>
             <button
-              onClick={() => setActiveTab("setup")}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "setup"}
+              aria-controls="tab-panel-setup"
+              onClick={() => selectTab("setup")}
               className={`pb-3 text-sm font-medium transition relative whitespace-nowrap ${
                 activeTab === "setup"
                   ? "text-sky-400 border-b-2 border-sky-400 font-bold"
@@ -679,7 +784,7 @@ export default function Dashboard() {
                   const found = savedBatches.find((b) => b.id === e.target.value);
                   if (found) {
                     setLatestResult(found.data);
-                    setActiveTab("images");
+                    selectTab("images");
                   }
                 }}
                 className="bg-slate-900 border border-slate-700/80 text-xs text-sky-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-sky-500 font-medium max-w-[280px] truncate cursor-pointer"
@@ -697,7 +802,7 @@ export default function Dashboard() {
 
         {/* Tab 1: Overview */}
         {activeTab === "overview" && (
-          <div className="space-y-6">
+          <div id="tab-panel-overview" role="tabpanel" className="space-y-6">
             {/* Quick Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -738,7 +843,7 @@ export default function Dashboard() {
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-slate-400">Today's Mode</span>
+                  <span className="text-xs font-medium text-slate-400">Today&apos;s Mode</span>
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
@@ -795,6 +900,7 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={triggerManualRun}
                   disabled={isRunning}
                   className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-lg shadow-indigo-600/30 cursor-pointer"
@@ -809,7 +915,7 @@ export default function Dashboard() {
 
         {/* Tab 2: Generated Images & Metadata */}
         {activeTab === "images" && (
-          <div className="space-y-6">
+          <div id="tab-panel-images" role="tabpanel" className="space-y-6">
             {loadingBatch && !latestResult ? (
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center space-y-4">
                 <Loader2 className="w-10 h-10 text-sky-400 animate-spin mx-auto" />
@@ -824,6 +930,7 @@ export default function Dashboard() {
                   กดปุ่มด้านล่างเพื่อเริ่มสร้างชุดภาพสต็อกประจำวันทันที หรือรอระบบอัตโนมัติทำงานเวลา 18:00 น.
                 </p>
                 <button
+                  type="button"
                   onClick={triggerManualRun}
                   disabled={isRunning}
                   className="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition cursor-pointer"
@@ -861,6 +968,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       <button
+                        type="button"
                         onClick={downloadAllImagesZip}
                         disabled={isZipping}
                         className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-md shadow-indigo-950/40 disabled:opacity-50"
@@ -878,6 +986,7 @@ export default function Dashboard() {
                         )}
                       </button>
                       <button
+                        type="button"
                         onClick={downloadMetadataCsv}
                         className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-md shadow-emerald-950/40"
                       >
@@ -903,6 +1012,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={handleTestEmail}
                       disabled={testingEmail}
                       className="shrink-0 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2"
@@ -978,9 +1088,12 @@ export default function Dashboard() {
                         <div className="lg:col-span-4 flex flex-col justify-center space-y-3">
                           {img.imageUrl ? (
                             <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-inner group relative">
-                              <img
+                              <NextImage
                                 src={img.imageUrl}
                                 alt={img.seoTitle}
+                                width={640}
+                                height={480}
+                                unoptimized
                                 className="w-full h-auto object-cover max-h-64"
                               />
                             </div>
@@ -992,6 +1105,7 @@ export default function Dashboard() {
 
                           {img.imageUrl && (
                             <button
+                              type="button"
                               onClick={() => downloadSingleImage(img)}
                               className="w-full bg-slate-800/90 hover:bg-slate-700 text-sky-300 hover:text-white text-xs font-semibold py-2 px-3 rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition shadow-sm"
                             >
@@ -1010,7 +1124,8 @@ export default function Dashboard() {
                                 📁 Unique Filename (ชื่อไฟล์รูปภาพ)
                               </span>
                               <button
-                                onClick={() => copyToClipboard(img.filename || `stock_${img.id}.png`, `filename-${img.id}`)}
+                                type="button"
+                                onClick={() => void copyToClipboard(img.filename || `stock_${img.id}.png`, `filename-${img.id}`)}
                                 className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
                               >
                                 {copiedKey === `filename-${img.id}` ? (
@@ -1038,7 +1153,8 @@ export default function Dashboard() {
                                 Adobe Stock SEO Title
                               </span>
                               <button
-                                onClick={() => copyToClipboard(img.seoTitle, `title-${img.id}`)}
+                                type="button"
+                                onClick={() => void copyToClipboard(img.seoTitle, `title-${img.id}`)}
                                 className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
                               >
                                 {copiedKey === `title-${img.id}` ? (
@@ -1066,7 +1182,8 @@ export default function Dashboard() {
                                 Generation Prompt
                               </span>
                               <button
-                                onClick={() => copyToClipboard(img.prompt, `prompt-${img.id}`)}
+                                type="button"
+                                onClick={() => void copyToClipboard(img.prompt, `prompt-${img.id}`)}
                                 className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
                               >
                                 {copiedKey === `prompt-${img.id}` ? (
@@ -1094,7 +1211,8 @@ export default function Dashboard() {
                                 Adobe Stock Optimized Keywords ({img.keywords.length} tags &bull; Top 10 Prioritized)
                               </span>
                               <button
-                                onClick={() => copyToClipboard(img.keywords.join(", "), `kw-${img.id}`)}
+                                type="button"
+                                onClick={() => void copyToClipboard(img.keywords.join(", "), `kw-${img.id}`)}
                                 className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-medium"
                               >
                                 {copiedKey === `kw-${img.id}` ? (
@@ -1126,7 +1244,7 @@ export default function Dashboard() {
 
         {/* Tab 3: Setup & Environment Variables */}
         {activeTab === "setup" && (
-          <div className="space-y-6">
+          <div id="tab-panel-setup" role="tabpanel" className="space-y-6">
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
               <h2 className="text-base font-bold text-white mb-4">Vercel &amp; Environment Variables Configuration</h2>
               <p className="text-xs text-slate-400 mb-6">
@@ -1204,6 +1322,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={handleTestEmail}
                     disabled={testingEmail}
                     className="bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-md shadow-sky-600/20 shrink-0"

@@ -27,6 +27,7 @@ export async function getOpenRouterCredits(apiKey?: string): Promise<OpenRouterC
         "Content-Type": "application/json",
       },
       next: { revalidate: 0 },
+      signal: AbortSignal.timeout(8_000),
     });
 
     if (creditsRes.ok) {
@@ -50,6 +51,7 @@ export async function getOpenRouterCredits(apiKey?: string): Promise<OpenRouterC
         "Content-Type": "application/json",
       },
       next: { revalidate: 0 },
+      signal: AbortSignal.timeout(8_000),
     });
 
     if (keyRes.ok) {
@@ -149,8 +151,8 @@ export async function callOpenRouterJSON<T>(
   }
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenRouter API failed (${response.status}): ${errorText}`);
+    console.error(`OpenRouter API failed with status ${response.status}`);
+    throw new Error("OpenRouter request failed");
   }
 
   const result = await response.json();

@@ -4,7 +4,11 @@ import { generateAllStockImages } from "./image-generator";
 import { sendDailyStockEmail, sendCreditDepletedEmergencyAlert } from "./smtp2go";
 import { WorkflowResult } from "./types";
 
-export async function executeDailyStockWorkflow(
+declare global {
+  var __dailyStockWorkflowRunning: boolean | undefined;
+}
+
+async function runDailyStockWorkflow(
   forcedMode?: "transparent_png" | "regular_scene"
 ): Promise<WorkflowResult> {
   const startTime = Date.now();
@@ -13,6 +17,16 @@ export async function executeDailyStockWorkflow(
   // 1. ดึงเครดิต OpenRouter
   const initialCredits = await getOpenRouterCredits();
   console.log(`Initial OpenRouter Credits: $${initialCredits.remainingCredits.toFixed(4)}`);
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new Error("OPENROUTER_API_KEY is not configured");
+  }
+  if (initialCredits.label === "Connection Error" || initialCredits.label === "Unable to retrieve credits") {
+    throw new Error("Unable to verify OpenRouter credit balance");
+  }
+  if (initialCredits.remainingCredits <= 0.01) {
+    await sendCreditDepletedEmergencyAlert({ credits: initialCredits });
+    throw new Error("OpenRouter credit balance is too low");
+  }
 
   // 2. ทำการวิจัยตลาดและสร้าง 20 Prompts ตามโหมดของวัน (สลับวันเว้นวันแบบ 100% Homogeneous)
   console.log(`Conducting market research (mode: ${forcedMode || "auto-scheduled"})...`);
@@ -66,4 +80,18 @@ export async function executeDailyStockWorkflow(
   await saveLatestBatch(workflowResult);
 
   return workflowResult;
+}
+
+export async function executeDailyStockWorkflow(
+  forcedMode?: "transparent_png" | "regular_scene",
+): Promise<WorkflowResult> {
+  if (globalThis.__dailyStockWorkflowRunning) {
+    throw new Error("A stock generation workflow is already running");
+  }
+  globalThis.__dailyStockWorkflowRunning = true;
+  try {
+    return await runDailyStockWorkflow(forcedMode);
+  } finally {
+    globalThis.__dailyStockWorkflowRunning = false;
+  }
 }
