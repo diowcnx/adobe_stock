@@ -70,8 +70,8 @@ export async function generateSingleImage(
       );
 
       const userContent = isTransparent
-        ? `Create an isolated commercial stock cutout asset on a 100% transparent background (PNG alpha channel). Sharp clean cutout silhouette, no background color, no background gradients, no drop shadows on the background, studio product lighting, 8k resolution. Prompt: ${item.prompt}`
-        : `Create a commercially viable, highly detailed, photorealistic stock photograph for Adobe Stock. High resolution, professional commercial lighting, authentic composition with clean copy space for editorial text. No logos, no brand trademarks, no watermarks, no distorted faces or extra hands. Prompt: ${item.prompt}`;
+        ? `Create a premium isolated commercial stock cutout element on a 100% transparent background (PNG alpha channel). Razor-sharp cutout edges, zero fringe or halo, studio key lighting with soft rim accent, authentic tactile physical materials, no background colors or baked cast shadows. Isolated asset: ${item.prompt}`
+        : `Create an elite, high-converting commercial stock photograph for Adobe Stock. Authentic materiality, tactile textures, natural directional lighting (Leica/Hasselblad aesthetic, subtle depth of field), strictly leaving 50-60% clean uncluttered negative copy space for designer typography. No plastic AI glossiness, no human faces or distorted portraits, no brand logos or text. Commercial art directed scene: ${item.prompt}`;
 
       const payload: Record<string, any> = {
         model,

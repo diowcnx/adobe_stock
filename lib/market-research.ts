@@ -32,22 +32,27 @@ export function getDailyScheduledMode(date: Date = new Date()): "transparent_png
 }
 
 const SYSTEM_PROMPT_REGULAR = `
-You are the elite Adobe Stock commercial photography strategist specializing in high-volume, top-earning contributor portfolios.
+You are the elite Adobe Stock commercial photography strategist and art director.
+You specialize in high-converting commercial stock photography that sells continuously to creative agencies, art directors, and brand publishers.
 
-TODAY'S STRICT MANDATE: 100% REGULAR COMMERCIAL SCENES WITH FULL BACKGROUND & MANDATORY COPY SPACE.
+TODAY'S STRICT MANDATE: 100% REGULAR COMMERCIAL SCENES WITH FULL BACKGROUND & MANDATORY 50-60% NEGATIVE COPY SPACE.
 DO NOT GENERATE ISOLATED CUTOUTS TODAY.
-EVERY SINGLE IMAGE IN THIS BATCH MUST FEATURE AMPLE CLEAN NEGATIVE COPY SPACE (40-60%) FOR EDITORIAL & ADVERTISING DESIGNERS.
 
-PROVEN PORTFOLIO RULES:
-1. STRICTLY NO HUMAN PORTRAITS / NO FACES.
-2. 5 PROVEN CATEGORIES:
-   - Category A: Cloud Computing, AI, Cybersecurity & Data Infrastructure (server rooms, fiber optics, tech corridors).
-   - Category B: Modern Interior Architecture & Blank Frame Mockups (living rooms, home office desks).
-   - Category C: Conceptual Metaphors & Business Symbolism (hands holding tokens, coins, balance scale).
-   - Category D: Culinary Spices & Food Flat Lays (overhead table with copy space).
-   - Category E: Seasonal & Nature Banners (autumn marble banner, telecom towers).
-3. KEYWORDS: Single words (individual concepts per Adobe Stock standards), 25-35 keywords, Top 10 prioritized.
-4. MODEL SELECTION: 'recraft/recraft-v4.1-flash' for interiors, mockups, flat lays; 'google/gemini-2.5-flash-image' for glowing server rooms.
+THE CORE CONVERSION SECRET: DESIGNER ERGONOMICS & HIGH-VALUE MICRO-NICHES
+Generic stock (like basic server rooms or plain frames) has millions of competitors and does NOT convert.
+Buyers choose new images ONLY when they solve real designer problems:
+1. DESIGNER ERGONOMICS: Every composition MUST leave 50-60% clean, uncluttered, beautifully textured negative copy space (smooth limewash wall, neutral travertine surface, dark moody slate, soft morning window light) positioned on the left, right, or top third for headlines and typography.
+2. HIGH-VALUE INDUSTRY MICRO-NICHES:
+   - Category 1 (Deep Tech & Hardware): Liquid Immersion Cooling Datacenter Racks, Quantum Optical Interconnect / Photonic Processing, High-Bandwidth AI Hardware Nodes, Sleek 6G Phased Array Antennas.
+   - Category 2 (High-End Architectural Mockups): Japandi & Wabi-Sabi Aesthetics, Limewash Plaster Walls, Raw Travertine Stone Blocks, Soft Dappled Branch Sunlight Shadows, Minimalist Blank Art & Poster Mockups (A-Series / 4:5 ratios).
+   - Category 3 (Tactile Physical Metaphors): Precision-crafted solid oak blocks, brushed brass balance scales, unglazed ceramic & terracotta tokens, minimalist stone staircases representing corporate growth.
+   - Category 4 (Modern Wellness & Functional Botanicals): Ceremonial Uji Matcha powder with bamboo chasen whisk on slate, adaptogenic Lion's Mane and Reishi medicinal mushrooms, raw Ashwagandha roots on dark stone.
+   - Category 5 (Biophilic Ecology & Seasonal Banners): Scandinavian organic textures, Nordic autumn foliage on raw travertine marble, dewdrops on lotus leaves, carbon-negative timber architecture with vertical gardens.
+3. AUTHENTIC MATERIALITY & LIGHTING:
+   - Hasselblad H6D-100c medium format crispness, Leica natural depth of field.
+   - Natural directional window light, tactile matte finishes, genuine organic textures.
+   - Strictly NO plastic hyper-glossy AI look, NO human faces, NO distorted text or logos.
+4. KEYWORDS: Single words (individual concepts per Adobe Stock standards), 25-35 keywords, Top 10 prioritized with specific micro-niche terms.
 
 OUTPUT FORMAT: Strict JSON matching the requested schema.
 `;
@@ -56,22 +61,22 @@ const SYSTEM_PROMPT_TRANSPARENT = `
 You are the elite Adobe Stock commercial strategist specializing in high-volume, top-earning TRANSPARENT BACKGROUND PNG CUTOUT ASSETS.
 
 TODAY'S STRICT MANDATE: 100% ISOLATED OBJECTS / CUTOUT ASSETS ON PURE TRANSPARENT BACKGROUND (ALPHA PNG).
-DO NOT GENERATE ANY FULL BACKGROUND SCENES, INTERIOR ROOMS, WALLS, OR BACKGROUND TEXTURES TODAY.
-EVERY SINGLE IMAGE IN THIS BATCH MUST BE A PURE ISOLATED GRAPHIC/PHOTO ELEMENT FOR DESIGNERS TO DOWNLOAD AS A TRANSPARENT PNG FOR COMPOSITING.
+DO NOT GENERATE FULL BACKGROUND SCENES, INTERIOR ROOMS, WALLS, OR BACKGROUND TEXTURES TODAY.
 
-PROVEN TOP-SELLING ISOLATED CATEGORIES FOR THIS ACCOUNT:
-1. Category A: Isolated High-Tech & Telecom Cutouts (5G cell antenna tower, server rack unit, network router, fiber optic bundle, holographic cyber shield icon, 3D cloud computing icon).
-2. Category B: Isolated Modern Furniture, Frames & Decor (floating blank modern wooden picture frame mockup, designer armchair, ceramic vase with pampas, modern desk lamp).
-3. Category C: Isolated Business 3D Metaphors (stack of gold coins with small graduation cap, wooden emoji tokens with happy/sad faces, brass balance scale, single glowing yellow light bulb, green sprout in dirt clump).
-4. Category D: Isolated Culinary Spices & Food Assets (whole star anise cluster, cinnamon sticks tied with twine, golden turmeric root & powder, fresh rosemary sprig, roasted coffee beans cluster).
-5. Category E: Isolated Seasonal & Nature Assets (golden autumn maple leaf, festive Halloween pumpkin, spring cherry blossom branch, pure crystal water droplet cluster).
-
-PROMPT & COMPOSITION RULES FOR TRANSPARENT PNG:
-- Every prompt MUST start with: "Isolated commercial cutout asset on a 100% transparent background (PNG alpha channel), sharp clean edges, studio product lighting, 8k resolution..."
-- SEO Title MUST end with "Isolated on Transparent Background Cutout PNG".
-- Aspect Ratio: use 1:1 or 3:4 for isolated assets.
-- Keywords MUST include: "isolated", "transparent", "cutout", "png", "clipart", "element", "alpha", "object" alongside specific descriptive single words. Top 10 prioritized. 25-35 keywords per item.
-- Model Selection: 'recraft/recraft-v4.1-flash' for clean isolated graphic/product cutouts, or 'google/gemini-2.5-flash-image' for glowing tech icons.
+THE PNG CONVERSION SECRET: RAZOR-SHARP ALPHA ISOLATION FOR DESIGNERS
+Art directors and web developers buy PNG cutouts for immediate drag-and-drop into posters, web hero headers, and UI mockups.
+1. ZERO FRINGE / CLEAN EDGES: Flawless edge separation, crisp silhouette, zero dark outlines, zero baked shadows on the alpha channel.
+2. 5 PROVEN HIGH-VALUE CUTOUT MICRO-NICHES:
+   - Category 1 (Isolated High-Tech & Telecom): 6G phased array antenna mast, enterprise liquid cooling blade module, glowing 3D quantum holographic node, cybersecurity biometric shield.
+   - Category 2 (Isolated Modern Decor & Mockups): Floating minimalist light oak frame mockup, modern boucle curved armchair, sculptural fluted ceramic vase, matte aluminum laptop mockup with blank black screen.
+   - Category 3 (Isolated Tactile Metaphors): Stack of brushed gold bullion with minimalist graduation cap, polished wooden emoji pebbles (happy/sad), precision-milled brass balance scale, glowing filament innovation bulb.
+   - Category 4 (Isolated Premium Botanicals & Food): Whole star anise cluster, cinnamon sticks tied with raw jute twine, raw turmeric root, dried lion's mane adaptogenic mushroom, whole roasted espresso coffee beans.
+   - Category 5 (Isolated Seasonal & Nature Elements): Single golden sugar maple leaf with crystal dewdrop, heirloom white pumpkin, cherry blossom twig with buds, pure crystal water droplet cluster.
+3. PROMPT DIRECTIVE:
+   - Every prompt MUST start with: "Isolated commercial cutout asset on a 100% transparent background (PNG alpha channel)..."
+   - SEO Title MUST end with "Isolated on Transparent Background Cutout PNG".
+   - Aspect Ratio: use 1:1 or 4:5 for isolated assets.
+   - Keywords MUST include: "isolated", "transparent", "cutout", "png", "clipart", "element", "alpha" alongside specific micro-niche single words. Top 10 prioritized.
 
 OUTPUT FORMAT: Strict JSON matching the requested schema.
 `;
@@ -99,22 +104,22 @@ export async function conductMarketResearchAndGeneratePrompts(
 
   const userPrompt = isTransparent
     ? `Current Date: ${currentDate}.
-Target: 100% TRANSPARENT BACKGROUND PNG CUTOUT ASSETS.
+Target: 100% TRANSPARENT BACKGROUND PNG CUTOUT ASSETS (Alpha Channel).
 Generate:
-1. Market trend analysis for isolated commercial PNG assets.
-2. Exactly 5 core concept niches (one per category):
-   - Category 1: Isolated High-Tech & Telecom (antennas, server units, cyber shields)
-   - Category 2: Isolated Modern Furniture & Mockups (picture frame, designer armchair)
-   - Category 3: Isolated Business 3D Metaphors (gold coins, wooden emoji tokens)
-   - Category 4: Isolated Culinary Spices & Food (star anise, cinnamon sticks, turmeric)
-   - Category 5: Isolated Seasonal & Nature (autumn maple leaf, pumpkin, crystal water)
-- Base keywords MUST be single words (15-20 individual words).
+1. Market trend analysis for isolated commercial PNG assets solving real graphic designer compositing needs.
+2. Exactly 5 cutting-edge micro-niche concept focuses (one per category):
+   - Category 1: Isolated High-Tech Hardware & Telecom (e.g. 6G Phased Array Antenna, Liquid Immersion Blade Module, Quantum Holographic Node)
+   - Category 2: Isolated Modern Interior & Mockup Assets (e.g. Floating Japandi Oak Frame Mockup, Boucle Sculptural Armchair, Ribbed Ceramic Vase)
+   - Category 3: Isolated Tactile Business Metaphors (e.g. Brushed Brass Balance Scale, Polished Solid Oak Emoji Pebbles, Brushed Gold Ingot Stack)
+   - Category 4: Isolated Premium Functional Botanicals (e.g. Ceremonial Matcha Bamboo Whisk, Adaptogenic Lion's Mane Mushroom, Raw Turmeric Cluster)
+   - Category 5: Isolated Seasonal & Nature Assets (e.g. Single Golden Sugar Maple Leaf with Dewdrop, Heirloom White Minimalist Pumpkin, Water Droplet Cluster)
+- Base keywords MUST be single words (15-20 individual words) prioritizing specific industry terms over generic words.
 
 Return strict JSON:
 {
   "trend": {
     "theme": "...",
-    "targetMarket": "...",
+    "targetMarket": "Creative Directors, UI/UX Designers & Ad Agencies",
     "commercialReasoning": "...",
     "seasonalRelevance": "...",
     "buyerDemandRating": "Very High"
@@ -123,30 +128,30 @@ Return strict JSON:
     {
       "id": 1,
       "category": "Technology / Telecom",
-      "conceptTitle": "5G Telecom Antenna Tower",
-      "subjectDescription": "modern telecommunication cellular antenna mast tower with high-tech microwave transmitters",
-      "modelSuggestion": "google/gemini-2.5-flash-image",
-      "keywords": ["isolated", "transparent", "cutout", "png", "telecom", "antenna", "5g", "cellular", "tower", "network", "wireless", "mast", "transmitter", "mobile", "broadband", "station", "digital", "equipment", "hardware"]
+      "conceptTitle": "6G Phased Array Cellular Antenna Mast",
+      "subjectDescription": "futuristic 6G telecommunication phased array antenna mast with sleek white aerodynamic geometric housing and brass connectors",
+      "modelSuggestion": "recraft/recraft-v4.1-flash",
+      "keywords": ["isolated", "transparent", "cutout", "png", "telecom", "antenna", "6g", "cellular", "mast", "phased", "array", "wireless", "transmitter", "broadband", "station", "digital", "hardware", "satellite", "network", "radar"]
     }
   ]
 }`
     : `Current Date: ${currentDate}.
-Target: 100% REGULAR COMMERCIAL SCENES WITH FULL BACKGROUND & AMPLE COPY SPACE.
+Target: 100% REGULAR COMMERCIAL SCENES WITH FULL BACKGROUND & MANDATORY 50-60% NEGATIVE COPY SPACE.
 Generate:
-1. Market trend analysis for commercial stock photography.
-2. Exactly 5 core concept niches (one per category):
-   - Category 1: Cloud Computing, AI & Data Infrastructure
-   - Category 2: Modern Interior Architecture & Blank Frame Mockups
-   - Category 3: Conceptual Metaphors & Business Symbolism
-   - Category 4: Culinary Spices & Food Flat Lays
-   - Category 5: Seasonal Banners, Nature & Telecom
-- Base keywords MUST be single words (15-20 individual words).
+1. Market trend analysis for commercial stock photography addressing real advertising and editorial layout demands.
+2. Exactly 5 cutting-edge micro-niche concept focuses (one per category):
+   - Category 1: Next-Gen Infrastructure & Hardware (e.g. Liquid Immersion Cooling Datacenter Racks, Quantum Photonic Processing Interconnect)
+   - Category 2: High-End Architectural Spaces & Mockups (e.g. Japandi Travertine Plinth with Limewash Wall and Dappled Olive Branch Shadows)
+   - Category 3: Tactile Physical Business Metaphors (e.g. Precision Milled Brass Balance Scale on Dark Slate, Hand-Carved Oak Growth Blocks)
+   - Category 4: Modern Wellness & Functional Botanicals (e.g. Ceremonial Grade Uji Matcha Flat Lay with Bamboo Whisk on Dark Textured Slate)
+   - Category 5: Biophilic Ecology & Seasonal Banners (e.g. Nordic Autumn Foliage on Raw Travertine Marble Banner, Dewdrops on Lotus Leaf)
+- Base keywords MUST be single words (15-20 individual words) prioritizing specific industry terms over generic words.
 
 Return strict JSON:
 {
   "trend": {
     "theme": "...",
-    "targetMarket": "...",
+    "targetMarket": "Advertising Agencies, Art Directors & Brand Publishers",
     "commercialReasoning": "...",
     "seasonalRelevance": "...",
     "buyerDemandRating": "Very High"
@@ -155,10 +160,10 @@ Return strict JSON:
     {
       "id": 1,
       "category": "Technology / Infrastructure",
-      "conceptTitle": "Cloud Computing Data Center",
-      "subjectDescription": "futuristic enterprise server room with glowing cyan and blue fiber optic cables and server racks",
+      "conceptTitle": "Liquid Immersion Cooling Datacenter Racks",
+      "subjectDescription": "advanced enterprise server rack submerged in clear dielectric fluid tank with subtle cyan bubbles and fiber optic interconnects, 50% clean dark negative space",
       "modelSuggestion": "google/gemini-2.5-flash-image",
-      "keywords": ["server", "datacenter", "cloud", "computing", "technology", "network", "hardware", "cyber", "internet", "enterprise", "storage", "digital", "telecom", "infrastructure", "fiber", "optics"]
+      "keywords": ["immersion", "cooling", "liquid", "datacenter", "server", "supercomputer", "hardware", "infrastructure", "dielectric", "fiber", "optics", "cloud", "computing", "technology", "enterprise", "sustainable", "efficiency"]
     }
   ]
 }`;
@@ -205,61 +210,61 @@ function expandCategoriesToTwentyItems(
     {
       ratio: "1:1" as const,
       anglePrefix: "Isolated commercial stock cutout asset on a 100% transparent background (PNG alpha channel) of a centered",
-      styleSuffix: "clean crisp alpha cutout edges, centered studio product lighting, zero background shadow, 8k resolution.",
+      styleSuffix: "razor-sharp alpha silhouette edges, zero background shadows or color fringe, 5600K studio strobe lighting, hyper-detailed tactile surface, 8k resolution.",
       titleSuffix: "Isolated on Transparent Background Cutout PNG",
-      extraTags: ["isolated", "transparent", "cutout", "png", "element", "alpha", "clipart", "object", "graphic"],
+      extraTags: ["isolated", "transparent", "cutout", "png", "element", "alpha", "clipart", "object", "graphic", "studio", "clean"],
     },
     {
       ratio: "1:1" as const,
-      anglePrefix: "Isolated commercial 3D stock asset on a 100% transparent background (PNG alpha channel) of an isometric perspective",
-      styleSuffix: "dynamic isometric three-quarter angle, sharp clean silhouette, studio lighting, PNG alpha transparency.",
+      anglePrefix: "Isolated commercial 3D stock asset on a 100% transparent background (PNG alpha channel) of an isometric three-quarter perspective of",
+      styleSuffix: "dynamic isometric angle, clean alpha cutout, subtle ambient rim lighting, premium graphic design element, PNG alpha transparency.",
       titleSuffix: "Isometric 3D Cutout Isolated on Transparent Background PNG",
-      extraTags: ["isometric", "isolated", "transparent", "cutout", "png", "3d", "render", "design", "asset"],
+      extraTags: ["isometric", "isolated", "transparent", "cutout", "png", "3d", "render", "design", "asset", "angle", "perspective"],
     },
     {
       ratio: "4:5" as const,
       anglePrefix: "Isolated commercial stock element on a 100% transparent background (PNG alpha channel) of an elegant vertical upright",
-      styleSuffix: "vertical tall silhouette, razor sharp edges, flawless alpha channel, high resolution studio photograph.",
+      styleSuffix: "vertical tall silhouette, flawless alpha channel edge separation, studio product lighting, ideal for poster and mobile layout drag-and-drop.",
       titleSuffix: "Vertical Commercial Asset Isolated on Transparent Background Cutout PNG",
-      extraTags: ["vertical", "isolated", "transparent", "cutout", "png", "upright", "element", "product", "studio"],
+      extraTags: ["vertical", "isolated", "transparent", "cutout", "png", "upright", "element", "product", "studio", "poster"],
     },
     {
       ratio: "16:9" as const,
-      anglePrefix: "Isolated commercial stock asset on a 100% transparent background (PNG alpha channel) of a wide multi-element composition of",
-      styleSuffix: "horizontal panoramic layout, perfectly cut out on transparent alpha, studio lighting, premium stock element.",
+      anglePrefix: "Isolated commercial stock asset on a 100% transparent background (PNG alpha channel) of a wide multi-element horizontal composition of",
+      styleSuffix: "horizontal panoramic layout, perfectly cut out on transparent alpha, studio lighting, premium stock element collection.",
       titleSuffix: "Banner Asset Isolated on Transparent Background Cutout PNG",
-      extraTags: ["banner", "isolated", "transparent", "cutout", "png", "wide", "composition", "cluster", "collection"],
+      extraTags: ["banner", "isolated", "transparent", "cutout", "png", "wide", "composition", "cluster", "collection", "set"],
     },
   ];
 
   const variationsConfigRegular = [
     {
       ratio: "16:9" as const,
-      anglePrefix: "Wide panoramic commercial stock photograph of",
-      styleSuffix: "wide composition with 50% clean negative copy space on the right for advertising text, professional commercial lighting, 8k resolution, authentic atmosphere, no human faces.",
-      titleSuffix: "with Clean Copy Space for Text",
-      extraTags: ["banner", "panoramic", "copyspace", "background", "advertising", "header", "horizontal", "wide", "commercial"],
+      anglePrefix: "Wide 16:9 panoramic commercial stock photograph of",
+      styleSuffix: "primary subject positioned strictly in the right third of the frame, leaving the entire left 60% as clean, smooth negative copy space for agency advertising headlines, Hasselblad medium format clarity, natural diffused 5600K commercial lighting, authentic tactile textures, no human faces.",
+      titleSuffix: "with 60% Clean Copy Space for Headline",
+      extraTags: ["banner", "panoramic", "copyspace", "advertising", "header", "horizontal", "wide", "commercial", "agency", "layout", "minimalist", "clean"],
     },
     {
       ratio: "3:2" as const,
-      anglePrefix: "High quality commercial stock editorial photograph of",
-      styleSuffix: "balanced composition with ample negative copy space, shallow depth of field, natural soft lighting, editorial grade, no human faces.",
-      titleSuffix: "Stock Photo with Copy Space",
-      extraTags: ["editorial", "copyspace", "photography", "professional", "layout", "publishing", "magazine", "commercial"],
+      anglePrefix: "High-end commercial stock editorial photograph of",
+      styleSuffix: "balanced rule-of-thirds composition with expansive clean copy space, shallow depth of field, Leica 50mm f/1.4 aesthetic, soft neutral window lighting, editorial magazine publishing quality, no human faces.",
+      titleSuffix: "Editorial Stock Photo with Copy Space",
+      extraTags: ["editorial", "copyspace", "photography", "professional", "layout", "publishing", "magazine", "commercial", "authentic", "depth"],
     },
     {
       ratio: "4:5" as const,
-      anglePrefix: "Modern vertical commercial stock photograph of",
-      styleSuffix: "vertical portrait orientation with expansive top clean copy space for mobile banners and typography, commercial studio lighting, no human faces.",
-      titleSuffix: "Vertical Mobile Banner with Copy Space",
-      extraTags: ["vertical", "mobile", "copyspace", "portrait", "social", "banner", "marketing", "content"],
+      anglePrefix: "Modern 4:5 vertical commercial stock photograph of",
+      styleSuffix: "subject anchored in the lower third, providing an expansive, clean, textured background in the upper 55% specifically engineered for mobile advertising typography and logos, crisp commercial lighting, no human faces.",
+      titleSuffix: "Vertical Mobile Banner with Top Copy Space",
+      extraTags: ["vertical", "mobile", "copyspace", "portrait", "social", "banner", "marketing", "content", "typography", "clean"],
     },
     {
       ratio: "1:1" as const,
       anglePrefix: "Minimalist commercial flat lay stock photograph of",
-      styleSuffix: "clean overhead bird's-eye view flat lay with generous negative copy space in center, subtle natural shadows, aesthetic commercial styling, no human faces.",
-      titleSuffix: "Minimalist Overhead Flat Lay with Copy Space",
-      extraTags: ["flatlay", "overhead", "minimalist", "copyspace", "square", "clean", "surface", "table", "aesthetic"],
+      styleSuffix: "clean overhead bird's-eye view flat lay with generous circular negative copy space in the center, soft natural directional window shadows, tactile organic surfaces, sophisticated commercial art direction, no human faces.",
+      titleSuffix: "Minimalist Overhead Flat Lay with Center Copy Space",
+      extraTags: ["flatlay", "overhead", "minimalist", "copyspace", "square", "clean", "surface", "table", "aesthetic", "tactile"],
     },
   ];
 
@@ -552,10 +557,16 @@ function getFallbackMarketData(
       },
     ];
 
+    const cleanSingleWords = (tags: string[]) =>
+      Array.from(new Set(tags.flatMap((t) => t.toLowerCase().replace(/[^a-z0-9\s-]/g, "").split(/\s+/))))
+        .filter((t) => t.length > 2 && !t.includes(" "))
+        .slice(0, 35);
+
     return {
       trend,
       items: rawTransparentItems.map((item) => ({
         ...item,
+        keywords: cleanSingleWords(item.keywords),
         isTransparent: true,
         generationMode: "transparent_png",
         filename: generateUniqueStockFilename(item.seoTitle, item.id, new Date(currentDate), "transparent_png"),
@@ -936,10 +947,16 @@ function getFallbackMarketData(
     }
   ];
 
+  const cleanSingleWords = (tags: string[]) =>
+    Array.from(new Set(tags.flatMap((t) => t.toLowerCase().replace(/[^a-z0-9\s-]/g, "").split(/\s+/))))
+      .filter((t) => t.length > 2 && !t.includes(" "))
+      .slice(0, 35);
+
   return {
     trend,
     items: rawItems.map((item) => ({
       ...item,
+      keywords: cleanSingleWords(item.keywords),
       isTransparent: false,
       generationMode: "regular_scene",
       filename: generateUniqueStockFilename(item.seoTitle, item.id, new Date(currentDate), "regular_scene"),
