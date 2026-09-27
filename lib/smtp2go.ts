@@ -181,6 +181,8 @@ function generateEmailHtml(
     })
     .join("");
 
+  const appUrl = process.env.APP_URL || "https://adobe-stock-lovat.vercel.app";
+
   return `
 <!DOCTYPE html>
 <html>
@@ -191,8 +193,27 @@ function generateEmailHtml(
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #0f172a;">
   <div style="max-width: 680px; margin: 0 auto;">
     
+    <!-- Top Quick Access Bar -->
+    <div style="background-color: #0f172a; border: 1px solid #1e293b; border-radius: 14px; padding: 12px 18px; margin-bottom: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <span style="color: #94a3b8; font-size: 13px; margin-right: 6px;">🔗 เข้าใช้งานระบบ:</span>
+            <a href="${appUrl}" style="color: #38bdf8; font-weight: 700; font-size: 14px; text-decoration: underline;">
+              ${appUrl}
+            </a>
+          </td>
+          <td align="right">
+            <a href="${appUrl}" style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); color: #ffffff; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-block; box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);">
+              เปิดเว็บทันที &rarr;
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+
     <!-- Header Banner -->
-    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #ffffff; padding: 28px 24px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #ffffff; padding: 26px 24px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td>
@@ -276,7 +297,9 @@ function generateEmailPlainText(
   images: StockImageItem[],
   credits: OpenRouterCreditInfo
 ): string {
+  const appUrl = process.env.APP_URL || "https://adobe-stock-lovat.vercel.app";
   let text = `📸 Adobe Stock Daily Dispatch - ${todayStr}\n`;
+  text += `🔗 Web Dashboard: ${appUrl}\n`;
   text += `OpenRouter Remaining Credit: $${credits.remainingCredits.toFixed(4)}\n\n`;
   text += `--- MARKET TREND ---\n`;
   text += `Theme: ${trend.theme}\n`;
