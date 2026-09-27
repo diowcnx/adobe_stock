@@ -21,17 +21,28 @@ import {
   FileSpreadsheet,
   FolderArchive,
   ArrowDownToLine,
-  Loader2
+  Loader2,
+  History
 } from "lucide-react";
 import JSZip from "jszip";
 import { WorkflowResult, OpenRouterCreditInfo, StockImageItem } from "@/lib/types";
 import { generateMetadataCsv } from "@/lib/csv";
+
+interface SavedBatch {
+  id: string;
+  dateStr: string;
+  theme: string;
+  mode: "transparent_png" | "regular_scene";
+  imageCount: number;
+  data: WorkflowResult;
+}
 
 export default function Dashboard() {
   const [credits, setCredits] = useState<OpenRouterCreditInfo | null>(null);
   const [loadingCredits, setLoadingCredits] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [latestResult, setLatestResult] = useState<WorkflowResult | null>(null);
+  const [savedBatches, setSavedBatches] = useState<SavedBatch[]>([]);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "images" | "setup">("overview");
   const [selectedMode, setSelectedMode] = useState<"auto" | "transparent_png" | "regular_scene">("auto");
@@ -92,6 +103,38 @@ export default function Dashboard() {
 
   const [loadingBatch, setLoadingBatch] = useState(false);
 
+  // บันทึกชุดภาพลงใน Local History เพื่อให้เปิดดูย้อนหลังได้ตลอดเวลา
+  const saveBatchToHistory = (batchData: WorkflowResult) => {
+    if (!batchData || !batchData.images || batchData.images.length === 0) return;
+    try {
+      const existing: SavedBatch[] = JSON.parse(localStorage.getItem("adobe_stock_history") || "[]");
+      const dateStr = new Date(batchData.timestamp || Date.now()).toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+      const batchId = batchData.timestamp || String(Date.now());
+      const filtered = existing.filter((b) => b.id !== batchId);
+      const cleanData: WorkflowResult = {
+        ...batchData,
+        images: batchData.images.map(({ imageBase64, ...rest }) => rest),
+      };
+      const newEntry: SavedBatch = {
+        id: batchId,
+        dateStr,
+        theme: batchData.trend?.theme || "Commercial Stock Set",
+        mode: batchData.generationMode || "regular_scene",
+        imageCount: batchData.images.length,
+        data: cleanData,
+      };
+      const updated = [newEntry, ...filtered].slice(0, 20);
+      localStorage.setItem("adobe_stock_history", JSON.stringify(updated));
+      setSavedBatches(updated);
+    } catch (e) {
+      console.warn("Could not save to history:", e);
+    }
+  };
+
   // ดึงชุดภาพล่าสุดอัตโนมัติ (จาก URL Query หรือจาก Cache บนเซิร์ฟเวอร์)
   const fetchLatestBatch = async () => {
     setLoadingBatch(true);
@@ -110,6 +153,7 @@ export default function Dashboard() {
         const data = await res.json();
         if (data.success && data.images && data.images.length > 0) {
           setLatestResult(data);
+          saveBatchToHistory(data);
           setActiveTab("images");
         }
       }
@@ -121,6 +165,18 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem("adobe_stock_history");
+      if (stored) {
+        const parsed: SavedBatch[] = JSON.parse(stored);
+        setSavedBatches(parsed);
+        if (parsed.length > 0) {
+          setLatestResult(parsed[0].data);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not parse history:", e);
+    }
     fetchCredits();
     fetchLatestBatch();
   }, []);
@@ -147,6 +203,7 @@ export default function Dashboard() {
       }
 
       setLatestResult(data);
+      saveBatchToHistory(data);
       if (data.credits) {
         setCredits(data.credits);
       }
@@ -443,38 +500,65 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Navigation Tabs */}
-        <div className="flex items-center border-b border-slate-800 space-x-4">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`pb-3 text-sm font-medium transition relative ${
-              activeTab === "overview"
-                ? "text-sky-400 border-b-2 border-sky-400"
-                : "text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            System Status &amp; Daily Schedule
-          </button>
-          <button
-            onClick={() => setActiveTab("images")}
-            className={`pb-3 text-sm font-medium transition relative ${
-              activeTab === "images"
-                ? "text-sky-400 border-b-2 border-sky-400"
-                : "text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            Generated Batches ({latestResult ? latestResult.images.length : 0})
-          </button>
-          <button
-            onClick={() => setActiveTab("setup")}
-            className={`pb-3 text-sm font-medium transition relative ${
-              activeTab === "setup"
-                ? "text-sky-400 border-b-2 border-sky-400"
-                : "text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            Environment &amp; Setup Guide
-          </button>
+        {/* Navigation Tabs & History Selector */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 gap-3 pb-1">
+          <div className="flex items-center space-x-4 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`pb-3 text-sm font-medium transition relative whitespace-nowrap ${
+                activeTab === "overview"
+                  ? "text-sky-400 border-b-2 border-sky-400"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              System Status &amp; Daily Schedule
+            </button>
+            <button
+              onClick={() => setActiveTab("images")}
+              className={`pb-3 text-sm font-medium transition relative whitespace-nowrap ${
+                activeTab === "images"
+                  ? "text-sky-400 border-b-2 border-sky-400"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              Generated Batches ({latestResult ? latestResult.images.length : 0})
+            </button>
+            <button
+              onClick={() => setActiveTab("setup")}
+              className={`pb-3 text-sm font-medium transition relative whitespace-nowrap ${
+                activeTab === "setup"
+                  ? "text-sky-400 border-b-2 border-sky-400"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              Environment &amp; Setup Guide
+            </button>
+          </div>
+
+          {/* History Selector Dropdown */}
+          {savedBatches.length > 0 && (
+            <div className="flex items-center gap-2 mb-2 sm:mb-0 shrink-0">
+              <History className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              <span className="text-xs text-slate-400 font-medium whitespace-nowrap">ประวัติชุดภาพเดิม:</span>
+              <select
+                onChange={(e) => {
+                  const found = savedBatches.find((b) => b.id === e.target.value);
+                  if (found) {
+                    setLatestResult(found.data);
+                    setActiveTab("images");
+                  }
+                }}
+                className="bg-slate-900 border border-slate-700/80 text-xs text-sky-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-sky-500 font-medium max-w-[280px] truncate cursor-pointer"
+                value={latestResult?.timestamp || ""}
+              >
+                {savedBatches.map((b, idx) => (
+                  <option key={b.id} value={b.id}>
+                    {idx === 0 ? "🌟 [ล่าสุด] " : ""}{b.dateStr} &bull; {b.mode === "transparent_png" ? "🔲 PNG" : "🏞️ ฉาก"} ({b.imageCount} ภาพ)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Tab 1: Overview */}
