@@ -41,6 +41,7 @@ export default function Dashboard() {
   const [credits, setCredits] = useState<OpenRouterCreditInfo | null>(null);
   const [loadingCredits, setLoadingCredits] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [runProgress, setRunProgress] = useState<string>("");
   const [latestResult, setLatestResult] = useState<WorkflowResult | null>(null);
   const [savedBatches, setSavedBatches] = useState<SavedBatch[]>([]);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -181,38 +182,108 @@ export default function Dashboard() {
     fetchLatestBatch();
   }, []);
 
-  // กดเริ่มกระบวนการทันที
+  // กดเริ่มกระบวนการทันทีด้วยระบบ Progressive Generation (ป้องกัน 504 Timeout เด็ดขาด และเห็นผลสดทันที)
   const triggerManualRun = async () => {
     setIsRunning(true);
+    setRunProgress("กำลังวิจัยแนวโน้มตลาดและวางแผน 20 ภาพ...");
     try {
-      const res = await fetch("/api/manual-trigger", {
+      // 1. เรียกวางแผน Prompts และวิจัยตลาด (รวดเร็วเพียง 1-2 วินาที)
+      const prepRes = await fetch("/api/prepare-batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: selectedMode }),
       });
-      const text = await res.text();
-      let data: any;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error(`Server status ${res.status}: ${text.slice(0, 200)}`);
+      const prepData = await prepRes.json();
+      if (!prepRes.ok || !prepData.success) {
+        throw new Error(prepData.error || "ไม่สามารถเตรียมชุดภาพได้");
       }
 
-      if (!res.ok || data.error) {
-        throw new Error(data.error || `Server responded with status ${res.status}`);
+      if (prepData.credits) {
+        setCredits(prepData.credits);
       }
 
-      setLatestResult(data);
-      saveBatchToHistory(data);
-      if (data.credits) {
-        setCredits(data.credits);
-      }
+      const initialBatch: WorkflowResult = {
+        success: true,
+        timestamp: new Date().toISOString(),
+        generationMode: prepData.mode,
+        trend: prepData.trend,
+        images: prepData.items,
+        credits: prepData.credits,
+        emailDelivery: { success: false, recipient: "web" },
+        durationMs: 0,
+      };
+
+      // นำ 20 การ์ดขึ้นจอทันที ผู้ใช้จะเห็น Title, Keywords และคิวสร้างภาพทันที!
+      setLatestResult(initialBatch);
       setActiveTab("images");
+
+      // 2. สร้างภาพทั้ง 20 ภาพแบบต่อเนื่องในพื้นหลัง (สร้างทีละ 3 ภาพพร้อมกัน)
+      let completedCount = 0;
+      const updatedImages = [...prepData.items];
+      const queue = [...prepData.items];
+      const concurrency = 3;
+
+      setRunProgress(`กำลังสร้างภาพ: 0/20 ภาพเสร็จแล้ว...`);
+
+      const workers = Array(concurrency).fill(null).map(async () => {
+        while (queue.length > 0) {
+          const item = queue.shift();
+          if (!item) break;
+
+          try {
+            const genRes = await fetch("/api/generate-item-image", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ item }),
+            });
+            if (genRes.ok) {
+              const genData = await genRes.json();
+              if (genData.imageUrl) {
+                const targetIdx = updatedImages.findIndex((x) => x.id === item.id);
+                if (targetIdx !== -1) {
+                  updatedImages[targetIdx] = {
+                    ...updatedImages[targetIdx],
+                    imageUrl: genData.imageUrl,
+                  };
+                  setLatestResult((prev) => prev ? { ...prev, images: [...updatedImages] } : prev);
+                }
+              }
+            }
+          } catch (itemErr) {
+            console.warn(`Error generating image #${item.id}:`, itemErr);
+          }
+
+          completedCount++;
+          const pct = Math.round((completedCount / 20) * 100);
+          setRunProgress(`กำลังสร้างภาพ: ${completedCount}/20 ภาพเสร็จแล้ว (${pct}%)...`);
+        }
+      });
+
+      await Promise.all(workers);
+
+      // 3. บันทึกผลลัพธ์ที่เสร็จสมบูรณ์ลง History และ Server Cache
+      const finalResult: WorkflowResult = {
+        ...initialBatch,
+        images: updatedImages,
+      };
+      setLatestResult(finalResult);
+      saveBatchToHistory(finalResult);
+
+      try {
+        await fetch("/api/save-batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(finalResult),
+        });
+      } catch {}
+
+      fetchCredits();
     } catch (err: any) {
       console.error("Run error:", err);
-      alert("Failed to execute generation: " + (err.message || String(err)));
+      alert("เกิดข้อผิดพลาดในการสร้างภาพ: " + (err.message || String(err)));
     } finally {
       setIsRunning(false);
+      setRunProgress("");
     }
   };
 
@@ -414,7 +485,7 @@ export default function Dashboard() {
               {isRunning ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>กำลังวิจัยและสร้างภาพ 20 ภาพ...</span>
+                  <span>{runProgress || "กำลังสร้างภาพ..."}</span>
                 </>
               ) : (
                 <>
@@ -438,6 +509,22 @@ export default function Dashboard() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+        {/* Live Generation Progress Banner */}
+        {isRunning && runProgress && (
+          <div className="bg-sky-950/80 border-2 border-sky-400 rounded-2xl p-5 mb-4 shadow-xl shadow-sky-500/10 flex items-center justify-between gap-4 animate-in fade-in">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 border border-sky-400/40">
+                <RefreshCw className="w-5 h-5 animate-spin" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sky-300 text-sm">{runProgress}</h3>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  ระบบกำลังสร้างภาพแบบ Real-time โดยภาพแต่ละภาพจะทยอยแสดงบนหน้าจอทันที ไม่ต้องรอนาน
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Low Credit Warning Banner */}
         {credits && credits.remainingCredits <= 0.05 && (
           <div className="bg-red-500/10 border-2 border-red-500/40 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg shadow-red-500/10">
