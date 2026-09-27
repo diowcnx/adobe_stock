@@ -32,7 +32,7 @@ CRITICAL ADOBE STOCK REQUIREMENTS:
 4. SEO Metadata per image:
    - SEO Title: 5 to 10 words, clear, concise, descriptive, containing the primary keyword naturally.
    - Keywords: 40 to 50 curated keywords. Order matters! The first 10 keywords MUST be the most critical, high-intent search terms.
-5. Model Choice: Choose the best photorealistic image generation model available on OpenRouter (e.g. 'black-forest-labs/flux-1-schnell' for fast cost-effective, or 'black-forest-labs/flux-1-dev' for supreme quality).
+5. Model Choice: Use 'google/gemini-2.5-flash-image' for highest commercial photographic realism, fast rendering, and cost efficiency.
 
 OUTPUT FORMAT: Strict JSON matching the requested schema.
 `;
@@ -69,7 +69,7 @@ Return JSON in this exact structure:
       "negativePrompt": "blurry, deformed, logos, text, watermark, bad hands",
       "keywords": ["keyword1", "keyword2", ... 40-50 keywords],
       "compositionStyle": "Wide Landscape Banner",
-      "modelSuggestion": "black-forest-labs/flux-1-schnell"
+      "modelSuggestion": "google/gemini-2.5-flash-image"
     }
     ... total 5 items
   ]
@@ -91,8 +91,8 @@ Return JSON in this exact structure:
       prompt: p.prompt,
       negativePrompt: p.negativePrompt,
       keywords: p.keywords,
-      modelUsed: p.modelSuggestion || "black-forest-labs/flux-1-schnell",
-      costEstimate: "~$0.003 - $0.025 / image",
+      modelUsed: p.modelSuggestion || "google/gemini-2.5-flash-image",
+      costEstimate: "~$0.00003 / image",
     }));
 
     return {
@@ -136,8 +136,8 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
           "esg report", "nature and technology", "high tech farming", "farming solutions", "modern greenhouse",
           "leafy greens", "agriculture banner", "growth", "cultivation", "vertical garden", "agritech banner"
         ],
-        modelUsed: "black-forest-labs/flux-1-schnell",
-        costEstimate: "~$0.003 / image",
+        modelUsed: "google/gemini-2.5-flash-image",
+        costEstimate: "~$0.00003 / image",
       },
       {
         id: 2,
@@ -156,8 +156,8 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
           "sustainable development", "fieldwork", "nature inspection", "commercial stock photo", "real expression",
           "healthy crops", "farm management", "esg agriculture", "crop monitoring", "smart device in farm"
         ],
-        modelUsed: "black-forest-labs/flux-1-schnell",
-        costEstimate: "~$0.003 / image",
+        modelUsed: "google/gemini-2.5-flash-image",
+        costEstimate: "~$0.00003 / image",
       },
       {
         id: 3,
@@ -176,8 +176,8 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
           "cultivating life", "botanical sprout", "spring growth", "macro soil", "texture",
           "close up hands", "sustainable future", "care and protection", "global conservation", "living nature"
         ],
-        modelUsed: "black-forest-labs/flux-1-schnell",
-        costEstimate: "~$0.003 / image",
+        modelUsed: "google/gemini-2.5-flash-image",
+        costEstimate: "~$0.00003 / image",
       },
       {
         id: 4,
@@ -195,8 +195,8 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
           "fresh vegetables", "natural food", "autumn harvest", "market display", "food photography",
           "colorful vegetables", "sustainable dining", "wholesome nutrition", "farm kitchen", "top view"
         ],
-        modelUsed: "black-forest-labs/flux-1-schnell",
-        costEstimate: "~$0.003 / image",
+        modelUsed: "google/gemini-2.5-flash-image",
+        costEstimate: "~$0.00003 / image",
       },
       {
         id: 5,
@@ -213,8 +213,8 @@ function getFallbackMarketData(): { trend: MarketTrend; items: StockImageItem[] 
           "modern rice farming", "clean water", "energy transition", "farming infrastructure", "asian landscape",
           "sunrise agricultural", "climate change solution", "nature and energy", "sustainable investment", "green power"
         ],
-        modelUsed: "black-forest-labs/flux-1-schnell",
-        costEstimate: "~$0.003 / image",
+        modelUsed: "google/gemini-2.5-flash-image",
+        costEstimate: "~$0.00003 / image",
       }
     ]
   };
