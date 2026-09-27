@@ -60,11 +60,16 @@ export async function sendDailyStockEmail({
   }
 
   try {
+    const isLowCredit = credits.remainingCredits <= 0.05;
+    const subjectPrefix = isLowCredit
+      ? `🚨 [แจ้งเตือนด่วน: เครดิต OpenRouter เหลือ $${credits.remainingCredits.toFixed(4)}] `
+      : "";
+
     const payload = {
       api_key: key,
       to: [toEmail],
       sender: fromEmail,
-      subject: `📸 [Adobe Stock Daily] 5 New Commercial Images & SEO Keywords - ${todayStr}`,
+      subject: `${subjectPrefix}📸 [Adobe Stock Daily] 5 New Commercial Images & SEO Keywords - ${todayStr}`,
       html_body: htmlBody,
       text_body: textBody,
       attachments: attachments.length > 0 ? attachments : undefined,
@@ -195,14 +200,40 @@ function generateEmailHtml(
             <p style="margin: 0; color: #cbd5e1; font-size: 13px;">${todayStr} | Automated AI Stock Production</p>
           </td>
           <td align="right" valign="top">
-            <div style="background-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); border-radius: 12px; padding: 10px 14px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
-              <div style="font-size: 10px; text-transform: uppercase; color: #a5b4fc; font-weight: 700;">OpenRouter Credit</div>
-              <div style="font-size: 18px; font-weight: 800; color: #38bdf8;">$${credits.remainingCredits.toFixed(4)}</div>
+            <div style="background-color: ${credits.remainingCredits <= 0.05 ? "rgba(239, 68, 68, 0.3)" : "rgba(255, 255, 255, 0.15)"}; backdrop-filter: blur(8px); border-radius: 12px; padding: 10px 14px; text-align: center; border: 1px solid ${credits.remainingCredits <= 0.05 ? "#ef4444" : "rgba(255,255,255,0.2)"};">
+              <div style="font-size: 10px; text-transform: uppercase; color: ${credits.remainingCredits <= 0.05 ? "#fca5a5" : "#a5b4fc"}; font-weight: 700;">OpenRouter Credit</div>
+              <div style="font-size: 18px; font-weight: 800; color: ${credits.remainingCredits <= 0.05 ? "#ef4444" : "#38bdf8"};">$${credits.remainingCredits.toFixed(4)}</div>
             </div>
           </td>
         </tr>
       </table>
     </div>
+
+    ${
+      credits.remainingCredits <= 0.05
+        ? `
+    <!-- Low / Depleted Credit Urgent Banner -->
+    <div style="background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 14px; padding: 18px 20px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.15);">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <div style="color: #991b1b; font-size: 16px; font-weight: 800; margin-bottom: 4px;">
+              🚨 แจ้งเตือน: เครดิต OpenRouter ของคุณใกล้หมดหรือหมดแล้ว ($${credits.remainingCredits.toFixed(4)})
+            </div>
+            <div style="color: #b91c1c; font-size: 13px; line-height: 1.4;">
+              ยอดเงินคงเหลือไม่เพียงพอต่อการสร้างภาพในรอบถัดไป กรุณากดปุ่มเพื่อเติมเครดิตบน OpenRouter
+            </div>
+          </td>
+          <td align="right" valign="middle" style="padding-left: 16px;">
+            <a href="https://openrouter.ai/credits" style="background-color: #dc2626; color: #ffffff; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-block; white-space: nowrap; box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);">
+              เติมเครดิตทันที &rarr;
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>`
+        : ""
+    }
 
     <!-- Market Research Card -->
     <div style="background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
@@ -272,4 +303,89 @@ function escapeHtml(unsafe: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+/**
+ * ส่งอีเมลแจ้งเตือนฉุกเฉินเมื่อเครดิต OpenRouter หมดหรือเหลือน้อยมาก
+ */
+export async function sendCreditDepletedEmergencyAlert({
+  credits,
+  recipientEmail,
+  senderEmail,
+  apiKey,
+}: {
+  credits: OpenRouterCreditInfo;
+  recipientEmail?: string;
+  senderEmail?: string;
+  apiKey?: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const toEmail = recipientEmail || process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
+  const fromEmail = senderEmail || process.env.SENDER_EMAIL || "stock-alerts@notify.diowcnx.com";
+  const key = apiKey || process.env.SMTP2GO_API_KEY;
+
+  const nowStr = new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" });
+
+  const html = `
+  <!DOCTYPE html>
+  <html>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; padding: 24px;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 2px solid #ef4444; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.2);">
+      <div style="background-color: #ef4444; color: #ffffff; padding: 24px; text-align: center;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 800;">🚨 เครดิต OpenRouter ของคุณหมดแล้ว!</h1>
+        <p style="margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;">ระบบผลิตภาพขาย Adobe Stock อัตโนมัติหยุดชั่วคราว</p>
+      </div>
+
+      <div style="padding: 28px;">
+        <div style="background-color: #fef2f2; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; border-left: 5px solid #dc2626;">
+          <div style="font-size: 12px; color: #7f1d1d; text-transform: uppercase; font-weight: 700;">สถานะเครดิตปัจจุบัน</div>
+          <div style="font-size: 28px; font-weight: 900; color: #dc2626; margin: 4px 0;">$${credits.remainingCredits.toFixed(4)}</div>
+          <div style="font-size: 12px; color: #991b1b;">บันทึกเวลา: ${nowStr} (เวลาประเทศไทย)</div>
+        </div>
+
+        <p style="color: #334155; font-size: 14px; line-height: 1.6;">
+          ระบบ <strong>adobe_stock</strong> ได้ทำการตรวจสอบยอดคงเหลือ และพบว่าเครดิตของคุณไม่เพียงพอสำหรับการสร้างภาพขายใน Adobe Stock
+        </p>
+
+        <p style="color: #334155; font-size: 14px; line-height: 1.6;">
+          เมื่อคุณทำการเติมเครดิตเรียบร้อยแล้ว ระบบจะกลับมาทำงานตามรอบปกติเวลา 18:00 น. หรือคุณสามารถกดสั่งสร้างภาพรอบใหม่ได้ทันทีผ่านหน้า Dashboard
+        </p>
+
+        <div style="text-align: center; margin: 32px 0 16px 0;">
+          <a href="https://openrouter.ai/credits" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; border-radius: 12px; font-size: 15px; font-weight: 800; text-decoration: none; display: inline-block; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);">
+            💳 เติมเงิน OpenRouter ทันที &rarr;
+          </a>
+        </div>
+      </div>
+
+      <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8;">
+        ส่งถึง: ${toEmail} &bull; ระบบอัตโนมัติ diowcnx/adobe_stock
+      </div>
+    </div>
+  </body>
+  </html>
+  `;
+
+  if (!key) {
+    console.warn("SMTP2GO_API_KEY not configured. Simulated emergency credit alert.");
+    return { success: true, messageId: `simulated-alert-${Date.now()}` };
+  }
+
+  try {
+    const res = await fetch("https://api.smtp2go.com/v3/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: key,
+        to: [toEmail],
+        sender: fromEmail,
+        subject: `🚨 [ด่วนที่สุด] เครดิต OpenRouter ของคุณหมดแล้ว ($${credits.remainingCredits.toFixed(4)}) - กรุณาเติมเครดิต`,
+        html_body: html,
+        text_body: `🚨 เครดิต OpenRouter ของคุณหมดแล้ว ($${credits.remainingCredits.toFixed(4)})\nกรุณาเติมเงินที่ https://openrouter.ai/credits เพื่อให้ระบบทำงานต่อ`,
+      }),
+    });
+    const data: Smtp2goSendResponse = await res.json();
+    return { success: res.ok && (data.data?.succeeded ?? 0) > 0 };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
 }

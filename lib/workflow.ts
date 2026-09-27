@@ -1,7 +1,7 @@
 import { getOpenRouterCredits } from "./openrouter";
 import { conductMarketResearchAndGeneratePrompts } from "./market-research";
 import { generateAllStockImages } from "./image-generator";
-import { sendDailyStockEmail } from "./smtp2go";
+import { sendDailyStockEmail, sendCreditDepletedEmergencyAlert } from "./smtp2go";
 import { WorkflowResult } from "./types";
 
 export async function executeDailyStockWorkflow(): Promise<WorkflowResult> {
@@ -23,7 +23,14 @@ export async function executeDailyStockWorkflow(): Promise<WorkflowResult> {
   // 4. ตรวจสอบเครดิตหลังสร้างภาพ
   const latestCredits = await getOpenRouterCredits();
 
-  // 5. ส่งอีเมลพร้อมข้อมูลและไฟล์แนบผ่าน SMTP2GO
+  // ตรวจสอบว่าเครดิตหมดหรือไม่ (เหลือน้อยกว่า $0.01)
+  const isCreditDepleted = latestCredits.remainingCredits <= 0.01 && Boolean(process.env.OPENROUTER_API_KEY);
+  if (isCreditDepleted) {
+    console.warn(`[ALERT] OpenRouter credit is depleted: $${latestCredits.remainingCredits.toFixed(4)}. Sending emergency alert...`);
+    await sendCreditDepletedEmergencyAlert({ credits: latestCredits });
+  }
+
+  // 5. ส่งอีเมลประจำวันพร้อมข้อมูลและไฟล์แนบผ่าน SMTP2GO
   console.log("Dispatching email via SMTP2GO to hs5ckt@gmail.com...");
   const emailResult = await sendDailyStockEmail({
     trend,

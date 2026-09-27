@@ -134,6 +134,34 @@ export default function Dashboard() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+        {/* Low Credit Warning Banner */}
+        {credits && credits.remainingCredits <= 0.05 && (
+          <div className="bg-red-500/10 border-2 border-red-500/40 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg shadow-red-500/10">
+            <div className="flex items-center space-x-3.5">
+              <div className="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-6 h-6 text-red-400 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-bold text-red-300 text-sm flex items-center gap-2">
+                  เครดิต OpenRouter ของคุณใกล้หมดหรือหมดแล้ว (${credits.remainingCredits.toFixed(4)})
+                </h3>
+                <p className="text-xs text-red-200/70 mt-0.5">
+                  ระบบส่งอีเมลแจ้งเตือนไปยัง hs5ckt@gmail.com เรียบร้อยแล้ว กรุณาเติมเครดิตเพื่อไม่ให้รอบการทำงานถัดไปหยุดชะงัก
+                </p>
+              </div>
+            </div>
+            <a
+              href="https://openrouter.ai/credits"
+              target="_blank"
+              rel="noreferrer"
+              className="bg-red-600 hover:bg-red-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-md shadow-red-600/30 whitespace-nowrap"
+            >
+              <span>เติมเครดิต OpenRouter</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        )}
+
         {/* Navigation Tabs */}
         <div className="flex items-center border-b border-slate-800 space-x-4">
           <button
