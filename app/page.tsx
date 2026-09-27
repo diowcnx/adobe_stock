@@ -15,7 +15,8 @@ import {
   Mail,
   Sliders,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  LogOut
 } from "lucide-react";
 import { WorkflowResult, OpenRouterCreditInfo, StockImageItem } from "@/lib/types";
 
@@ -26,6 +27,15 @@ export default function Dashboard() {
   const [latestResult, setLatestResult] = useState<WorkflowResult | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "images" | "setup">("overview");
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch (e) {
+      window.location.href = "/login";
+    }
+  };
 
   // ดึงเครดิต OpenRouter เมื่อโหลดหน้าเว็บ
   const fetchCredits = async () => {
@@ -138,6 +148,15 @@ export default function Dashboard() {
                   <span>Run Today's Batch Now</span>
                 </>
               )}
+            </button>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              title="ออกจากระบบ"
+              className="p-2 rounded-xl bg-slate-800/80 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-slate-700/60 transition"
+            >
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>

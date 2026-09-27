@@ -5,12 +5,15 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60; // รองรับระยะเวลาประมวลผลสูงสุดสำหรับ Vercel Serverless
 
 export async function GET(request: NextRequest) {
-  // ตรวจสอบความปลอดภัยด้วย Authorization Bearer CRON_SECRET ถ้ามีการตั้งไว้
+  // ตรวจสอบความปลอดภัยด้วย Authorization Bearer CRON_SECRET
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // หากมีการตั้ง CRON_SECRET ต้องตรงกันเท่านั้น
+  if (cronSecret) {
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: "Unauthorized: Invalid CRON_SECRET" }, { status: 401 });
+    }
   }
 
   try {
