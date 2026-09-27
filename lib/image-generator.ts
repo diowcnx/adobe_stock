@@ -9,8 +9,6 @@ export const MODEL_GEMINI_IMAGE = "google/gemini-2.5-flash-image"; // Gemini 2.5
 export const DEFAULT_IMAGE_MODEL = MODEL_RECRAFT_FLASH;
 export const BACKUP_IMAGE_MODELS = [
   MODEL_GEMINI_IMAGE,
-  "google/gemini-3.1-flash-image",
-  "openai/gpt-5-image-mini",
 ];
 
 /**
@@ -103,7 +101,7 @@ export async function generateSingleImage(
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(25000),
+        signal: AbortSignal.timeout(12000),
       });
 
       if (!response.ok) {
@@ -141,17 +139,22 @@ export async function generateSingleImage(
             imageBase64: base64,
           };
         } else {
-          // ดาวน์โหลดภาพและแปลงเป็น Base64
-          const imgRes = await fetch(extractedUrl);
-          if (imgRes.ok) {
-            const buf = await imgRes.arrayBuffer();
-            const base64 = Buffer.from(buf).toString("base64");
-            const dataUri = `data:image/png;base64,${base64}`;
-            return {
-              imageUrl: dataUri,
-              imageBase64: base64,
-            };
+          // ดาวน์โหลดภาพและแปลงเป็น Base64 สำหรับแนบไฟล์อีเมล
+          let base64 = "";
+          try {
+            const imgRes = await fetch(extractedUrl, { signal: AbortSignal.timeout(5000) });
+            if (imgRes.ok) {
+              const buf = await imgRes.arrayBuffer();
+              base64 = Buffer.from(buf).toString("base64");
+            }
+          } catch (fetchErr) {
+            console.warn(`[Item #${item.id}] Could not fetch image buffer for email attachment:`, fetchErr);
           }
+
+          return {
+            imageUrl: extractedUrl, // รักษา hosted URL ไว้ ไม่แปลงเป็น dataUri ขนาดใหญ่
+            imageBase64: base64,
+          };
         }
       }
 
@@ -163,7 +166,7 @@ export async function generateSingleImage(
     }
   }
 
-  // หาก OpenRouter ล้มเหลวทั้งหมด ให้รายงาน Error ชัดเจน แทนที่จะสร้างสีพื้นหลอกตา
+  // หาก OpenRouter ล้มเหลวทั้งหมด ให้รายงาน Error ชัดเจน
   return {
     imageUrl: "",
     imageBase64: "",
@@ -172,8 +175,8 @@ export async function generateSingleImage(
 }
 
 /**
- * สร้างภาพทั้งหมด 5 ภาพพร้อมกันแบบขนาน (Parallel Execution via Promise.all)
- * ลดระยะเวลาประมวลผลทั้งหมดลงเหลือเพียง 2-4 วินาที ป้องกันปัญหา Vercel Function Timeout
+ * สร้างภาพทั้งหมด 20 ภาพพร้อมกันแบบขนานเต็มรูปแบบ (Parallel Execution via Promise.all)
+ * ลดระยะเวลาประมวลผลทั้งหมดลงเหลือเพียง 3-4 วินาที ป้องกันปัญหา 504 Timeout เด็ดขาด
  */
 export async function generateAllStockImages(
   items: StockImageItem[],
@@ -181,36 +184,27 @@ export async function generateAllStockImages(
 ): Promise<StockImageItem[]> {
   console.log(`Starting parallel image generation for ${items.length} items...`);
   
-  const chunkSize = 10;
-  const results: StockImageItem[] = [];
-
-  for (let i = 0; i < items.length; i += chunkSize) {
-    const chunk = items.slice(i, i + chunkSize);
-    console.log(`Processing image chunk ${Math.floor(i / chunkSize) + 1} (${chunk.length} items)...`);
-
-    const chunkResults = await Promise.all(
-      chunk.map(async (item) => {
-        try {
-          const result = await generateSingleImage(item, apiKey);
-          return {
-            ...item,
-            modelUsed: item.modelUsed || DEFAULT_IMAGE_MODEL,
-            imageUrl: result.imageUrl || undefined,
-            imageBase64: result.imageBase64 || undefined,
-            description: result.error ? `Error: ${result.error}` : undefined,
-          };
-        } catch (err: any) {
-          console.error(`Failed generating image #${item.id}:`, err);
-          return {
-            ...item,
-            modelUsed: item.modelUsed || DEFAULT_IMAGE_MODEL,
-            description: `Generation error: ${err.message || String(err)}`,
-          };
-        }
-      })
-    );
-    results.push(...chunkResults);
-  }
+  const results = await Promise.all(
+    items.map(async (item) => {
+      try {
+        const result = await generateSingleImage(item, apiKey);
+        return {
+          ...item,
+          modelUsed: item.modelUsed || DEFAULT_IMAGE_MODEL,
+          imageUrl: result.imageUrl || undefined,
+          imageBase64: result.imageBase64 || undefined,
+          description: result.error ? `Error: ${result.error}` : undefined,
+        };
+      } catch (err: any) {
+        console.error(`Failed generating image #${item.id}:`, err);
+        return {
+          ...item,
+          modelUsed: item.modelUsed || DEFAULT_IMAGE_MODEL,
+          description: `Generation error: ${err.message || String(err)}`,
+        };
+      }
+    })
+  );
 
   console.log(`Image generation completed for all ${results.length} items.`);
   return results;

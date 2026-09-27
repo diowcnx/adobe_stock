@@ -18,7 +18,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await executeDailyStockWorkflow();
-    return NextResponse.json(result);
+    const clientSafeResult = {
+      ...result,
+      images: result.images.map(({ imageBase64, ...rest }) => rest),
+    };
+    return NextResponse.json(clientSafeResult);
   } catch (error: any) {
     console.error("Cron workflow execution error:", error);
     return NextResponse.json(

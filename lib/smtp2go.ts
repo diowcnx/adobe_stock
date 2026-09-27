@@ -64,8 +64,8 @@ export async function sendDailyStockEmail({
     },
   ];
 
-  // ควบคุมขนาดรวมของ attachments ไม่ให้เกิน 18 MB เพื่อป้องกัน email payload limits
-  const MAX_ATTACHMENT_BYTES = 18 * 1024 * 1024;
+  // ควบคุมขนาดรวมของ attachments ไม่ให้เกิน 9 MB เพื่อความรวดเร็วและป้องกัน email payload limits
+  const MAX_ATTACHMENT_BYTES = 9 * 1024 * 1024;
   let currentBytes = csvBase64.length * 0.75;
 
   for (const img of images) {
@@ -114,6 +114,7 @@ export async function sendDailyStockEmail({
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10000),
     });
 
     const data: Smtp2goSendResponse = await res.json();

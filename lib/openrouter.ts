@@ -119,8 +119,9 @@ export async function callOpenRouterJSON<T>(
       ],
       response_format: { type: "json_object" },
       temperature: 0.7,
-      max_tokens: 8000,
+      max_tokens: 2500,
     }),
+    signal: AbortSignal.timeout(8000),
   });
 
   // ถ้า router ไม่รองรับ response_format (เช่น เกิด 400) ให้ส่งคำขอแบบปกติ
@@ -141,8 +142,9 @@ export async function callOpenRouterJSON<T>(
           { role: "user", content: userPrompt },
         ],
         temperature: 0.7,
-        max_tokens: 8000,
+        max_tokens: 2500,
       }),
+      signal: AbortSignal.timeout(8000),
     });
   }
 

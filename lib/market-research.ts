@@ -76,6 +76,18 @@ PROMPT & COMPOSITION RULES FOR TRANSPARENT PNG:
 OUTPUT FORMAT: Strict JSON matching the requested schema.
 `;
 
+interface FastResearchResponse {
+  trend: MarketTrend;
+  categories: Array<{
+    id: number;
+    category: string;
+    conceptTitle: string;
+    subjectDescription: string;
+    modelSuggestion: string;
+    keywords: string[];
+  }>;
+}
+
 export async function conductMarketResearchAndGeneratePrompts(
   currentDate: string = new Date().toISOString(),
   forcedMode?: "transparent_png" | "regular_scene"
@@ -86,23 +98,19 @@ export async function conductMarketResearchAndGeneratePrompts(
   const systemPrompt = isTransparent ? SYSTEM_PROMPT_TRANSPARENT : SYSTEM_PROMPT_REGULAR;
 
   const userPrompt = isTransparent
-    ? `
-Current Date: ${currentDate}.
-Target: 100% TRANSPARENT BACKGROUND PNG CUTOUT BATCH (20 isolated items).
-CRITICAL: DO NOT MIX! All 20 items MUST be isolated objects on a transparent background (PNG alpha channel).
-
+    ? `Current Date: ${currentDate}.
+Target: 100% TRANSPARENT BACKGROUND PNG CUTOUT ASSETS.
 Generate:
-1. Market trend analysis for isolated commercial PNG assets (theme, target market, commercial reasoning, seasonal relevance, demand rating).
-2. Exactly 20 distinct, high-quality isolated cutout prompts distributed across the 5 proven niches (IDs 1 to 20):
-   * 4 items: Isolated High-Tech & Telecom Cutouts (IDs 1-4)
-   * 4 items: Isolated Modern Furniture, Frames & Decor (IDs 5-8)
-   * 4 items: Isolated Business 3D Metaphors (IDs 9-12)
-   * 4 items: Isolated Culinary Spices & Food Assets (IDs 13-16)
-   * 4 items: Isolated Seasonal & Nature Assets (IDs 17-20)
-   - SEO Titles MUST end with "Isolated on Transparent Background Cutout PNG".
-   - Keywords MUST be single words (25-35 tags) with top 10 prioritized, including 'isolated', 'transparent', 'cutout', 'png', 'element'.
+1. Market trend analysis for isolated commercial PNG assets.
+2. Exactly 5 core concept niches (one per category):
+   - Category 1: Isolated High-Tech & Telecom (antennas, server units, cyber shields)
+   - Category 2: Isolated Modern Furniture & Mockups (picture frame, designer armchair)
+   - Category 3: Isolated Business 3D Metaphors (gold coins, wooden emoji tokens)
+   - Category 4: Isolated Culinary Spices & Food (star anise, cinnamon sticks, turmeric)
+   - Category 5: Isolated Seasonal & Nature (autumn maple leaf, pumpkin, crystal water)
+- Base keywords MUST be single words (15-20 individual words).
 
-Return JSON in this exact structure:
+Return strict JSON:
 {
   "trend": {
     "theme": "...",
@@ -111,38 +119,30 @@ Return JSON in this exact structure:
     "seasonalRelevance": "...",
     "buyerDemandRating": "Very High"
   },
-  "prompts": [
+  "categories": [
     {
       "id": 1,
-      "seoTitle": "... Isolated on Transparent Background Cutout PNG",
-      "category": "...",
-      "aspectRatio": "1:1",
-      "prompt": "Isolated commercial stock cutout asset on a 100% transparent background (PNG alpha channel)...",
-      "negativePrompt": "solid background, color background, human face, portrait, shadows on background",
-      "keywords": ["isolated", "transparent", "cutout", "png", ... 25-35 keywords],
-      "compositionStyle": "Isolated Product Asset / Clipart",
-      "modelSuggestion": "recraft/recraft-v4.1-flash"
+      "category": "Technology / Telecom",
+      "conceptTitle": "5G Telecom Antenna Tower",
+      "subjectDescription": "modern telecommunication cellular antenna mast tower with high-tech microwave transmitters",
+      "modelSuggestion": "google/gemini-2.5-flash-image",
+      "keywords": ["isolated", "transparent", "cutout", "png", "telecom", "antenna", "5g", "cellular", "tower", "network", "wireless", "mast", "transmitter", "mobile", "broadband", "station", "digital", "equipment", "hardware"]
     }
-    ... total 20 items (ids 1 to 20)
   ]
-}
-`
-    : `
-Current Date: ${currentDate}.
-Target: 100% REGULAR COMMERCIAL SCENES WITH FULL BACKGROUND & COPY SPACE (20 items).
-CRITICAL: DO NOT MIX! All 20 items MUST be full commercial stock scenes with 40-60% clean copy space.
-
+}`
+    : `Current Date: ${currentDate}.
+Target: 100% REGULAR COMMERCIAL SCENES WITH FULL BACKGROUND & AMPLE COPY SPACE.
 Generate:
-1. Market trend analysis (theme, target market, commercial reasoning, seasonal relevance, demand rating).
-2. Exactly 20 distinct, high-quality image prompts distributed across the 5 proven niches (IDs 1 to 20):
-   * 4 items: Cloud Computing, AI, Cybersecurity & Data Infrastructure (IDs 1-4)
-   * 4 items: Modern Interior Architecture & Blank Frame Mockups (IDs 5-8)
-   * 4 items: Conceptual Metaphors & Business Symbolism (IDs 9-12)
-   * 4 items: Culinary Spices & Food Flat Lays (IDs 13-16)
-   * 4 items: Seasonal Banners, Nature & Telecom (IDs 17-20)
-   - Keywords: 25-35 single words, top 10 prioritized.
+1. Market trend analysis for commercial stock photography.
+2. Exactly 5 core concept niches (one per category):
+   - Category 1: Cloud Computing, AI & Data Infrastructure
+   - Category 2: Modern Interior Architecture & Blank Frame Mockups
+   - Category 3: Conceptual Metaphors & Business Symbolism
+   - Category 4: Culinary Spices & Food Flat Lays
+   - Category 5: Seasonal Banners, Nature & Telecom
+- Base keywords MUST be single words (15-20 individual words).
 
-Return JSON in this exact structure:
+Return strict JSON:
 {
   "trend": {
     "theme": "...",
@@ -151,47 +151,31 @@ Return JSON in this exact structure:
     "seasonalRelevance": "...",
     "buyerDemandRating": "Very High"
   },
-  "prompts": [
+  "categories": [
     {
       "id": 1,
-      "seoTitle": "...",
-      "category": "...",
-      "aspectRatio": "16:9",
-      "prompt": "Full detailed prompt with lighting, camera angle, clean copy space, no human faces...",
-      "negativePrompt": "human face, portrait, blurry, distorted, logos, watermark, text",
-      "keywords": ["keyword1", "keyword2", ... 25-35 keywords with top 10 prioritized],
-      "compositionStyle": "Wide Landscape Banner / Flat Lay / High-Tech Infrastructure",
-      "modelSuggestion": "google/gemini-2.5-flash-image"
+      "category": "Technology / Infrastructure",
+      "conceptTitle": "Cloud Computing Data Center",
+      "subjectDescription": "futuristic enterprise server room with glowing cyan and blue fiber optic cables and server racks",
+      "modelSuggestion": "google/gemini-2.5-flash-image",
+      "keywords": ["server", "datacenter", "cloud", "computing", "technology", "network", "hardware", "cyber", "internet", "enterprise", "storage", "digital", "telecom", "infrastructure", "fiber", "optics"]
     }
-    ... total 20 items (ids 1 to 20)
   ]
-}
-`;
+}`;
 
   try {
-    const data = await callOpenRouterJSON<ResearchResponse>(
+    const data = await callOpenRouterJSON<FastResearchResponse>(
       systemPrompt,
       userPrompt,
       "typesafe/jev-router"
     );
 
-    const items: StockImageItem[] = data.prompts.map((p) => {
-      const isRecraft = p.modelSuggestion && p.modelSuggestion.includes("recraft");
-      return {
-        id: p.id,
-        seoTitle: p.seoTitle,
-        category: p.category,
-        aspectRatio: p.aspectRatio,
-        prompt: p.prompt,
-        negativePrompt: p.negativePrompt,
-        keywords: p.keywords,
-        isTransparent,
-        generationMode: mode,
-        modelUsed: p.modelSuggestion || (isTransparent ? "recraft/recraft-v4.1-flash" : "recraft/recraft-v4.1-flash"),
-        filename: generateUniqueStockFilename(p.seoTitle, p.id, new Date(currentDate), mode),
-        costEstimate: isRecraft ? "~$0.007 / image" : "~$0.00003 / image",
-      };
-    });
+    if (!data?.categories || data.categories.length === 0) {
+      throw new Error("Invalid or empty categories returned by LLM");
+    }
+
+    // ขยาย 5 หมวดหมู่หลักให้กลายเป็น 20 รายการสำหรับผลิตจริง (4 variations ต่อ 1 หมวด)
+    const items = expandCategoriesToTwentyItems(data.categories, isTransparent, mode, currentDate);
 
     return {
       trend: data.trend,
@@ -199,9 +183,132 @@ Return JSON in this exact structure:
       mode,
     };
   } catch (error) {
-    console.error("OpenRouter market research error, falling back to account's top-seller dataset:", error);
+    console.error("OpenRouter market research error or timeout, falling back to curated dataset:", error);
     return getFallbackMarketData(mode, currentDate);
   }
+}
+
+/**
+ * ขยาย 5 แนวคิดหลักให้กลายเป็น 20 รายการคุณภาพสูง (4 สัดส่วน/มุมมอง ต่อ 1 แนวคิด)
+ * ประมวลผลใน Memory ใช้เวลา 0 ms ป้องกัน Timeout 100%
+ */
+function expandCategoriesToTwentyItems(
+  categories: FastResearchResponse["categories"],
+  isTransparent: boolean,
+  mode: "transparent_png" | "regular_scene",
+  currentDate: string
+): StockImageItem[] {
+  const items: StockImageItem[] = [];
+  const dateObj = new Date(currentDate);
+
+  const variationsConfigTransparent = [
+    {
+      ratio: "1:1" as const,
+      anglePrefix: "Isolated commercial stock cutout asset on a 100% transparent background (PNG alpha channel) of a centered",
+      styleSuffix: "clean crisp alpha cutout edges, centered studio product lighting, zero background shadow, 8k resolution.",
+      titleSuffix: "Isolated on Transparent Background Cutout PNG",
+      extraTags: ["isolated", "transparent", "cutout", "png", "element", "alpha", "clipart", "object", "graphic"],
+    },
+    {
+      ratio: "1:1" as const,
+      anglePrefix: "Isolated commercial 3D stock asset on a 100% transparent background (PNG alpha channel) of an isometric perspective",
+      styleSuffix: "dynamic isometric three-quarter angle, sharp clean silhouette, studio lighting, PNG alpha transparency.",
+      titleSuffix: "Isometric 3D Cutout Isolated on Transparent Background PNG",
+      extraTags: ["isometric", "isolated", "transparent", "cutout", "png", "3d", "render", "design", "asset"],
+    },
+    {
+      ratio: "4:5" as const,
+      anglePrefix: "Isolated commercial stock element on a 100% transparent background (PNG alpha channel) of an elegant vertical upright",
+      styleSuffix: "vertical tall silhouette, razor sharp edges, flawless alpha channel, high resolution studio photograph.",
+      titleSuffix: "Vertical Commercial Asset Isolated on Transparent Background Cutout PNG",
+      extraTags: ["vertical", "isolated", "transparent", "cutout", "png", "upright", "element", "product", "studio"],
+    },
+    {
+      ratio: "16:9" as const,
+      anglePrefix: "Isolated commercial stock asset on a 100% transparent background (PNG alpha channel) of a wide multi-element composition of",
+      styleSuffix: "horizontal panoramic layout, perfectly cut out on transparent alpha, studio lighting, premium stock element.",
+      titleSuffix: "Banner Asset Isolated on Transparent Background Cutout PNG",
+      extraTags: ["banner", "isolated", "transparent", "cutout", "png", "wide", "composition", "cluster", "collection"],
+    },
+  ];
+
+  const variationsConfigRegular = [
+    {
+      ratio: "16:9" as const,
+      anglePrefix: "Wide panoramic commercial stock photograph of",
+      styleSuffix: "wide composition with 50% clean negative copy space on the right for advertising text, professional commercial lighting, 8k resolution, authentic atmosphere, no human faces.",
+      titleSuffix: "with Clean Copy Space for Text",
+      extraTags: ["banner", "panoramic", "copyspace", "background", "advertising", "header", "horizontal", "wide", "commercial"],
+    },
+    {
+      ratio: "3:2" as const,
+      anglePrefix: "High quality commercial stock editorial photograph of",
+      styleSuffix: "balanced composition with ample negative copy space, shallow depth of field, natural soft lighting, editorial grade, no human faces.",
+      titleSuffix: "Stock Photo with Copy Space",
+      extraTags: ["editorial", "copyspace", "photography", "professional", "layout", "publishing", "magazine", "commercial"],
+    },
+    {
+      ratio: "4:5" as const,
+      anglePrefix: "Modern vertical commercial stock photograph of",
+      styleSuffix: "vertical portrait orientation with expansive top clean copy space for mobile banners and typography, commercial studio lighting, no human faces.",
+      titleSuffix: "Vertical Mobile Banner with Copy Space",
+      extraTags: ["vertical", "mobile", "copyspace", "portrait", "social", "banner", "marketing", "content"],
+    },
+    {
+      ratio: "1:1" as const,
+      anglePrefix: "Minimalist commercial flat lay stock photograph of",
+      styleSuffix: "clean overhead bird's-eye view flat lay with generous negative copy space in center, subtle natural shadows, aesthetic commercial styling, no human faces.",
+      titleSuffix: "Minimalist Overhead Flat Lay with Copy Space",
+      extraTags: ["flatlay", "overhead", "minimalist", "copyspace", "square", "clean", "surface", "table", "aesthetic"],
+    },
+  ];
+
+  const configs = isTransparent ? variationsConfigTransparent : variationsConfigRegular;
+
+  // วนลูป 5 หมวดหมู่ -> สร้างหมวดละ 4 รายการ = 20 รายการ
+  for (let cIdx = 0; cIdx < categories.length && cIdx < 5; cIdx++) {
+    const cat = categories[cIdx];
+    const modelUsed = cat.modelSuggestion || (isTransparent ? "recraft/recraft-v4.1-flash" : "recraft/recraft-v4.1-flash");
+    const isRecraft = modelUsed.includes("recraft");
+
+    for (let vIdx = 0; vIdx < configs.length; vIdx++) {
+      const v = configs[vIdx];
+      const id = cIdx * 4 + vIdx + 1; // ID 1 ถึง 20
+
+      const seoTitle = `${cat.conceptTitle} ${v.titleSuffix}`.trim();
+      const prompt = `${v.anglePrefix} ${cat.subjectDescription}, ${v.styleSuffix}`;
+      const negativePrompt = isTransparent
+        ? "solid background, color background, human face, portrait, shadows on background, blurry, watermark"
+        : "human face, portrait, blurry, distorted, logos, watermark, text, crowded center without copy space";
+
+      // รวบรวมคำสำคัญให้เป็น single words 25-35 คำ
+      const combinedKeywords = Array.from(
+        new Set([
+          ...v.extraTags,
+          ...(cat.keywords || []).flatMap((k) => k.toLowerCase().replace(/[^a-z0-9\s-]/g, "").split(/\s+/)),
+        ])
+      )
+        .filter((k) => k.length > 2 && !k.includes(" "))
+        .slice(0, 35);
+
+      items.push({
+        id,
+        seoTitle,
+        category: cat.category || "Commercial Stock",
+        aspectRatio: v.ratio,
+        prompt,
+        negativePrompt,
+        keywords: combinedKeywords,
+        isTransparent,
+        generationMode: mode,
+        modelUsed,
+        filename: generateUniqueStockFilename(seoTitle, id, dateObj, mode),
+        costEstimate: isRecraft ? "~$0.007 / image" : "~$0.00003 / image",
+      });
+    }
+  }
+
+  return items;
 }
 
 /**

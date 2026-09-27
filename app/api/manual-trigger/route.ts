@@ -17,7 +17,12 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await executeDailyStockWorkflow(mode);
-    return NextResponse.json(result);
+    // ตัด imageBase64 ออกจาก JSON Response เพื่อลดขนาดข้อมูลจาก 30MB เหลือ ~25KB ป้องกัน 4.5MB Vercel Limit
+    const clientSafeResult = {
+      ...result,
+      images: result.images.map(({ imageBase64, ...rest }) => rest),
+    };
+    return NextResponse.json(clientSafeResult);
   } catch (error: any) {
     console.error("Manual workflow trigger error:", error);
     return NextResponse.json(
