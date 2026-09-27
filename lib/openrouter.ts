@@ -86,11 +86,12 @@ export async function getOpenRouterCredits(apiKey?: string): Promise<OpenRouterC
 
 /**
  * เรียก LLM บน OpenRouter สำหรับสร้างผลลัพธ์แบบ JSON
+ * รองรับ TypeSafe: Jev Router (typesafe/jev-router)
  */
 export async function callOpenRouterJSON<T>(
   systemPrompt: string,
   userPrompt: string,
-  model: string = "google/gemini-2.5-flash",
+  model: string = "typesafe/jev-router",
   apiKey?: string
 ): Promise<T> {
   const key = apiKey || process.env.OPENROUTER_API_KEY;
@@ -99,7 +100,10 @@ export async function callOpenRouterJSON<T>(
     throw new Error("OPENROUTER_API_KEY is not defined in environment variables.");
   }
 
-  const response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
+  const systemWithJsonInstruction = `${systemPrompt}\n\nIMPORTANT: Respond with pure JSON only, without any introductory or concluding text.`;
+
+  // 1. ลองเรียกพร้อม response_format: { type: "json_object" }
+  let response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
@@ -110,13 +114,35 @@ export async function callOpenRouterJSON<T>(
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: systemWithJsonInstruction },
         { role: "user", content: userPrompt },
       ],
       response_format: { type: "json_object" },
       temperature: 0.7,
     }),
   });
+
+  // ถ้า router ไม่รองรับ response_format (เช่น เกิด 400) ให้ส่งคำขอแบบปกติ
+  if (!response.ok && response.status === 400) {
+    console.warn(`Router ${model} does not support response_format, retrying with standard prompt...`);
+    response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "HTTP-Referer": "https://adobe-stock.vercel.app",
+        "X-Title": "Adobe Stock Market Research & Generator",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemWithJsonInstruction },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.7,
+      }),
+    });
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -129,10 +155,14 @@ export async function callOpenRouterJSON<T>(
     throw new Error("Empty response from OpenRouter");
   }
 
+  // แยก JSON ออกมาแม้จะมีข้อความ Markdown หรือเกริ่นนำ
   try {
     return JSON.parse(content) as T;
   } catch {
-    // กรณีที่ LLM ส่ง markdown code block ```json ... ``` มา
+    const match = content.match(/\{[\s\S]*\}/);
+    if (match) {
+      return JSON.parse(match[0]) as T;
+    }
     const cleaned = content.replace(/```json/g, "").replace(/```/g, "").trim();
     return JSON.parse(cleaned) as T;
   }

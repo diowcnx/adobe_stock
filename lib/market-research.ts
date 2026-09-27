@@ -80,7 +80,7 @@ Return JSON in this exact structure:
     const data = await callOpenRouterJSON<ResearchResponse>(
       SYSTEM_PROMPT,
       userPrompt,
-      "google/gemini-2.5-flash"
+      "typesafe/jev-router"
     );
 
     const items: StockImageItem[] = data.prompts.map((p) => ({
