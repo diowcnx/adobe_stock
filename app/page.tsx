@@ -259,26 +259,31 @@ export default function Dashboard() {
           count++;
           setZipProgress(`กำลังโหลดภาพที่ ${count}/${latestResult.images.length}...`);
           try {
-            let blob: Blob | null = null;
-            try {
-              const res = await fetch(img.imageUrl);
-              if (res.ok) {
-                blob = await res.blob();
+            const filename = img.filename || `stock_image_${img.id}.png`;
+            if (img.imageUrl.startsWith("data:")) {
+              const base64Data = img.imageUrl.split(",")[1];
+              zip.file(filename, base64Data, { base64: true });
+            } else {
+              let blob: Blob | null = null;
+              try {
+                const res = await fetch(img.imageUrl);
+                if (res.ok) {
+                  blob = await res.blob();
+                }
+              } catch {
+                // fallback to proxy
               }
-            } catch {
-              // fallback to proxy
-            }
 
-            if (!blob) {
-              const proxyRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(img.imageUrl)}`);
-              if (proxyRes.ok) {
-                blob = await proxyRes.blob();
+              if (!blob) {
+                const proxyRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(img.imageUrl)}`);
+                if (proxyRes.ok) {
+                  blob = await proxyRes.blob();
+                }
               }
-            }
 
-            if (blob) {
-              const filename = img.filename || `stock_image_${img.id}.png`;
-              zip.file(filename, blob);
+              if (blob) {
+                zip.file(filename, blob);
+              }
             }
           } catch (fetchErr) {
             console.warn(`Could not add image #${img.id} to zip:`, fetchErr);
@@ -309,6 +314,17 @@ export default function Dashboard() {
   const downloadSingleImage = async (img: StockImageItem) => {
     if (!img.imageUrl) return;
     try {
+      const filename = img.filename || `stock_image_${img.id}.png`;
+      if (img.imageUrl.startsWith("data:")) {
+        const link = document.createElement("a");
+        link.href = img.imageUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
+
       let blob: Blob | null = null;
       try {
         const res = await fetch(img.imageUrl);
@@ -324,7 +340,7 @@ export default function Dashboard() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = img.filename || `stock_image_${img.id}.png`;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

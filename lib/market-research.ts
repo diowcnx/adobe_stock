@@ -131,7 +131,7 @@ Return strict JSON:
       "category": "Technology / Telecom",
       "conceptTitle": "6G Phased Array Cellular Antenna Mast",
       "subjectDescription": "futuristic 6G telecommunication phased array antenna mast with sleek white aerodynamic geometric housing and brass connectors",
-      "modelSuggestion": "openai/gpt-image-1-mini",
+      "modelSuggestion": "openai/gpt-5-image-mini",
       "keywords": ["isolated", "transparent", "cutout", "png", "telecom", "antenna", "6g", "cellular", "mast", "phased", "array", "wireless", "transmitter", "broadband", "station", "digital", "hardware", "satellite", "network", "radar"]
     }
   ]
@@ -274,7 +274,7 @@ function expandCategoriesToTwentyItems(
   // วนลูป 5 หมวดหมู่ -> สร้างหมวดละ 4 รายการ = 20 รายการ
   for (let cIdx = 0; cIdx < categories.length && cIdx < 5; cIdx++) {
     const cat = categories[cIdx];
-    const modelUsed = cat.modelSuggestion || (isTransparent ? "openai/gpt-image-1-mini" : "recraft/recraft-v4.1-flash");
+    const modelUsed = cat.modelSuggestion || (isTransparent ? "openai/gpt-5-image-mini" : "google/gemini-2.5-flash-image");
     const isRecraft = modelUsed.includes("recraft");
 
     for (let vIdx = 0; vIdx < configs.length; vIdx++) {
@@ -344,7 +344,7 @@ function getFallbackMarketData(
         prompt: "Commercial studio product shot of a modern telecommunication cellular antenna mast tower with high-tech transmitters, completely isolated, razor-sharp clean silhouette cutout edges, zero background shadows, studio lighting, 8k resolution, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, color background, sky, wires mess, blurry, text, logos",
         keywords: ["isolated", "transparent", "cutout", "png", "telecom", "antenna", "5g", "cellular", "tower", "network", "wireless", "mast", "transmitter", "mobile", "broadband", "station", "receiver", "technology", "communication", "broadcast", "digital", "equipment", "hardware", "satellite"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -355,7 +355,7 @@ function getFallbackMarketData(
         prompt: "Commercial studio product shot of an enterprise dark server rack unit with subtle glowing cyan LED indicator lights, completely isolated, sharp clean cutout silhouette, studio product lighting, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, color background, room, floor, blurry, logos, text",
         keywords: ["isolated", "transparent", "cutout", "png", "server", "rack", "datacenter", "cloud", "hardware", "computer", "hosting", "storage", "technology", "network", "cyber", "internet", "enterprise", "telecom", "database", "digital", "chassis", "equipment"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -366,7 +366,7 @@ function getFallbackMarketData(
         prompt: "Commercial 3D graphic asset of a futuristic glowing blue cyber security shield icon with subtle binary digital circuitry, completely isolated, clean alpha edges, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, black background, blurry, distorted, watermark",
         keywords: ["isolated", "transparent", "cutout", "png", "cybersecurity", "shield", "security", "firewall", "protection", "icon", "data", "safety", "network", "encryption", "digital", "cyber", "defense", "privacy", "virtual", "futuristic", "symbol"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -377,7 +377,7 @@ function getFallbackMarketData(
         prompt: "Commercial 3D icon of a digital neural network brain silhouette made of interconnected glowing cyan dots and lines, completely isolated, clean cutout, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, dark background, blurry, watermark",
         keywords: ["isolated", "transparent", "cutout", "png", "artificial intelligence", "brain", "neural", "network", "icon", "technology", "smart", "digital", "data", "algorithm", "deep", "learning", "machine", "science", "future", "mind", "concept"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -388,7 +388,7 @@ function getFallbackMarketData(
         prompt: "Commercial studio mockup of a contemporary light oak vertical poster frame mockup with pure white blank inner mat board, completely isolated, clean sharp cutout edges, soft realistic self-shadow only, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, wall, room, text in frame, picture in frame, logos",
         keywords: ["isolated", "transparent", "cutout", "png", "mockup", "frame", "poster", "blank", "wood", "picture", "canvas", "border", "minimalist", "display", "template", "empty", "oak", "photo", "art", "modern", "design", "clean"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -399,7 +399,7 @@ function getFallbackMarketData(
         prompt: "Commercial furniture studio photograph of a luxury mid-century modern brown leather armchair with slim black metal legs, completely isolated, sharp cutout silhouette, crisp studio lighting, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, floor, living room, wall, blurry, distorted",
         keywords: ["isolated", "transparent", "cutout", "png", "armchair", "chair", "leather", "furniture", "interior", "brown", "modern", "luxury", "seat", "design", "living room", "decor", "home", "studio", "comfort", "relax", "nordic"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -410,7 +410,7 @@ function getFallbackMarketData(
         prompt: "Commercial home decor studio cutout of a beige fluted ceramic vase holding fluffy dried pampas grass stems, completely isolated, sharp clean alpha edges, soft neutral studio lighting, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, table, room, wall, blurry",
         keywords: ["isolated", "transparent", "cutout", "png", "vase", "pampas", "grass", "ceramic", "decor", "interior", "fluffy", "dried", "beige", "neutral", "home", "aesthetic", "minimalist", "boho", "decoration", "plant", "floral"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -421,7 +421,7 @@ function getFallbackMarketData(
         prompt: "Commercial device studio photograph of a sleek open aluminum laptop seen at a three-quarter angle with a completely blank dark display screen mockup, completely isolated, perfectly clean cutout edges, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, desk, hands, brand logos, keyboard text distortion",
         keywords: ["isolated", "transparent", "cutout", "png", "laptop", "mockup", "screen", "computer", "notebook", "aluminum", "display", "blank", "device", "technology", "office", "work", "business", "modern", "portable", "tech"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -432,7 +432,7 @@ function getFallbackMarketData(
         prompt: "Commercial 3D concept photo of two rounded smooth natural wood pebble tokens side-by-side, one engraved with a happy smiling face and one with a sad frowning face, completely isolated, clean alpha cutout, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, hands, table, blurry, logos",
         keywords: ["isolated", "transparent", "cutout", "png", "feedback", "rating", "emoji", "token", "wood", "happy", "sad", "review", "satisfaction", "customer", "sentiment", "choice", "emotion", "service", "score", "survey", "opinion"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -443,7 +443,7 @@ function getFallbackMarketData(
         prompt: "Commercial 3D conceptual photo of a neat rising stack of shiny gold coins topped with a small black academic graduation mortarboard cap, completely isolated, clean cutout silhouette, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, surface, shadow, blurry, text",
         keywords: ["isolated", "transparent", "cutout", "png", "coins", "gold", "graduation", "cap", "finance", "education", "scholarship", "loan", "investment", "money", "student", "savings", "wealth", "tuition", "success", "future"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -454,7 +454,7 @@ function getFallbackMarketData(
         prompt: "Commercial stock studio object of an antique polished brass justice balance scale hanging perfectly level in equilibrium, completely isolated, sharp clean cutout edges, studio lighting, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, table, wall, distorted chains",
         keywords: ["isolated", "transparent", "cutout", "png", "justice", "scale", "balance", "brass", "law", "legal", "court", "equality", "equity", "ethics", "judgment", "lawyer", "attorney", "judge", "fairness", "weight", "symbol"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -465,7 +465,7 @@ function getFallbackMarketData(
         prompt: "Commercial concept studio photograph of an upright traditional glass incandescent light bulb with glowing golden-yellow filament, completely isolated, sharp glass cutout edges, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, black background, socket, wires, blurry",
         keywords: ["isolated", "transparent", "cutout", "png", "light bulb", "bulb", "idea", "innovation", "creativity", "glow", "energy", "bright", "inspiration", "thinking", "solution", "genius", "brainstorm", "concept", "electricity", "invention"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -476,7 +476,7 @@ function getFallbackMarketData(
         prompt: "Commercial botanical nature cutout of a vibrant green young sprout seedling growing out of a compact rounded clump of rich dark fertile soil, completely isolated, crisp alpha edges, fresh dewy leaf texture, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, pot, garden, blurry, watermark",
         keywords: ["isolated", "transparent", "cutout", "png", "sprout", "plant", "seedling", "growth", "soil", "green", "nature", "sustainability", "environment", "esg", "earth", "organic", "eco", "agriculture", "spring", "life", "invest"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -487,7 +487,7 @@ function getFallbackMarketData(
         prompt: "Commercial food photography studio asset of a cluster of dry natural star anise pods, rich textured brown woody petals, completely isolated, sharp studio focus, zero background shadows, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, table, bowl, blurry, watermark",
         keywords: ["isolated", "transparent", "cutout", "png", "star anise", "anise", "spice", "culinary", "ingredient", "seasoning", "herb", "organic", "cooking", "aromatic", "kitchen", "asian", "dry", "flavor", "gourmet", "natural", "seed"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -498,7 +498,7 @@ function getFallbackMarketData(
         prompt: "Commercial culinary studio asset of five real Ceylon cinnamon bark quills bundled together and neatly tied with rustic natural jute string, completely isolated, sharp cutout silhouette, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, wood surface, cloth, blurry",
         keywords: ["isolated", "transparent", "cutout", "png", "cinnamon", "stick", "twine", "spice", "culinary", "baking", "aromatic", "ingredient", "bark", "flavor", "organic", "natural", "cooking", "gourmet", "kitchen", "seasoning"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -509,7 +509,7 @@ function getFallbackMarketData(
         prompt: "Commercial culinary studio photograph of a single fresh culinary rosemary sprig with needle-like green leaves, completely isolated, clean alpha channel cutout, crisp detailed botanical texture, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, chopping board, dish, blurry, watermark",
         keywords: ["isolated", "transparent", "cutout", "png", "rosemary", "herb", "sprig", "fresh", "green", "culinary", "leaf", "cooking", "seasoning", "organic", "ingredient", "aromatic", "kitchen", "natural", "healthy", "food", "gourmet"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -520,7 +520,7 @@ function getFallbackMarketData(
         prompt: "Commercial product studio asset of a neat small mound of glossy dark roasted Arabica coffee beans, rich brown color, detailed oily bean texture, completely isolated, sharp cutout boundary, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, sack, cup, table, blurry",
         keywords: ["isolated", "transparent", "cutout", "png", "coffee", "bean", "roasted", "arabica", "espresso", "caffeine", "pile", "aroma", "grain", "brown", "beverage", "cafe", "kitchen", "ingredient", "food", "organic", "natural"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -531,7 +531,7 @@ function getFallbackMarketData(
         prompt: "Commercial botanical food photograph of a fresh knobby turmeric rhizome root alongside several cut circular orange slices, completely isolated, clean alpha cutout, vibrant golden color, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, plate, soil, blurry, watermark",
         keywords: ["isolated", "transparent", "cutout", "png", "turmeric", "root", "spice", "orange", "sliced", "curry", "culinary", "healthy", "organic", "ingredient", "herb", "kitchen", "seasoning", "ayurveda", "fresh", "natural", "superfood"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -542,7 +542,7 @@ function getFallbackMarketData(
         prompt: "Commercial seasonal botanical element of a single real Canadian maple leaf in rich golden-orange autumn colors with tiny crystal water dew drops on surface, completely isolated, crisp alpha edges, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, tree, branch, blurry, fake leaf",
         keywords: ["isolated", "transparent", "cutout", "png", "leaf", "autumn", "fall", "maple", "orange", "gold", "seasonal", "october", "november", "nature", "thanksgiving", "foliage", "dew", "drop", "water", "botanical", "vibrant"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
       {
@@ -553,7 +553,7 @@ function getFallbackMarketData(
         prompt: "Commercial holiday asset of a vibrant round orange pumpkin with natural textured green stem, completely isolated, studio flash lighting, crisp clean silhouette edges, no background.",
         negativePrompt: "checkerboard, checkered grid, fake transparency, grid pattern, solid background, field, porch, dirty, blurry, text",
         keywords: ["isolated", "transparent", "cutout", "png", "pumpkin", "halloween", "autumn", "fall", "orange", "seasonal", "october", "harvest", "thanksgiving", "vegetable", "gourd", "holiday", "celebration", "food", "farm", "clean"],
-        modelUsed: "openai/gpt-image-1-mini",
+        modelUsed: "openai/gpt-5-image-mini",
         costEstimate: "~$0.008 / image",
       },
     ];
@@ -619,7 +619,7 @@ function getFallbackMarketData(
         "indoor", "wooden", "neutral", "daylight", "apartment",
         "clean", "styling", "cozy", "pampas", "vase"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -637,7 +637,7 @@ function getFallbackMarketData(
         "healthy", "natural", "seed", "powder", "table",
         "dark", "mortar", "bowl", "texture", "recipe"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -655,7 +655,7 @@ function getFallbackMarketData(
         "opinion", "client", "concept", "balance", "decision",
         "gesture", "holding", "token", "feeling", "business"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -745,7 +745,7 @@ function getFallbackMarketData(
         "light", "decor", "aesthetic", "residential", "styling",
         "morning", "sink", "elegance", "indoor", "blank"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -763,7 +763,7 @@ function getFallbackMarketData(
         "display", "modern", "freelance", "business", "neutral",
         "daylight", "decor", "productivity", "study", "table"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -781,7 +781,7 @@ function getFallbackMarketData(
         "clean", "frame", "poster", "light", "space",
         "poster", "showroom", "empty", "urban", "design"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -799,7 +799,7 @@ function getFallbackMarketData(
         "daylight", "morning", "relax", "beige", "peaceful",
         "shadow", "furniture", "canvas", "room", "indoor"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -817,7 +817,7 @@ function getFallbackMarketData(
         "success", "budget", "wealth", "banking", "economy",
         "academic", "career", "study", "tuition", "holding"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -835,7 +835,7 @@ function getFallbackMarketData(
         "symbol", "neutral", "authority", "order", "truth",
         "honest", "measure", "professional", "holding", "concept"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -853,7 +853,7 @@ function getFallbackMarketData(
         "power", "energy", "yellow", "business", "vision",
         "talent", "individuality", "success", "bright", "invention"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -871,7 +871,7 @@ function getFallbackMarketData(
         "life", "nurture", "development", "eco", "spring",
         "symbol", "fresh", "holding", "seed", "concept"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -889,7 +889,7 @@ function getFallbackMarketData(
         "olive", "flavor", "recipe", "table", "board",
         "diet", "natural", "chef", "mediterranean", "texture"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -907,7 +907,7 @@ function getFallbackMarketData(
         "morning", "roast", "food", "table", "natural",
         "fresh", "drink", "gourmet", "ingredient", "energy"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -925,7 +925,7 @@ function getFallbackMarketData(
         "organic", "healthy", "kitchen", "gourmet", "recipe",
         "overhead", "seed", "table", "aromatic", "stone"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     },
     {
@@ -943,7 +943,7 @@ function getFallbackMarketData(
         "texture", "flat lay", "elegant", "background", "season",
         "vibrant", "overhead", "surface", "celebration", "carrara"
       ],
-      modelUsed: "recraft/recraft-v4.1-flash",
+      modelUsed: "google/gemini-2.5-flash-image",
       costEstimate: "~$0.007 / image",
     }
   ];
