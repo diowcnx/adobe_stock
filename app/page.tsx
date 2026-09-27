@@ -18,8 +18,12 @@ import {
   AlertCircle,
   LogOut,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
+  FolderArchive,
+  ArrowDownToLine,
+  Loader2
 } from "lucide-react";
+import JSZip from "jszip";
 import { WorkflowResult, OpenRouterCreditInfo, StockImageItem } from "@/lib/types";
 import { generateMetadataCsv } from "@/lib/csv";
 
@@ -143,6 +147,106 @@ export default function Dashboard() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const [isZipping, setIsZipping] = useState(false);
+  const [zipProgress, setZipProgress] = useState<string>("");
+
+  const downloadAllImagesZip = async () => {
+    if (!latestResult || !latestResult.images || latestResult.images.length === 0) return;
+    setIsZipping(true);
+    setZipProgress("กำลังเริ่มเตรียมแพ็กเกจ ZIP...");
+    try {
+      const zip = new JSZip();
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+
+      // 1. แนบไฟล์ CSV เข้าไปใน ZIP เพื่อความสะดวกในการใช้งานทันที
+      const csvContent = generateMetadataCsv(latestResult.images);
+      zip.file(`adobe_stock_metadata_${dateStr}.csv`, csvContent);
+
+      // 2. ดึงภาพทั้ง 20 ภาพ
+      let count = 0;
+      for (const img of latestResult.images) {
+        if (img.imageUrl) {
+          count++;
+          setZipProgress(`กำลังโหลดภาพที่ ${count}/${latestResult.images.length}...`);
+          try {
+            let blob: Blob | null = null;
+            try {
+              const res = await fetch(img.imageUrl);
+              if (res.ok) {
+                blob = await res.blob();
+              }
+            } catch {
+              // fallback to proxy
+            }
+
+            if (!blob) {
+              const proxyRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(img.imageUrl)}`);
+              if (proxyRes.ok) {
+                blob = await proxyRes.blob();
+              }
+            }
+
+            if (blob) {
+              const filename = img.filename || `stock_image_${img.id}.png`;
+              zip.file(filename, blob);
+            }
+          } catch (fetchErr) {
+            console.warn(`Could not add image #${img.id} to zip:`, fetchErr);
+          }
+        }
+      }
+
+      setZipProgress("กำลังสร้างและบีบอัดไฟล์ ZIP ทั้งหมด...");
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+      const link = document.createElement("a");
+      link.href = url;
+      const modeSlug = latestResult.generationMode || "stock";
+      link.download = `adobe_stock_batch_${modeSlug}_${dateStr}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("ZIP creation error:", err);
+      alert("ไม่สามารถสร้างไฟล์ ZIP ได้: " + (err.message || String(err)));
+    } finally {
+      setIsZipping(false);
+      setZipProgress("");
+    }
+  };
+
+  const downloadSingleImage = async (img: StockImageItem) => {
+    if (!img.imageUrl) return;
+    try {
+      let blob: Blob | null = null;
+      try {
+        const res = await fetch(img.imageUrl);
+        if (res.ok) blob = await res.blob();
+      } catch {}
+
+      if (!blob) {
+        const proxyRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(img.imageUrl)}`);
+        if (proxyRes.ok) blob = await proxyRes.blob();
+      }
+
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = img.filename || `stock_image_${img.id}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        window.open(img.imageUrl, "_blank");
+      }
+    } catch (e) {
+      window.open(img.imageUrl, "_blank");
+    }
   };
 
   return (
@@ -450,13 +554,32 @@ export default function Dashboard() {
                         <strong className="text-slate-300">Seasonal Horizon:</strong> {latestResult.trend.seasonalRelevance}
                       </div>
                     </div>
-                    <button
-                      onClick={downloadMetadataCsv}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-md shadow-emerald-950/40"
-                    >
-                      <FileSpreadsheet className="w-4 h-4" />
-                      <span>Download Metadata CSV (Filename,Title,Keywords)</span>
-                    </button>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        onClick={downloadAllImagesZip}
+                        disabled={isZipping}
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-md shadow-indigo-950/40 disabled:opacity-50"
+                      >
+                        {isZipping ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>{zipProgress || "กำลังบีบอัดไฟล์ ZIP..."}</span>
+                          </>
+                        ) : (
+                          <>
+                            <FolderArchive className="w-4 h-4" />
+                            <span>ดาวน์โหลดทั้ง 20 ภาพ (ZIP + CSV)</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={downloadMetadataCsv}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-md shadow-emerald-950/40"
+                      >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        <span>Download CSV Only</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -547,7 +670,7 @@ export default function Dashboard() {
 
                       <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
                         {/* Image Preview */}
-                        <div className="lg:col-span-4 flex flex-col justify-center">
+                        <div className="lg:col-span-4 flex flex-col justify-center space-y-3">
                           {img.imageUrl ? (
                             <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-inner group relative">
                               <img
@@ -560,6 +683,16 @@ export default function Dashboard() {
                             <div className="w-full h-48 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center text-slate-500 text-xs">
                               Preview generated
                             </div>
+                          )}
+
+                          {img.imageUrl && (
+                            <button
+                              onClick={() => downloadSingleImage(img)}
+                              className="w-full bg-slate-800/90 hover:bg-slate-700 text-sky-300 hover:text-white text-xs font-semibold py-2 px-3 rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition shadow-sm"
+                            >
+                              <ArrowDownToLine className="w-3.5 h-3.5" />
+                              <span>บันทึกภาพเดี่ยว (Download)</span>
+                            </button>
                           )}
                         </div>
 

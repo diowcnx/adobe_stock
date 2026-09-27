@@ -53,7 +53,8 @@ export async function sendDailyStockEmail({
   const htmlBody = generateEmailHtml(todayStr, trend, images, credits, csvFilename, mode);
   const textBody = generateEmailPlainText(todayStr, trend, images, credits, csvFilename, mode);
 
-  // แนบไฟล์ CSV ที่มีเฉพาะ Filename,Title,Keywords เสมอ
+  // แนบเฉพาะไฟล์ CSV (Filename,Title,Keywords) เบาเพียง ~10KB เพื่อความรวดเร็วและแน่นอน 100%
+  // ผู้ใช้สามารถคลิกลิงก์บนอีเมลเพื่อไปดาวน์โหลดชุดภาพทั้งหมด (ZIP) ได้ที่หน้าเว็บทันที
   const csvContent = generateMetadataCsv(images);
   const csvBase64 = Buffer.from(csvContent, "utf-8").toString("base64");
   const attachments: Array<{ filename: string; fileblob: string; mimetype: string }> = [
@@ -63,24 +64,6 @@ export async function sendDailyStockEmail({
       mimetype: "text/csv",
     },
   ];
-
-  // ควบคุมขนาดรวมของ attachments ให้อยู่ในระดับปลอดภัย (ไม่เกิน 4 MB) เพื่อป้องกัน payload timeout
-  const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
-  let currentBytes = csvBase64.length * 0.75;
-
-  for (const img of images) {
-    if (img.imageBase64 && img.filename) {
-      const imgBytes = img.imageBase64.length * 0.75;
-      if (currentBytes + imgBytes < MAX_ATTACHMENT_BYTES) {
-        attachments.push({
-          filename: img.filename,
-          fileblob: img.imageBase64,
-          mimetype: "image/png",
-        });
-        currentBytes += imgBytes;
-      }
-    }
-  }
 
   if (!key) {
     console.warn("SMTP2GO_API_KEY not configured in environment variables.");
@@ -102,57 +85,22 @@ export async function sendDailyStockEmail({
       api_key: key,
       to: [toEmail],
       sender: fromEmail,
-      subject: `${subjectPrefix}📸 ${modeTag} ${images.length} New Adobe Stock Assets & SEO Keywords - ${todayStr}`,
+      subject: `${subjectPrefix}📸 ${modeTag} ${images.length} New Adobe Stock Assets Ready for Download - ${todayStr}`,
       html_body: htmlBody,
       text_body: textBody,
-      attachments: attachments.length > 0 ? attachments : undefined,
+      attachments,
     };
 
-    let res = await fetch("https://api.smtp2go.com/v3/email/send", {
+    const res = await fetch("https://api.smtp2go.com/v3/email/send", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(12000),
     });
 
-    let data: Smtp2goSendResponse = await res.json().catch(() => ({}));
-
-    // หากส่งไม่สำเร็จ (เช่น ติดขนาดไฟล์แนบ หรือ timeout) ให้ลองส่งซ้ำทันทีโดยแนบเฉพาะไฟล์ CSV
-    if ((!res.ok || (data?.data?.succeeded ?? 0) === 0) && attachments.length > 1) {
-      console.warn("Retrying email dispatch with CSV metadata attachment only...");
-      const lightPayload = {
-        ...payload,
-        attachments: [
-          {
-            filename: csvFilename,
-            fileblob: csvBase64,
-            mimetype: "text/csv",
-          },
-        ],
-      };
-
-      try {
-        const retryRes = await fetch("https://api.smtp2go.com/v3/email/send", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(lightPayload),
-          signal: AbortSignal.timeout(10000),
-        });
-        const retryData: Smtp2goSendResponse = await retryRes.json().catch(() => ({}));
-        if (retryRes.ok && retryData?.data && (retryData.data.succeeded ?? 0) > 0) {
-          return {
-            success: true,
-            messageId: retryData.data.email_id || `sent-${Date.now()}`,
-          };
-        }
-      } catch (retryErr) {
-        console.error("Retry with CSV only also failed:", retryErr);
-      }
-    }
+    const data: Smtp2goSendResponse = await res.json().catch(() => ({}));
 
     if (res.ok && data?.data && (data.data.succeeded ?? 0) > 0) {
       return {
@@ -275,19 +223,21 @@ function generateEmailHtml(
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #0f172a;">
   <div style="max-width: 680px; margin: 0 auto;">
     
-    <!-- Top Quick Access Bar -->
-    <div style="background-color: #0f172a; border: 1px solid #1e293b; border-radius: 14px; padding: 12px 18px; margin-bottom: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    <!-- Top Action Card: Download All Images & Metadata on Web -->
+    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); border: 2px solid #3b82f6; border-radius: 16px; padding: 18px 22px; margin-bottom: 22px; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td>
-            <span style="color: #94a3b8; font-size: 13px; margin-right: 6px;">🔗 เข้าใช้งานระบบ:</span>
-            <a href="${appUrl}" style="color: #38bdf8; font-weight: 700; font-size: 14px; text-decoration: underline;">
-              ${appUrl}
-            </a>
+            <div style="color: #38bdf8; font-size: 16px; font-weight: 800; margin-bottom: 4px;">
+              📥 ภาพชุดใหม่ 20 ภาพพร้อมดาวน์โหลดแล้ว!
+            </div>
+            <div style="color: #cbd5e1; font-size: 13px; line-height: 1.4;">
+              คลิกปุ่มเพื่อเปิดหน้าเว็บและกดดาวน์โหลดไฟล์ภาพทั้งหมดแบบ <strong>ZIP Archive</strong> (พร้อมชื่อไฟล์แยกเฉพาะตัว) และไฟล์ <strong>CSV</strong> ทันที
+            </div>
           </td>
-          <td align="right">
-            <a href="${appUrl}" style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); color: #ffffff; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-block; box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);">
-              เปิดเว็บทันที &rarr;
+          <td align="right" valign="middle" style="padding-left: 16px;">
+            <a href="${appUrl}" style="background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: #ffffff; padding: 12px 22px; border-radius: 12px; font-size: 13px; font-weight: 800; text-decoration: none; display: inline-block; white-space: nowrap; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4);">
+              ดาวน์โหลดภาพบนเว็บ &rarr;
             </a>
           </td>
         </tr>

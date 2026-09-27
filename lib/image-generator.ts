@@ -139,21 +139,9 @@ export async function generateSingleImage(
             imageBase64: base64,
           };
         } else {
-          // ดาวน์โหลดภาพและแปลงเป็น Base64 สำหรับแนบไฟล์อีเมล
-          let base64 = "";
-          try {
-            const imgRes = await fetch(extractedUrl, { signal: AbortSignal.timeout(5000) });
-            if (imgRes.ok) {
-              const buf = await imgRes.arrayBuffer();
-              base64 = Buffer.from(buf).toString("base64");
-            }
-          } catch (fetchErr) {
-            console.warn(`[Item #${item.id}] Could not fetch image buffer for email attachment:`, fetchErr);
-          }
-
           return {
-            imageUrl: extractedUrl, // รักษา hosted URL ไว้ ไม่แปลงเป็น dataUri ขนาดใหญ่
-            imageBase64: base64,
+            imageUrl: extractedUrl,
+            imageBase64: "",
           };
         }
       }
