@@ -585,12 +585,7 @@ export default function Dashboard() {
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-lg leading-tight flex items-center gap-2">
-                Adobe Stock AI Producer
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium border border-emerald-500/30">
-                  Daily 18:00 ICT
-                </span>
-              </h1>
+              <h1 className="font-bold text-lg leading-tight">Adobe Stock AI Producer</h1>
               <p className="text-xs text-slate-400">diowcnx/adobe_stock &bull; Vercel Automated Engine</p>
             </div>
           </div>
