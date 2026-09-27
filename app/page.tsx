@@ -530,7 +530,7 @@ export default function Dashboard() {
                           <div>
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                                40-50 Curated Keywords ({img.keywords.length} tags)
+                                Adobe Stock Optimized Keywords ({img.keywords.length} tags &bull; Top 10 Prioritized)
                               </span>
                               <button
                                 onClick={() => copyToClipboard(img.keywords.join(", "), `kw-${img.id}`)}

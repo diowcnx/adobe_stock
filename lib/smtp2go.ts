@@ -200,7 +200,7 @@ function generateEmailHtml(
           <!-- Keywords Ready to Paste -->
           <div>
             <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-              🏷️ 40-50 Keywords (Ready to Copy into Adobe Stock Contributor)
+              🏷️ Adobe Stock Optimized Keywords (Single Words / Top 10 Prioritized)
             </div>
             <div style="font-size: 12px; color: #1e293b; line-height: 1.6; background-color: #f1f5f9; padding: 12px; border-radius: 8px; word-break: break-word;">
               ${escapeHtml(keywordsString)}
