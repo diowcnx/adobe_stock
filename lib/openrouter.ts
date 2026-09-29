@@ -93,7 +93,7 @@ export async function getOpenRouterCredits(apiKey?: string): Promise<OpenRouterC
 export async function callOpenRouterJSON<T>(
   systemPrompt: string,
   userPrompt: string,
-  model: string = "typesafe/jev-router",
+  model: string = "google/gemini-3.1-flash-lite",
   apiKey?: string
 ): Promise<T> {
   const key = apiKey || process.env.OPENROUTER_API_KEY;
@@ -105,7 +105,7 @@ export async function callOpenRouterJSON<T>(
   const systemWithJsonInstruction = `${systemPrompt}\n\nIMPORTANT: Respond with pure JSON only, without any introductory or concluding text.`;
 
   // 1. ลองเรียกพร้อม response_format: { type: "json_object" }
-  let response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
+  const response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
@@ -121,34 +121,12 @@ export async function callOpenRouterJSON<T>(
       ],
       response_format: { type: "json_object" },
       temperature: 0.7,
-      max_tokens: 2500,
+      max_tokens: 6000,
     }),
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(25_000),
   });
 
-  // ถ้า router ไม่รองรับ response_format (เช่น เกิด 400) ให้ส่งคำขอแบบปกติ
-  if (!response.ok && response.status === 400) {
-    console.warn(`Router ${model} does not support response_format, retrying with standard prompt...`);
-    response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "HTTP-Referer": "https://adobe-stock.vercel.app",
-        "X-Title": "Adobe Stock Market Research & Generator",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: systemWithJsonInstruction },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 2500,
-      }),
-      signal: AbortSignal.timeout(8000),
-    });
-  }
+  // One planning request only. The caller uses curated briefs if it fails.
 
   if (!response.ok) {
     console.error(`OpenRouter API failed with status ${response.status}`);

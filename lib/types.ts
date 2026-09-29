@@ -3,7 +3,7 @@ export interface MarketTrend {
   targetMarket: string;
   commercialReasoning: string;
   seasonalRelevance: string;
-  buyerDemandRating: "High" | "Very High" | "Trending Commercial";
+  buyerDemandRating: "High" | "Very High" | "Trending Commercial" | "Research Candidate";
 }
 
 export interface StockImageItem {
@@ -11,6 +11,7 @@ export interface StockImageItem {
   seoTitle: string;
   category: string;
   aspectRatio: "16:9" | "3:2" | "4:5" | "1:1";
+  composition?: "artwork" | "advertising" | "asset";
   prompt: string;
   negativePrompt?: string;
   keywords: string[];

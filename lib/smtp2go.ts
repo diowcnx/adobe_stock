@@ -1,5 +1,5 @@
 import { MarketTrend, OpenRouterCreditInfo, StockImageItem } from "./types";
-import { generateMetadataCsv, generateUniqueStockFilename } from "./csv";
+import { generateMetadataCsv } from "./csv";
 
 interface Smtp2goSendResponse {
   data?: {
@@ -55,13 +55,6 @@ export async function sendDailyStockEmail({
   const dateSlug = `${yyyy}${mm}${dd}`;
   const csvFilename = `adobe_stock_metadata_${dateSlug}.csv`;
 
-  // ตรวจสอบให้ทุกภาพมีชื่อไฟล์เฉพาะตัวที่ไม่ซ้ำกัน
-  images.forEach((img) => {
-    if (!img.filename) {
-      img.filename = generateUniqueStockFilename(img.seoTitle, img.id, now, mode);
-    }
-  });
-
   // อ้างอิงชุดล่าสุดบนเซิร์ฟเวอร์ โดยไม่ฝังข้อมูลภาพลงใน URL
   const appUrl = process.env.APP_URL || "https://adobe-stock-lovat.vercel.app";
   const downloadUrl = `${appUrl}/?tab=images`;
@@ -71,7 +64,7 @@ export async function sendDailyStockEmail({
   const textBody = generateNotificationEmailPlainText(todayStr, trend, images.length, credits, csvFilename, mode, downloadUrl);
 
   // แนบไฟล์ CSV ข้อมูล Metadata (Filename, Title, Keywords)
-  const csvContent = generateMetadataCsv(images);
+  const csvContent = generateMetadataCsv(images, mode);
   const csvBase64 = Buffer.from(csvContent, "utf-8").toString("base64");
   const attachments: Array<{ filename: string; fileblob: string; mimetype: string }> = [
     {
@@ -203,12 +196,12 @@ function generateNotificationEmailHtml(
       <!-- Mode & Upscale Recommendation -->
       <div style="background-color: #ffffff; border: 1.5px solid ${isTransparent ? "#38bdf8" : "#10b981"}; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
         <div style="color: ${isTransparent ? "#0284c7" : "#059669"}; font-size: 14px; font-weight: 800; margin-bottom: 4px;">
-          ${isTransparent ? "🔲 โหมดวันนี้: ชุดภาพ PNG พื้นหลังโปร่งใส (100% Alpha Cutout)" : "🏞️ โหมดวันนี้: ชุดภาพทั่วไปมีฉากหลัง (พร้อม Copy Space 50-60%)"}
+          ${isTransparent ? "🔲 โหมดวันนี้: ชุดภาพ PNG พื้นหลังโปร่งใส (100% Alpha Cutout)" : "🏞️ โหมดวันนี้: ชุดภาพทั่วไปหรืองานศิลป์ตามหมวดประจำวัน"}
         </div>
         <div style="color: #475569; font-size: 13px; line-height: 1.4;">
           ${isTransparent
             ? "ชุดนี้เป็นภาพ Isolated Cutout ทั้งหมด กรุณาเลือกบันทึกผลลัพธ์เป็น <strong>.PNG</strong> เพื่อรักษาความโปร่งใส"
-            : "ชุดนี้เป็นภาพ Commercial Scene สามารถบันทึกเป็น <strong>.JPG หรือ .PNG</strong> ได้ตามสะดวก"}
+            : "ชุดนี้ใช้ชื่อไฟล์ <strong>.jpeg</strong> โดยองค์ประกอบภาพยึดตามโจทย์ของหมวดประจำวัน"}
         </div>
       </div>
 
@@ -275,7 +268,7 @@ function generateNotificationEmailPlainText(
 ): string {
   const modeLabel = mode === "transparent_png"
     ? "🔲 ชุดภาพ PNG พื้นหลังโปร่งใส (แนะนำ Save เป็น .PNG)"
-    : "🏞️ ชุดภาพทั่วไปมีฉากหลังและ Copy Space (แนะนำ Save เป็น .JPG หรือ .PNG)";
+    : "🏞️ ชุดภาพทั่วไปหรืองานศิลป์ตามหมวดประจำวัน (ชื่อไฟล์ .jpeg)";
 
   let text = `📸 Adobe Stock Daily Dispatch - ${todayStr}\n\n`;
   text += `ภาพชุดใหม่ ${imageCount} ภาพสร้างเสร็จสมบูรณ์แล้ว!\n\n`;

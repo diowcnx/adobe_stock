@@ -1,6 +1,6 @@
 # 📸 Adobe Stock Automated AI Generator & Daily Dispatcher
 
-ระบบวิจัยแนวโน้มตลาด Stock Photography ทั่วโลก, วิเคราะห์คีย์เวิร์ด, สร้าง 5 Prompts ที่แตกต่างกัน, สร้างภาพในอัตราส่วนสำหรับ Adobe Stock ผ่าน OpenRouter, ตรวจสอบยอดเครดิตคงเหลือ และจัดส่งอีเมลพร้อมไฟล์แนบและ SEO Metadata อัตโนมัติทุกวันเวลา 18:00 น. ผ่าน SMTP2GO
+ระบบสร้างภาพพร้อม SEO metadata ผ่าน OpenRouter วันละ 10 แนวคิด โดยหมุนเวียน 7 หมวดตามวันเวลาไทย ใช้สัญญาณจากรายงานแนวโน้มสาธารณะเพื่อเป็นแนวคิดตั้งต้น (ไม่ใช่ข้อมูลยอดขาย Adobe Stock) พร้อมตรวจเครดิตและจัดส่งอีเมลผ่าน SMTP2GO ทุกวันเวลา 18:00 น.
 
 ---
 
@@ -9,20 +9,23 @@
 1. **Market Research Engine**:
    - วิเคราะห์ปฏิทินเทศกาลล่วงหน้า 1-3 เดือน (ช่วงที่เอเจนซี่และนักการตลาดค้นหาภาพซื้อจริง)
    - ไม่จำกัดเฉพาะตลาด US แต่วิเคราะห์ครอบคลุมตลาดโลก (APAC, ยุโรป, ตะวันออกกลาง, อเมริกา)
-   - เจาะ Niche เชิงพาณิชย์ที่มีความต้องการสูง เช่น Modern Agri-tech & ESG, AI & Smart Industry, Authentic Lifestyles, Senior Care, Sustainable Cuisine
+   - หมุนหมวด Wall art, Wedding stationery, Tactile branding, Playful learning, Local hospitality, Climate adaptation และ Accessible living รายวัน
+   - รายงานแยกสัญญาณจากตลาด Etsy / Adobe Creative Trends ออกจากสมมติฐานที่ยังไม่ได้ตรวจสอบบน Adobe Stock
 2. **Adobe Stock Compliant Prompts & Metadata**:
-   - สร้าง 5 Prompts ในมุมมองภาพและสัดส่วนที่แตกต่างกัน (16:9 Landscape Banner, 3:2 Commercial Wide, 4:5 Social/Portrait, 1:1 Flat Lay/Macro, 3:2 In-action)
-   - มี **Copy Space** สำหรับใส่ข้อความโฆษณาตามความต้องการของผู้ซื้อ Stock
+   - สร้าง 10 Prompts ที่มี subject, buyer use และรายละเอียดภาพต่างกัน แทนการสร้างหลาย crop จากแนวคิดซ้ำ
+   - งาน Wall art สร้างตัว artwork เต็มภาพ ไม่บังคับ mockup หรือ copy space; หมวดโฆษณาจะมีพื้นที่วางข้อความเมื่อเหมาะกับโจทย์
    - ไม่มีเครื่องหมายการค้า โลโก้ หรือองค์ประกอบละเมิดลิขสิทธิ์
    - ให้ **SEO Title** กระชับ ชัดเจน
-   - ให้ **Keywords 40-50 คำ** เรียงลำดับคำค้นหาสำคัญ 10 คำแรกตามเกณฑ์ Adobe Stock
+   - ให้ **Keywords 15-25 คำ** เรียงคำเฉพาะไว้ก่อนและตรวจความเกี่ยวข้อง
 3. **OpenRouter Integration**:
-   - เลือกใช้โมเดลสร้างภาพที่สมจริง คมชัด และคุ้มค่าที่สุด (เช่น ตระกูล FLUX.1)
+   - ใช้ Gemini 3.1 Flash Lite Image สำหรับภาพ และ Gemini 2.5 Flash Lite สำหรับวางแผนแนวคิดหนึ่งครั้งต่อชุด
+   - ไม่ส่งคำขอภาพซ้ำไปยังโมเดลราคาแพงขึ้นอัตโนมัติเมื่อเกิด timeout; ตรวจ OpenRouter Activity เพื่อดูยอดที่เรียกเก็บจริง
    - ตรวจสอบยอดเครดิตคงเหลือ (Remaining Credits) ผ่าน OpenRouter API และแนบรายงานในอีเมลทุกวัน
 4. **SMTP2GO Automated Delivery**:
    - ส่งอีเมลตรงถึง `hs5ckt@gmail.com`
    - จัดรูปแบบ HTML สวยงาม พร้อมกล่อง Copy SEO Title และ Keywords
-   - แนบไฟล์ภาพทั้ง 5 ภาพความละเอียดสูง
+   - แนบ metadata CSV; ปุ่ม Dashboard ใช้ดาวน์โหลดภาพ ZIP หรือทีละภาพ
+   - ไฟล์ชุด JPEG ใช้ส่วนขยาย `.jpeg`; ชุด PNG ใช้ `.png`
 5. **Daily Loop via Vercel Cron**:
    - ตั้งเวลาทำงานอัตโนมัติทุกวันเวลา 18:00 น. ตามเวลาไทย (`0 11 * * *` UTC)
    - มี Web Dashboard ให้กด "Run Today's Batch Now" เพื่อทดสอบและดูผลลัพธ์ได้ทันที

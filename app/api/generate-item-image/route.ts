@@ -5,7 +5,7 @@ import { readJsonBody, validationErrorResponse } from "@/lib/request";
 import { isStockImageItem } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {

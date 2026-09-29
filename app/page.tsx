@@ -27,8 +27,9 @@ import {
 } from "lucide-react";
 import JSZip from "jszip";
 import { WorkflowResult, OpenRouterCreditInfo, StockImageItem } from "@/lib/types";
-import { generateMetadataCsv } from "@/lib/csv";
+import { generateMetadataCsv, getStockImageFilename } from "@/lib/csv";
 import { getErrorMessage, isRecord } from "@/lib/errors";
+import { BATCH_SIZE, getDailyCategory, getDailyScheduledMode, WEEKLY_CATEGORIES } from "@/lib/production-plan";
 import { isWorkflowResult } from "@/lib/validation";
 
 type GenerationModeSelection = "auto" | "transparent_png" | "regular_scene";
@@ -47,16 +48,6 @@ interface TestEmailResult {
   senderEmail?: string;
   recipientEmail?: string;
 }
-
-function getScheduledModeForToday(): "transparent_png" | "regular_scene" {
-  const now = new Date();
-  const startOfYear = new Date(now.getFullYear(), 0, 0);
-  return Math.floor((now.getTime() - startOfYear.getTime()) / 86_400_000) % 2 === 0
-    ? "transparent_png"
-    : "regular_scene";
-}
-
-const TODAY_SCHEDULED_MODE = getScheduledModeForToday();
 
 interface SavedBatch {
   id: string;
@@ -129,7 +120,8 @@ export default function Dashboard() {
     }
   };
 
-  const todayScheduledMode = TODAY_SCHEDULED_MODE;
+  const todayScheduledMode = getDailyScheduledMode();
+  const todayCategory = getDailyCategory();
 
   const handleLogout = async () => {
     try {
@@ -255,7 +247,7 @@ export default function Dashboard() {
   // กดเริ่มกระบวนการทันทีด้วยระบบ Progressive Generation (ป้องกัน 504 Timeout เด็ดขาด และเห็นผลสดทันที)
   const triggerManualRun = async () => {
     setIsRunning(true);
-    setRunProgress("กำลังวิจัยแนวโน้มตลาดและวางแผน 20 ภาพ...");
+    setRunProgress(`กำลังวางแผนแนวคิดและเตรียม ${BATCH_SIZE} ภาพ...`);
     try {
       // 1. เรียกวางแผน Prompts และวิจัยตลาด (รวดเร็วเพียง 1-2 วินาที)
       const prepRes = await fetch("/api/prepare-batch", {
@@ -283,17 +275,18 @@ export default function Dashboard() {
         durationMs: 0,
       };
 
-      // นำ 20 การ์ดขึ้นจอทันที ผู้ใช้จะเห็น Title, Keywords และคิวสร้างภาพทันที!
+      // นำการ์ดขึ้นจอทันที ผู้ใช้จะเห็น Title, Keywords และคิวสร้างภาพทันที
       setLatestResult(initialBatch);
       selectTab("images");
 
-      // 2. สร้างภาพทั้ง 20 ภาพแบบต่อเนื่องในพื้นหลัง (สร้างทีละ 3 ภาพพร้อมกัน)
+      // 2. สร้างภาพทั้งชุดแบบต่อเนื่องในพื้นหลัง (สร้างทีละ 3 ภาพพร้อมกัน)
       let completedCount = 0;
       const updatedImages = [...prepData.items];
       const queue = [...prepData.items];
       const concurrency = 3;
 
-      setRunProgress(`กำลังสร้างภาพ: 0/20 ภาพเสร็จแล้ว...`);
+      const totalCount = queue.length;
+      setRunProgress(`กำลังสร้างภาพ: 0/${totalCount} ภาพเสร็จแล้ว...`);
 
       const workers = Array(concurrency).fill(null).map(async () => {
         while (queue.length > 0) {
@@ -324,8 +317,8 @@ export default function Dashboard() {
           }
 
           completedCount++;
-          const pct = Math.round((completedCount / 20) * 100);
-          setRunProgress(`กำลังสร้างภาพ: ${completedCount}/20 ภาพเสร็จแล้ว (${pct}%)...`);
+          const pct = totalCount === 0 ? 100 : Math.round((completedCount / totalCount) * 100);
+          setRunProgress(`กำลังสร้างภาพ: ${completedCount}/${totalCount} ภาพเสร็จแล้ว (${pct}%)...`);
         }
       });
 
@@ -394,7 +387,7 @@ export default function Dashboard() {
       showNotice("ยังไม่มีข้อมูลภาพสำหรับดาวน์โหลด CSV", "error");
       return;
     }
-    const csvContent = generateMetadataCsv(latestResult.images);
+    const csvContent = generateMetadataCsv(latestResult.images, latestResult.generationMode);
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -446,10 +439,10 @@ export default function Dashboard() {
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
       // 1. แนบไฟล์ CSV เข้าไปใน ZIP เพื่อความสะดวกในการใช้งานทันที
-      const csvContent = generateMetadataCsv(batch.images);
+      const csvContent = generateMetadataCsv(batch.images, batch.generationMode);
       zip.file(`adobe_stock_metadata_${dateStr}.csv`, csvContent);
 
-      // 2. ดึงภาพทั้ง 20 ภาพ
+      // 2. ดึงภาพทั้งหมดในชุด
       let count = 0;
       let addedImageCount = 0;
       const expectedImageCount = batch.images.filter((image) => Boolean(image.imageUrl)).length;
@@ -458,7 +451,7 @@ export default function Dashboard() {
           count++;
           setZipProgress(`กำลังโหลดภาพที่ ${count}/${batch.images.length}...`);
           try {
-            const filename = img.filename || `stock_image_${img.id}.png`;
+            const filename = getStockImageFilename(img, batch.generationMode);
             if (img.imageUrl.startsWith("data:")) {
               const base64Data = img.imageUrl.split(",")[1];
               zip.file(filename, base64Data, { base64: true });
@@ -528,7 +521,7 @@ export default function Dashboard() {
       return;
     }
     try {
-      const filename = img.filename || `stock_image_${img.id}.png`;
+      const filename = getStockImageFilename(img, latestResult?.generationMode);
       if (img.imageUrl.startsWith("data:")) {
         const link = document.createElement("a");
         link.href = img.imageUrl;
@@ -619,7 +612,7 @@ export default function Dashboard() {
                 }
               }}
               className="bg-slate-800/90 border border-slate-700/80 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500 font-medium"
-              title="เลือกโหมดการสร้างภาพ (สลับวันต่อวันอัตโนมัติ หรือบังคับโหมดใดโหมดหนึ่ง)"
+              title="เลือกโหมดตามหมวดประจำวันอัตโนมัติ หรือบังคับโหมดใดโหมดหนึ่ง"
             >
               <option value="auto">
                 🔄 Auto: {todayScheduledMode === "transparent_png" ? "🔲 วันนี้โหมด Transparent PNG" : "🏞️ วันนี้โหมด Regular Scene"}
@@ -643,7 +636,7 @@ export default function Dashboard() {
               ) : (
                 <>
                   <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                  <span>⚡ สั่งสร้างชุดภาพ 20 ภาพทันที</span>
+                  <span>⚡ สั่งสร้างชุดภาพ {BATCH_SIZE} ภาพทันที</span>
                 </>
               )}
             </button>
@@ -823,8 +816,8 @@ export default function Dashboard() {
                   <span className="text-xs font-medium text-slate-400">Daily Production</span>
                   <ImageIcon className="w-4 h-4 text-purple-400" />
                 </div>
-                <div className="text-xl font-bold text-white">20 Images / Day</div>
-                <p className="text-xs text-slate-500 mt-1">100% Homogeneous Set</p>
+                <div className="text-xl font-bold text-white">{BATCH_SIZE} Images / Day</div>
+                <p className="text-xs text-slate-500 mt-1">7 different categories by weekday</p>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -842,12 +835,26 @@ export default function Dashboard() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
-                  {todayScheduledMode === "transparent_png" ? "🔲 Transparent PNG" : "🏞️ Regular Scene"}
+                  {todayCategory.name} · {todayScheduledMode === "transparent_png" ? "🔲 PNG" : "🏞️ JPEG"}
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {todayScheduledMode === "transparent_png" ? "Save as .PNG" : "Save as .JPG/.PNG"}
+                  {todayScheduledMode === "transparent_png" ? "Filename: .png" : "Filename: .jpeg"}
                 </p>
               </div>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+              <h3 className="font-semibold text-white mb-3">Weekly buyer-use categories · 10 images per day</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+                {WEEKLY_CATEGORIES.map((category) => (
+                  <div key={category.day} className={`rounded-xl border p-3 ${category.name === todayCategory.name ? "border-sky-500/60 bg-sky-950/40" : "border-slate-800 bg-slate-950/50"}`}>
+                    <div className="text-[11px] text-slate-500">{category.day}</div>
+                    <div className="text-xs font-semibold text-slate-200 mt-1">{category.name}</div>
+                    <div className="text-[10px] text-slate-500 mt-1">{category.mode === "transparent_png" ? "PNG assets" : "JPEG scene/art"}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-3">Category ideas use public creative and search trends as directional signals; they are not verified sales or competition rankings.</p>
             </div>
 
             {/* Workflow Pipeline Card */}
@@ -860,12 +867,12 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center">1</div>
                   <div className="font-semibold text-white">Market Research</div>
-                  <p className="text-slate-400">Scans seasonal cycles &amp; proven winner niches (Cloud, Mockup, Metaphor, Food, Telecom).</p>
+                  <p className="text-slate-400">Uses the weekly category plan and seasonal context without claiming live marketplace demand.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
-                  <div className="font-semibold text-white">20 Stock Prompts</div>
-                  <p className="text-slate-400">Creates 20 diverse items with commercial copy space across 5 high-converting niches.</p>
+                  <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
+                  <p className="text-slate-400">Creates {BATCH_SIZE} focused items across 7 rotating categories, reducing image-generation calls per batch.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
@@ -891,7 +898,7 @@ export default function Dashboard() {
                 <div className="space-y-1">
                   <h3 className="font-bold text-white text-base">พร้อมทดลองสร้างชุดภาพสต็อกใหม่หรือไม่?</h3>
                   <p className="text-xs text-slate-400">
-                    กดปุ่มเพื่อเริ่มวิจัยตลาด ออกแบบ Prompt และสั่งสร้างภาพสต็อก 20 ภาพ พร้อมดาวน์โหลดไฟล์ ZIP + CSV ทันที
+                    กดปุ่มเพื่อวางแผนแนวคิด ออกแบบ Prompt และสั่งสร้างภาพสต็อก {BATCH_SIZE} ภาพ พร้อมดาวน์โหลดไฟล์ ZIP + CSV ทันที
                   </p>
                 </div>
                 <button
@@ -901,7 +908,7 @@ export default function Dashboard() {
                   className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-lg shadow-indigo-600/30 cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                  {isRunning ? "กำลังสร้างชุดภาพ..." : "⚡ สั่งสร้างชุดภาพ 20 ภาพทันที"}
+                  {isRunning ? "กำลังสร้างชุดภาพ..." : `⚡ สั่งสร้างชุดภาพ ${BATCH_SIZE} ภาพทันที`}
                 </button>
               </div>
             )}
@@ -939,7 +946,7 @@ export default function Dashboard() {
                 <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/60 border border-slate-800 rounded-2xl p-6">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
-                      🎯 Winning Niche: {latestResult.trend.buyerDemandRating} Demand
+                      🎯 Concept Status: {latestResult.trend.buyerDemandRating}
                     </span>
                     <span className="text-xs text-slate-400">
                       Duration: {(latestResult.durationMs / 1000).toFixed(1)}s &bull; Email:{" "}
@@ -952,6 +959,9 @@ export default function Dashboard() {
                   </div>
                   <h2 className="text-xl font-bold text-white mb-2">{latestResult.trend.theme}</h2>
                   <p className="text-sm text-slate-300 mb-3">{latestResult.trend.commercialReasoning}</p>
+                  <p className="text-[11px] text-amber-300/90 mb-3">
+                    หมายเหตุ: เป็นแนวคิดจากการวิเคราะห์เชิงกลยุทธ์ ไม่ใช่ข้อมูลยอดขายหรือจำนวนการค้นหาแบบเรียลไทม์
+                  </p>
                   <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400 border-t border-slate-800 pt-3">
                     <div className="flex flex-wrap gap-4">
                       <div>
@@ -976,7 +986,7 @@ export default function Dashboard() {
                         ) : (
                           <>
                             <FolderArchive className="w-4 h-4" />
-                            <span>ดาวน์โหลดทั้ง 20 ภาพ (ZIP + CSV)</span>
+                            <span>ดาวน์โหลดทั้ง {latestResult.images.length} ภาพ (ZIP + CSV)</span>
                           </>
                         )}
                       </button>
@@ -1031,13 +1041,13 @@ export default function Dashboard() {
                     <div>
                       <strong className="block text-white text-sm font-bold">
                         {latestResult.generationMode === "transparent_png"
-                          ? "100% Transparent PNG Set (พื้นหลังโปร่งใสทั้งชุด 20 ภาพ)"
-                          : "100% Regular Commercial Stock Set (ภาพทั่วไปมีฉากหลังทั้งชุด 20 ภาพ)"}
+                          ? `100% Transparent PNG Set (พื้นหลังโปร่งใสทั้งชุด ${latestResult.images.length} ภาพ)`
+                          : `100% Regular Commercial Stock Set (ภาพทั่วไปมีฉากหลังทั้งชุด ${latestResult.images.length} ภาพ)`}
                       </strong>
                       <span className="text-slate-300">
                         {latestResult.generationMode === "transparent_png"
                           ? "💡 คำแนะนำการ Upscale: บันทึกไฟล์เป็น .PNG เท่านั้น เพื่อรักษาความโปร่งใส (Alpha Transparency) สำหรับส่งขายหมวด Isolated PNG"
-                          : "💡 คำแนะนำการ Upscale: สามารถเลือกบันทึกเป็น .JPG หรือ .PNG ได้ตามสะดวก ทุกภาพมี Negative Copy Space พร้อมใช้งาน"}
+                          : "💡 รูปภาพทั่วไปและงานศิลป์ใช้ชื่อไฟล์ .jpeg โดยองค์ประกอบภาพจะยึดตามหมวดประจำวัน"}
                       </span>
                     </div>
                   </div>
@@ -1120,7 +1130,7 @@ export default function Dashboard() {
                               </span>
                               <button
                                 type="button"
-                                onClick={() => void copyToClipboard(img.filename || `stock_${img.id}.png`, `filename-${img.id}`)}
+                                onClick={() => void copyToClipboard(getStockImageFilename(img, latestResult.generationMode), `filename-${img.id}`)}
                                 className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
                               >
                                 {copiedKey === `filename-${img.id}` ? (
@@ -1137,7 +1147,7 @@ export default function Dashboard() {
                               </button>
                             </div>
                             <div className="text-xs font-mono font-medium text-emerald-400 bg-slate-950 p-2.5 rounded-xl border border-slate-800 break-all select-all">
-                              {img.filename || `stock_${img.id}.png`}
+                              {getStockImageFilename(img, latestResult.generationMode)}
                             </div>
                           </div>
 

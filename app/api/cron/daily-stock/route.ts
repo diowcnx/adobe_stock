@@ -3,7 +3,7 @@ import { executeDailyStockWorkflow } from "@/lib/workflow";
 import { secureCompare } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // รองรับระยะเวลาประมวลผลสูงสุดสำหรับ Vercel Serverless
+export const maxDuration = 300; // Requires Vercel Fluid compute for Hobby deployments.
 
 export async function GET(request: NextRequest) {
   // ตรวจสอบความปลอดภัยด้วย Authorization Bearer CRON_SECRET

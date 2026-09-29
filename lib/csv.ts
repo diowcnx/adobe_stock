@@ -1,5 +1,7 @@
 import { StockImageItem } from "./types";
 
+type GenerationMode = "transparent_png" | "regular_scene";
+
 /**
  * แปลงข้อความเป็น URL/File-friendly slug
  */
@@ -13,13 +15,13 @@ function sanitizeSlug(text: string): string {
 
 /**
  * สร้างชื่อไฟล์ที่ไม่ซ้ำกันแน่นอน 100% (Unique Filename)
- * รูปแบบ: stock_[transparent|regular]_YYYYMMDD_HHmmss_ID_slug_HEX.png
+ * รูปแบบ: stock_[transparent|regular]_YYYYMMDD_HHmmss_ID_slug_HEX.[png|jpeg]
  */
 export function generateUniqueStockFilename(
   title: string,
   id: number,
   date: Date = new Date(),
-  mode?: "transparent_png" | "regular_scene"
+  mode?: GenerationMode
 ): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Bangkok",
@@ -45,7 +47,40 @@ export function generateUniqueStockFilename(
   const slug = sanitizeSlug(title) || `image_${id}`;
   const modePrefix = mode === "transparent_png" ? "stock_transparent" : mode === "regular_scene" ? "stock_regular" : "stock";
 
-  return `${modePrefix}_${yyyy}${mm}${dd}_${hh}${min}${ss}_${id}_${slug}_${randomHex}.png`;
+  const extension = mode === "transparent_png" ? "png" : "jpeg";
+
+  return `${modePrefix}_${yyyy}${mm}${dd}_${hh}${min}${ss}_${id}_${slug}_${randomHex}.${extension}`;
+}
+
+function inferStockImageMode(image: StockImageItem, batchMode?: GenerationMode): GenerationMode {
+  if (image.isTransparent || image.generationMode === "transparent_png") {
+    return "transparent_png";
+  }
+  if (image.generationMode === "regular_scene") {
+    return "regular_scene";
+  }
+  if (/^stock_transparent_/i.test(image.filename || "")) {
+    return "transparent_png";
+  }
+  return batchMode || "regular_scene";
+}
+
+/**
+ * คืนชื่อไฟล์ที่ตรงกับชนิดภาพเสมอ รวมถึงข้อมูลเก่าที่ยังใช้ .png
+ * แต่ไม่มี generationMode: โปร่งใสใช้ .png ส่วนภาพทั่วไปใช้ .jpeg
+ */
+export function getStockImageFilename(
+  image: StockImageItem,
+  batchMode?: GenerationMode,
+): string {
+  const mode = inferStockImageMode(image, batchMode);
+  const extension = mode === "transparent_png" ? "png" : "jpeg";
+  const fallback = `stock_image_${image.id}`;
+  const original = image.filename?.trim() || fallback;
+  const filenameOnly = original.split(/[\\/]/).pop() || fallback;
+  const basename = filenameOnly.replace(/\.[^.]+$/, "") || fallback;
+
+  return `${basename}.${extension}`;
 }
 
 /**
@@ -65,10 +100,10 @@ function escapeCsvField(field: string): string {
  * Header: Filename,Title,Keywords,Category,Releases
  * โดย 2 คอลัมน์หลัง (Category, Releases) ปล่อยว่างไว้ตามข้อกำหนด
  */
-export function generateMetadataCsv(images: StockImageItem[]): string {
+export function generateMetadataCsv(images: StockImageItem[], batchMode?: GenerationMode): string {
   const header = "Filename,Title,Keywords,Category,Releases";
   const rows = images.map((img) => {
-    const filename = img.filename || `stock_image_${img.id}.png`;
+    const filename = getStockImageFilename(img, batchMode);
     const title = img.seoTitle || "";
     const keywords = (img.keywords || []).join(", ");
 

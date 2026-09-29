@@ -22,14 +22,17 @@ interface OpenRouterImageResponse {
 }
 
 // โมเดลสร้างภาพที่เปิดให้บริการจริงและเสถียรที่สุดบน OpenRouter
-export const MODEL_GEMINI_IMAGE = "google/gemini-2.5-flash-image";
-export const MODEL_GEMINI_31 = "google/gemini-3.1-flash-image";
-export const MODEL_GPT5_IMAGE_MINI = "openai/gpt-5-image-mini";
+export const MODEL_GEMINI_IMAGE = "google/gemini-3.1-flash-lite-image";
 
 export const DEFAULT_IMAGE_MODEL = MODEL_GEMINI_IMAGE;
 export const MODEL_TRANSPARENT_PRIMARY = MODEL_GEMINI_IMAGE;
-export const MODEL_TRANSPARENT_BACKUP_1 = MODEL_GEMINI_31;
-export const MODEL_TRANSPARENT_BACKUP_2 = MODEL_GPT5_IMAGE_MINI;
+
+function sanitizeImagePrompt(prompt: string): string {
+  return prompt
+    .replace(/adobe\s+stock/gi, "commercial image marketplace")
+    .replace(/\bstock\s+(photograph|photo|image)\b/gi, "commercial advertising $1")
+    .trim();
+}
 
 /**
  * แปลง Aspect Ratio ให้ตรงกับข้อกำหนด
@@ -39,9 +42,9 @@ function getAspectRatioForModel(ratio: string): string {
     case "16:9":
       return "16:9";
     case "3:2":
-      return "4:3";
+      return "3:2";
     case "4:5":
-      return "3:4";
+      return "4:5";
     case "1:1":
     default:
       return "1:1";
@@ -178,17 +181,13 @@ export async function generateSingleImage(
     };
   }
 
-  const isTransparent = Boolean(
-    item.isTransparent ||
-    item.generationMode === "transparent_png" ||
-    item.prompt.toLowerCase().includes("isolated")
-  );
+  const isTransparent = item.generationMode
+    ? item.generationMode === "transparent_png"
+    : item.isTransparent === true;
 
-  const modelsToTry = [
-    MODEL_GEMINI_IMAGE,
-    MODEL_GEMINI_31,
-    MODEL_GPT5_IMAGE_MINI,
-  ];
+  // A timed-out provider request may still be billed. Never automatically
+  // submit a replacement request or upgrade to a more expensive image model.
+  const modelsToTry = [DEFAULT_IMAGE_MODEL];
 
   let lastError = "";
 
@@ -196,18 +195,27 @@ export async function generateSingleImage(
     try {
       console.log(`[Item #${item.id}] Calling OpenRouter model ${model} (mode: ${isTransparent ? "transparent_png" : "regular_scene"})...`);
 
+      const basePrompt = sanitizeImagePrompt(item.prompt);
       const sanitizedPrompt = isTransparent
-        ? item.prompt
+        ? basePrompt
             .replace(/isolated commercial cutout asset on a 100% transparent background \(png alpha channel\) of/gi, "Commercial studio product shot of floating")
             .replace(/on a 100% transparent background \(png alpha channel\)/gi, "completely floating, clean backdrop")
             .replace(/transparent background/gi, "pure solid white backdrop")
             .replace(/png alpha transparency/gi, "clean silhouette edges")
             .replace(/\b(soft realistic self-shadow only|self-shadow|with shadow|soft shadow|subtle shadow|drop shadow|contact shadow|ground shadow|floor shadow|cast shadow|shadows?)\b/gi, "zero shadows")
-        : item.prompt;
+        : basePrompt;
+
+      const mandatoryExclusions = [
+        "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
+        "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
+        item.negativePrompt ? `Also exclude: ${item.negativePrompt}.` : "",
+      ].filter(Boolean).join(" ");
 
       const userContent = isTransparent
-        ? `Create an isolated commercial stock element on a pure solid white studio background. Centered floating subject, razor-sharp clean silhouette cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic tactile physical materials, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}`
-        : `Create an elite, high-converting commercial stock photograph for Adobe Stock. Authentic materiality, tactile textures, natural directional lighting (Leica/Hasselblad aesthetic, subtle depth of field), strictly leaving 50-60% clean uncluttered negative copy space for designer typography. No plastic AI glossiness, no human faces or distorted portraits, no brand logos or text. Commercial art directed scene: ${sanitizedPrompt}`;
+        ? `Create an isolated commercial design element on a pure solid white studio background. Centered floating subject, razor-sharp clean silhouette cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic tactile physical materials, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. ${mandatoryExclusions}`
+        : item.composition === "artwork"
+          ? `Create the original full-bleed artwork itself, not a photograph of a print, room, frame or mockup. Follow the specified artistic medium and composition with detailed print-friendly texture. Do not reserve advertising copy space. ${sanitizedPrompt}. ${mandatoryExclusions}`
+          : `Create an art-directed commercial scene. Authentic materials, tactile textures, natural lighting, believable geometry and copy space appropriate to the brief. No plastic AI glossiness. Follow the intended medium and visual details: ${sanitizedPrompt}. ${mandatoryExclusions}`;
 
       const payload: Record<string, unknown> = {
         model,
@@ -232,7 +240,7 @@ export async function generateSingleImage(
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(12000), // จำกัด timeout ไม่เกิน 12 วินาทีต่อภาพ
+        signal: AbortSignal.timeout(45_000),
       });
 
       if (!response.ok) {
@@ -311,13 +319,9 @@ export async function generateSingleImage(
       }
 
       // ถ้าเป็นโหมดโปร่งใสและได้เป็น hosted URL ให้ดึง Buffer มาทำ True Alpha
-      if (isTransparent && directUrl && !extractedBuffer) {
-        try {
-          const remoteImage = await fetchAllowlistedImage(directUrl, 6_000);
-          extractedBuffer = Buffer.from(remoteImage.body);
-        } catch {
-          // หาก fetch buffer ไม่สำเร็จ ให้ fallback ใช้ directUrl โดยตรง
-        }
+      if (directUrl && !extractedBuffer) {
+        const remoteImage = await fetchAllowlistedImage(directUrl, 6_000);
+        extractedBuffer = Buffer.from(remoteImage.body);
       }
 
       // ประมวลผลภาพ
@@ -331,7 +335,7 @@ export async function generateSingleImage(
           };
         } else {
           const compressedBuffer = await sharp(extractedBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
-            .jpeg({ quality: 85 })
+            .jpeg({ quality: 95, chromaSubsampling: "4:4:4" })
             .toBuffer();
           const base64 = compressedBuffer.toString("base64");
           return {

@@ -28,12 +28,12 @@ async function runDailyStockWorkflow(
     throw new Error("OpenRouter credit balance is too low");
   }
 
-  // 2. ทำการวิจัยตลาดและสร้าง 20 Prompts ตามโหมดของวัน (สลับวันเว้นวันแบบ 100% Homogeneous)
+  // 2. วางแผน 10 briefs ตามหมวดประจำวันของเวลาไทย
   console.log(`Conducting market research (mode: ${forcedMode || "auto-scheduled"})...`);
   const { trend, items, mode } = await conductMarketResearchAndGeneratePrompts(undefined, forcedMode);
   console.log(`Resolved generation mode: ${mode} (${items.length} items)`);
 
-  // 3. สร้างภาพทั้ง 20 ภาพ
+  // 3. สร้างภาพจำนวนตามชุดประจำวันที่กำหนด
   console.log(`Generating ${items.length} commercial images for mode: ${mode}...`);
   const generatedImages = await generateAllStockImages(items);
 
