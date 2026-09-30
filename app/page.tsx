@@ -30,7 +30,7 @@ import JSZip from "jszip";
 import { WorkflowResult, OpenRouterCreditInfo, StockImageItem } from "@/lib/types";
 import { generateMetadataCsv, getStockImageFilename } from "@/lib/csv";
 import { getErrorMessage, isRecord } from "@/lib/errors";
-import { BATCH_SIZE, getDailyCategory, getDailyScheduledMode, WEEKLY_CATEGORIES } from "@/lib/production-plan";
+import { BATCH_SIZE, getDailyCategory, getDailyScheduledMode, MONTHLY_CATEGORIES } from "@/lib/production-plan";
 import { isWorkflowResult } from "@/lib/validation";
 
 type GenerationModeSelection = "auto" | "transparent_png" | "regular_scene";
@@ -881,7 +881,7 @@ export default function Dashboard() {
                   <ImageIcon className="w-4 h-4 text-purple-400" />
                 </div>
                 <div className="text-xl font-bold text-white">{BATCH_SIZE} Images / Day</div>
-                <p className="text-xs text-slate-500 mt-1">7 different categories by weekday</p>
+                <p className="text-xs text-slate-500 mt-1">31 distinct buyer-use themes by day of month</p>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -908,11 +908,11 @@ export default function Dashboard() {
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-              <h3 className="font-semibold text-white mb-3">Weekly buyer-use categories · 10 images per day</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
-                {WEEKLY_CATEGORIES.map((category) => (
-                  <div key={category.day} className={`rounded-xl border p-3 ${category.name === todayCategory.name ? "border-sky-500/60 bg-sky-950/40" : "border-slate-800 bg-slate-950/50"}`}>
-                    <div className="text-[11px] text-slate-500">{category.day}</div>
+              <h3 className="font-semibold text-white mb-3">Monthly buyer-use plan · 10 images per day</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                {MONTHLY_CATEGORIES.map((category) => (
+                  <div key={category.day} className={`rounded-xl border p-3 ${category.day === todayCategory.day ? "border-sky-500/60 bg-sky-950/40" : "border-slate-800 bg-slate-950/50"}`}>
+                    <div className="text-[11px] text-slate-500">Day {category.day}</div>
                     <div className="text-xs font-semibold text-slate-200 mt-1">{category.name}</div>
                     <div className="text-[10px] text-slate-500 mt-1">{category.mode === "transparent_png" ? "PNG assets" : "JPEG scene/art"}</div>
                   </div>
@@ -931,12 +931,12 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center">1</div>
                   <div className="font-semibold text-white">Market Research</div>
-                  <p className="text-slate-400">Uses the weekly category plan and seasonal context without claiming live marketplace demand.</p>
+                  <p className="text-slate-400">Uses today&apos;s unique monthly theme and seasonal context without claiming live marketplace demand.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Creates {BATCH_SIZE} focused items across 7 rotating categories, reducing image-generation calls per batch.</p>
+                  <p className="text-slate-400">Creates {BATCH_SIZE} focused concepts for one of 31 distinct daily themes, reducing image-generation calls per batch.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>

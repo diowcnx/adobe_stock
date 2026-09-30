@@ -6,13 +6,6 @@ import { BATCH_SIZE, getBangkokDate, getDailyCategory, getDailyScheduledMode, Ge
 
 export { getDailyScheduledMode } from "./production-plan";
 
-function getISOWeek(date: Date): number {
-  const utc = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-  utc.setUTCDate(utc.getUTCDate() + 4 - (utc.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
-  return Math.ceil((((utc.getTime() - yearStart.getTime()) / 86_400_000) + 1) / 7);
-}
-
 interface Concept {
   title: string;
   subject: string;
@@ -66,7 +59,7 @@ export async function conductMarketResearchAndGeneratePrompts(
       `You are a commercial art director developing buyer-specific image briefs, NOT a live market research tool.
 Return exactly ${BATCH_SIZE} genuinely different subjects, not crops, recolors or angles of one idea.
 Each must solve a concrete buyer task and contain a distinctive subject + context + material combination.
-Use the supplied research-inspired seeds as starting points, not mandatory copies. Invent new subjects within today's category.
+Use the supplied research-inspired seeds as starting points, not mandatory copies. Invent new subjects within today's unique day-of-month theme.
 When a seed names a cultural material or technique, use it only with its named source and do not blend distinct traditions into generic "African" motifs. For people-centered community briefs, make a staged commercial illustration, not a claim of a real documentary event; show adults at a distance or from behind, with no identifiable faces. For nursery interiors, show no child and keep the crib empty of loose bedding or toys.
 Never invent sales figures, search volumes, customer validation or claims of low competition. No brands, artist imitation, protected characters, generic coffee/matcha, blank frames or generic laptop scenes.
 No typography, signatures, logos, watermarks or marketplace names in image descriptions.
@@ -74,15 +67,16 @@ Avoid impossible hardware and unsupported medical, cultural or accessibility com
 Titles describe only visible content, not demand, render quality or buyers. Keywords must be relevant English search terms, ordered with the most specific ten first; no keyword stuffing.
 Return JSON {"concepts":[{"title":"...","subject":"detailed visual description","buyerUse":"specific purchaser and intended use","differentiation":"specific visual distinction","keywords":["..."]}]}.
 Provide 15-25 keywords per concept. Keep subject descriptions under 65 words.`,
-      `Bangkok production date: ${productionDate}. Category: ${category.name}. Buyers: ${category.buyer}. Week-specific creative direction ${getISOWeek(date)}: invent a fresh concrete variation and avoid generic stock motifs.
-Research signals: Pinterest Predicts 2026 reports searches for "circus interior" +130%, "circus nursery" +50%, "afrobohemian home decor" +220% and "adire fabric" +130%. Adobe Creative Trends 2026 highlights playful imagery, authentic connection and local culture; Etsy Spring/Summer 2026 reports rising wall art and botanical wedding searches. These are cross-platform search/creative signals, NOT proof of Adobe Stock sales; community art, climate and accessibility remain buyer-use hypotheses.
+      `Bangkok production date: ${productionDate}. Day-of-month theme ${category.day}/31: ${category.name}. Buyers: ${category.buyer}. Create a fresh, commercially usable interpretation unique to this date.
+Portfolio review: publicly sorted first-page assets across ten Adobe Stock contributor profiles surfaced recurring buyer-use patterns: clear copy space and room/product mockups; ingredient-led food still life; candid family, pet and expressive lifestyle moments; precise botanical cutouts; destination-specific architecture; and practical finance, healthcare, civic and technology concepts. Treat these only as visual/use-case signals. Do not imitate a named contributor, recreate an existing asset, or claim the ranking proves marketplace-wide demand.
+Other directional signals: Pinterest Predicts 2026 reports searches for "circus interior" +130%, "circus nursery" +50%, "afrobohemian home decor" +220% and "adire fabric" +130%. Adobe Creative Trends 2026 highlights playful imagery, authentic connection and local culture; Etsy Spring/Summer 2026 reports rising wall art and botanical wedding searches. These are cross-platform search/creative signals, NOT proof of Adobe Stock sales; community art, climate and accessibility remain buyer-use hypotheses.
 Starting points: ${category.seeds.join("; ")}.
 Mode: ${mode}. ${isTransparent
         ? "Create single isolated design elements on pure white for later background removal, saturated midtone subjects, crisp closed silhouettes, no white/translucent fine detail, no shadows. Do not request checkerboards or simulated transparency."
         : composition === "artwork"
           ? "Create the actual full-bleed unframed artwork, NOT a room, frame, poster mockup or photo of artwork. No advertising copy-space requirement. Cohesive palette and print-friendly detail."
           : "Create usable commercial scenes with natural material detail and intentional space for a designer's later text, without making every scene the same empty tabletop."}
-Use the season 60-90 days after this date where relevant, otherwise evergreen. Do not merely repeat last week's subject with a different palette.`,
+Use the season 60-90 days after this date where relevant, otherwise evergreen. Do not repeat another date's subject with only a different palette.`,
       "google/gemini-3.1-flash-lite",
     ));
   } catch (error) {
@@ -103,9 +97,9 @@ Use the season 60-90 days after this date where relevant, otherwise evergreen. D
       ? "Single centered isolated element, pure white background, crisp silhouette, no cast or contact shadows, no translucent or white subject details."
       : composition === "artwork"
         ? "Full-bleed original artwork, balanced print composition, no frame, no room, no mockup, no reserved advertising area."
-        : category.name === "Community art events"
+        : category.name.includes("Community art")
           ? "Wide staged commercial illustration of adult community members collaborating, viewed from behind or at a distance, no identifiable faces, no readable signs, no logos, and no implication that this depicts a real named event."
-          : category.name === "Circus nursery interiors"
+          : category.name.includes("circus")
             ? "Livable, uncluttered children's interior with no child present; keep the crib entirely empty of bedding, pillows and toys. Use original circus-inspired decor without known characters or trademarks."
             : "Art-directed scene with credible materials, restrained natural lighting and uncluttered copy space appropriate to its buyer use.";
     return {
@@ -123,10 +117,10 @@ Use the season 60-90 days after this date where relevant, otherwise evergreen. D
   return {
     mode, items,
     trend: {
-      theme: `${category.name} — ${BATCH_SIZE} buyer-focused concepts`,
+      theme: `Day ${category.day} · ${category.name} — ${BATCH_SIZE} buyer-focused concepts`,
       targetMarket: category.buyer,
       commercialReasoning: `${fallback ? "Curated fallback briefs; AI planning unavailable." : "AI-developed briefs based on curated research signals."} Each concept targets a distinct buyer use. No live sales, competition or keyword-volume validation; review before submission.`,
-      seasonalRelevance: `Bangkok ${productionDate}; weekly ${category.day} category. Validate season and cultural details manually.`,
+      seasonalRelevance: `Bangkok ${productionDate}; monthly plan day ${category.day}/31. Validate season and cultural details manually.`,
       buyerDemandRating: "Research Candidate",
     },
   };

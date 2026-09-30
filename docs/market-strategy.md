@@ -1,35 +1,71 @@
-# Weekly image brief strategy
+# Monthly buyer-use image strategy
 
-Each production run requests ten separate image briefs for that day's category. Bangkok local weekday selects both the category and the image mode. Regular work is named `.jpeg`; isolated reusable assets are named `.png` after the existing transparency-processing step.
+Every Bangkok calendar day maps to a different focused theme (days 1–31). A normal run makes ten distinct briefs within that day's use case. Months with 28–30 days simply do not use the unused final day(s); the next month starts at day 1 with the 31-theme plan again. Themes are grounded in observable portfolio patterns and practical buyer tasks, not represented as sales forecasts.
 
-| Bangkok day | Brief category | Typical buyer/use | Output |
-|---|---|---|---|
-| Monday | Wall art | Interior designers and print publishers | JPEG, full-bleed artwork |
-| Tuesday | Wedding stationery | Invitation designers assembling botanical layouts | PNG design elements |
-| Wednesday | Afro-bohemian interiors | Interior editors and home decor publishers | JPEG commercial scenes |
-| Thursday | Circus nursery interiors | Nursery decor publishers, family brands, and interior designers | JPEG commercial scenes |
-| Friday | Community art events | Local arts organizations, municipalities, and community publishers | JPEG staged commercial scenes |
-| Saturday | Climate adaptation | Water and building communications | PNG explanatory elements |
-| Sunday | Accessible living | Inclusive housing and community service publishers | JPEG commercial scenes |
+## Monthly plan
 
-## What the research supports
+| Day | Unique daily theme | Typical buyer/use | Output |
+|---:|---|---|---|
+| 1 | Copy-space hospitality interiors | Hospitality marketers and interior publishers | JPEG scene |
+| 2 | Restaurant-ready food still life | Food publishers and restaurant marketers | JPEG scene |
+| 3 | Authentic family and companion-animal moments | Family brands and pet-care publishers | JPEG scene |
+| 4 | Botanical and culinary ingredient cutouts | Food and wellness designers | PNG assets |
+| 5 | Finance and business decision concepts | Financial services and business publishers | JPEG scene |
+| 6 | Destination-specific travel and city stories | Tourism boards and travel publishers | JPEG scene |
+| 7 | Expressive pet portraits and care | Veterinary services and animal welfare publishers | JPEG scene |
+| 8 | Botanical seamless pattern and surface design | Surface designers and stationery publishers | JPEG artwork |
+| 9 | Healthcare professionals in everyday practice | Healthcare and patient-education publishers | JPEG scene |
+| 10 | Regional ingredients and home cooking | Recipe publishers and food brands | JPEG scene |
+| 11 | Nature textures and leafy copy space | Wellness, gardening, and environmental publishers | JPEG scene |
+| 12 | Small-business product packaging scenes | Independent product brands | JPEG scene |
+| 13 | Playful circus-inspired children's rooms | Nursery publishers and family brands | JPEG scene |
+| 14 | Botanical wedding and event design elements | Wedding stationery designers | PNG assets |
+| 15 | Music, sound, and creative culture visuals | Music educators and event publishers | JPEG scene |
+| 16 | Everyday urban mobility and public transit | Mobility services and city publishers | JPEG scene |
+| 17 | Climate-smart gardens and food growing | Sustainability educators and urban agriculture | PNG assets |
+| 18 | Community arts and local maker events | Municipal arts programs and community groups | JPEG scene |
+| 19 | Cybersecurity and practical digital privacy | Technology and digital-literacy publishers | JPEG scene |
+| 20 | Contemporary kitchen and home renovation | Home brands and interior publishers | JPEG scene |
+| 21 | Accessible home details and inclusive living | Inclusive housing and community-service publishers | JPEG scene |
+| 22 | Original print-ready wall art | Interior stylists and print publishers | JPEG artwork |
+| 23 | Civic participation and community services | Civic organizations and public-service publishers | JPEG scene |
+| 24 | Learning through hands-on creativity | Education publishers and family-learning brands | JPEG scene |
+| 25 | Herbal wellness and garden-to-kitchen ingredients | Wellness and food editors | JPEG scene |
+| 26 | Craft textiles and material-led interiors | Home decor publishers | JPEG scene |
+| 27 | Wildlife and biodiversity field stories | Conservation educators and nature publishers | JPEG scene |
+| 28 | Movement, recovery, and inclusive fitness | Fitness and wellbeing publishers | JPEG scene |
+| 29 | Architecture, stairways, and usable space | Architects and real-estate publishers | JPEG scene |
+| 30 | Useful technology and human-computer interaction | Software teams and technology publishers | JPEG scene |
+| 31 | Seasonal gifting and handmade celebrations | Retailers and event publishers | JPEG scene |
 
-Etsy's Spring/Summer 2026 Seller Trend Report says its guidance uses Etsy search data. It reports year-over-year rises in searches for wall art decor (+110%), gallery prints (+80%), and abstract art (+38%); it also reports increased searches related to botanical weddings, journals, and playful hobbies. These signals support trying the related buyer briefs, but apply to Etsy searches and products, not Adobe Stock downloads or earnings.
+## Adobe Stock portfolio review
 
-Pinterest Predicts 2026 reports increases in global English-language Pinterest searches for “circus interior” (+130%), “circus nursery” (+50%), “afrobohemian home decor” (+220%), and “adire fabric” (+130%). Its published comparison uses normalized searches from September 2024–August 2025 against September 2023–August 2024. Those are search-interest changes on Pinterest, not sales. The signals support testing circus nursery and Afro-bohemian interior briefs, with source-specific design details.
+Reviewed on 30 September 2026 using the public contributor portfolios' `?order=nb_downloads` ordering. The order provides a within-profile popularity signal; Adobe does not expose the underlying download totals on these pages, so this is not a cross-market sales ranking. Themes below summarize the visible first-page work and are used only as commercial-use inspiration, never as instructions to copy an artist's style or recreate an asset.
 
-Adobe's 2026 Creative Trends report recommends playful imagery, emotional connection, and local stories made with the relevant community. This supports testing community art event scenes, but the AI-generated images are staged concepts, not documentation of actual local people or events. Community briefs therefore avoid identifiable faces, named locations, and claims of documentary authenticity. Cultural references such as Nigerian Adire or Ethiopian art must be used only when the visible work actually represents that source; do not collapse distinct traditions into a generic “African” pattern.
+| Contributor profile | Patterns observed in the first page sorted by downloads |
+|---|---|
+| [ImageFlow](https://stock.adobe.com/th/contributor/204251986/Num?order=nb_downloads) | Interior and office mockups with usable negative space; business, finance, and technology concepts. |
+| [Photographer](https://stock.adobe.com/th/contributor/201225812/photographer?order=nb_downloads) | Food close-ups and menu-friendly dishes, including fish, steak, chocolate, and sandwiches. |
+| [Photography](https://stock.adobe.com/th/contributor/201029138/photography?order=nb_downloads) | Candid dogs, pets, children and families, with expressive everyday moments. |
+| [Nature](https://stock.adobe.com/th/contributor/211793481/nature?order=nb_downloads) | Isolated botanicals, culinary leaves, herbs, fruit, and ingredient elements on simple backgrounds. |
+| [Miguel Lifestyle](https://stock.adobe.com/th/contributor/206975367/miguel-lifestyle?order=nb_downloads) | Characterful pets and babies, playful costume concepts, and unusual technology metaphors. |
+| [Travel 'N' Lifestyle](https://stock.adobe.com/th/contributor/209971316/travel-n-lifestyle?order=nb_downloads) | Destination-specific architecture, recognizable urban places, transport, landscapes, and travel moments. |
+| [best stock](https://stock.adobe.com/th/contributor/213179358/best-stock?order=nb_downloads) | Event and civic concepts, tickets, portraits, accessories, and clean product-focused objects. |
+| [Illustration](https://stock.adobe.com/th/contributor/213190834/illustration?order=nb_downloads) | Music graphics, finance concepts, healthcare, business planning, greenhouse agriculture, and maps. |
+| [OMA illustration](https://stock.adobe.com/th/contributor/208896874/oma-illustration?order=nb_downloads) | Seamless nature patterns, flora, landscape motifs, and seasonal decorative illustration. |
+| [ClickPaint](https://stock.adobe.com/th/contributor/211064571/clickpaint?order=nb_downloads) | Branding and product mockups, billboards, event materials, architecture portfolios, and design collateral. |
 
-Climate adaptation and accessible living remain in the schedule because they describe specific communication needs and visual subjects for business and public-service buyers. The research checked here does not establish their Adobe Stock sales volume. They are testable hypotheses, not “high-demand” rankings.
+These profiles span photos, illustration, and templates. The generator translates the recurring *buyer task* (clear copy space, useful food/product details, authentic moments, specific places, or explanatory concepts) into original photographic or cutout briefs; it must not mimic any contributor's signature aesthetic. Template-only examples are treated as evidence of buyer contexts such as packaging, event collateral, or brand presentation—not as a request to reproduce a template.
 
-Sources checked 29 September 2026:
+## Limits and safeguards
 
-- Etsy, [Seller Trend Report: Spring and Summer 2026](https://www.etsy.com/ca/seller-handbook/article/1473931456647), published 17 March 2026. The report does not provide Adobe Stock sales data.
-- Pinterest, [Predicts 2026 newsroom summary](https://newsroom.pinterest.com/news/pinterest-predicts-nonconformity-self-preservation-and-escapism-drive-21-trends-for-2026/) and [2026 trend report](https://business.pinterest.com/pdf/pinterest-predicts/2026-trend-report/), checked 29 September 2026.
-- Adobe, [Creative Trends 2026](https://business.adobe.com/resources/creative-trends-report.html). The report forecasts creative directions rather than ranking Adobe Stock product sales.
-- Google, [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing), checked 29 September 2026: Gemini 3.1 Flash Lite Image standard output is about $0.0336 per 1K image; the previous Gemini 2.5 Flash Image standard output was $0.039 per image. Ten 1K images are about $0.34 versus about $0.78 for twenty previous-model images, before input tokens and any provider or resolution differences. Actual OpenRouter credits are the source of truth for each account's charges.
-- OpenRouter, [model listings](https://openrouter.ai/api/v1/models), queried 29 September 2026: concept planning uses `google/gemini-3.1-flash-lite` at $0.25/M input tokens and $1.50/M output tokens. It is used for one planning request per batch; if that request fails, curated prompts are used without retrying.
+The profile order is not a guarantee that similar content will sell. It is biased toward each contributor's existing catalog and cannot establish market-wide demand, competition, recent velocity, or earnings. Adobe Stock does not publish a public per-keyword sales or search-volume dataset. Pinterest/Etsy trends likewise describe activity on those services, not Adobe Stock purchases. Each result remains a research candidate and needs human review for commercial utility, visual quality, release requirements, and factual accuracy.
 
-The generator's system prompt asks for distinct subjects and buyer-specific applications and rejects obvious duplicate concepts. It cannot verify that an image or concept is unique across all marketplace uploads. Review the finished image, title, and keywords before submission. A text instruction alone cannot guarantee that a model will not draw text or watermark-like artifacts.
+The planning prompt requests ten different subjects for the chosen day, prohibits artist imitation and asset recreation, and names concrete buyer applications. Images are not automatically checked against Adobe's full marketplace, so visual similarity must still be reviewed before submission. It also prohibits text, brands, and unsupported health/accessibility claims, and asks that cultural references be accurate to what is actually depicted.
 
-Adobe Stock result counts are dynamic and can vary by locale, filters, and time. Search counts pasted into the request are kept as a point-in-time clue only; they do not prove demand, competition, or conversion. The broad “woven basket” page independently displayed 629,702 results in a Polish locale when checked, rather than the 615,865 in the supplied snapshot. Adobe Stock search pages for several specific phrases could not be independently opened in this review. The comparison should therefore be used to generate long-tail experiments, not to promise low competition or sales.
+## Additional directional sources
+
+- [Adobe Stock Contributor Handbook](https://stock.adobe.com/pages/artisthub/pdf/contributor-handbook-2022.pdf): recommends considering why a buyer would license the content, developing distinct versions of common themes, and reviewing top portfolios in Contributor Insights. This is contributor guidance, not sales data for this project.
+- [Pinterest Predicts 2026](https://business.pinterest.com/pinterest-predicts/2026/funhaus/): search-interest signals for playful interiors and circus nurseries; they are Pinterest queries, not Adobe Stock downloads.
+- [Adobe Creative Trends 2026](https://business.adobe.com/resources/creative-trends-report.html): trend direction around play, connection, and local stories, not a ranking of Adobe Stock sales.
+- [Etsy Seller Trend Report: Spring/Summer 2026](https://www.etsy.com/ca/seller-handbook/article/1473931456647): Etsy search signals for wall decor and botanical wedding themes, not Adobe Stock demand.
