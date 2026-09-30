@@ -54,12 +54,54 @@ Reviewed on 30 September 2026 using the public contributor portfolios' `?order=n
 | [Illustration](https://stock.adobe.com/th/contributor/213190834/illustration?order=nb_downloads) | Music graphics, finance concepts, healthcare, business planning, greenhouse agriculture, and maps. |
 | [OMA illustration](https://stock.adobe.com/th/contributor/208896874/oma-illustration?order=nb_downloads) | Seamless nature patterns, flora, landscape motifs, and seasonal decorative illustration. |
 | [ClickPaint](https://stock.adobe.com/th/contributor/211064571/clickpaint?order=nb_downloads) | Branding and product mockups, billboards, event materials, architecture portfolios, and design collateral. |
+| [Foodlovers](https://stock.adobe.com/contributor/200784141/foodlovers?order=nb_downloads) | Strongly styled food subjects across ingredients, cooking actions, seasonal meals, and playful food scenes. |
+| [Food](https://stock.adobe.com/contributor/212340771/food?order=nb_downloads) | Visual metaphors made from ingredients, alongside isolated floral/botanical assets; distinguish concepts from catalog-style cutouts. |
+| [Jessica Nash](https://stock.adobe.com/contributor/206758749/jessica-nash?order=nb_downloads) | Mixed people, place, food, interiors, objects, and travel-adjacent material. |
+| [Paritha Wannawanit](https://stock.adobe.com/contributor/206686077/paritha-wannawanit?order=nb_downloads) | Food preparation, ingredient handling, baked goods, drinks, and finished regional dishes. |
+| [TRAVEL PODRÓŻE](https://stock.adobe.com/contributor/210252539/travel-podr%C3%B3%C5%BCe?order=nb_downloads) | Place-specific Barcelona/Spain, coastal scenery, travel portraits, and destination details. |
+| [AWL Images](https://stock.adobe.com/contributor/206327826/awl-images?order=nb_downloads) | Identifiable city landmarks and landscapes with precise place names and travel context. |
+| [SJ Travel Footage](https://stock.adobe.com/contributor/200451866/sj-travel-footage?order=nb_downloads) | Nature details, food, everyday concepts, wildlife, and recognizable travel locations across photo/video assets. |
+| [Hiroshi Ohashi](https://stock.adobe.com/contributor/207902506/hiroshi-ohashi?order=nb_downloads) | Documented traditional food production and craft processes, with hands-on actions and specific materials. |
+| [Danita Delimont](https://stock.adobe.com/contributor/208610759/greg-johnston-danita-delimont?order=nb_downloads) | Regionally identified scenery, wildlife/nature, gardens, outdoor recreation, and local markets. |
+| [Mats Dreyer](https://stock.adobe.com/contributor/208789629/mats-dreyer?order=nb_downloads) | Graphic food still lifes using strong order, texture, and deliberate backgrounds; ingredient-level and finished-dish views. |
+| [Roberta](https://stock.adobe.com/contributor/206949121/roberta?order=nb_downloads) | Homemade dishes and raw ingredients styled with tactile surfaces and close food detail. |
+| [Lauren Allen](https://stock.adobe.com/contributor/208194894/lauren-allen?order=nb_downloads) | Drinks, desserts, ingredients, and culinary settings with editorial food context. |
+| [Lori Eanes](https://stock.adobe.com/contributor/208195212/lori-eanes?order=nb_downloads) | Food in action—oven, grill, pouring, and preparation—as well as polished dishes and drinks. |
+| [Natascha Brandt](https://stock.adobe.com/contributor/207764671/natascha-brandt?order=nb_downloads) | Textural food and floral still life, natural light, and intentional shadow/background treatments. |
+| [Brie Photography](https://stock.adobe.com/contributor/206761268/brie-photography?order=nb_downloads) | Distinct regional/ethnic dishes, prepared food, kitchen details, and serving context. |
+| [Liz Clayman](https://stock.adobe.com/contributor/207545494/liz-clayman?order=nb_downloads) | Food gatherings, cocktails, culinary ingredients, and specific material/cultural details. |
 
-These profiles span photos, illustration, and templates. The generator translates the recurring *buyer task* (clear copy space, useful food/product details, authentic moments, specific places, or explanatory concepts) into original photographic or cutout briefs; it must not mimic any contributor's signature aesthetic. Template-only examples are treated as evidence of buyer contexts such as packaging, event collateral, or brand presentation—not as a request to reproduce a template.
+The profiles span photos, illustration, and templates. This adds 16 profiles with usable visible first-page observations to the original ten (26 observations total); pages with unavailable, sparse, or non-descriptive results were not counted. The generator translates recurring *buyer tasks* (clear copy space, useful food/product details, authentic preparation, specific places, or explanatory concepts) into original briefs; it must not mimic any contributor's signature aesthetic. Template-only examples are treated as evidence of buyer contexts such as packaging, event collateral, or brand presentation—not as a request to reproduce a template.
+
+## No-cost search-page market scan
+
+On 30 September 2026, checked Adobe Stock image search pages in a normal browser with no login, paid API, or account changes. The first page was treated as a qualitative snapshot, and the displayed result count only as rough catalog supply for that exact phrase. Counts change over time and between query variants; they are not sales volume, keyword search volume, or a reliable count of competitors.
+
+| Adobe Stock query | Approx. image results observed | First-page pattern / implication |
+|---|---:|---|
+| [wall art](https://stock.adobe.com/th/search/images?k=wall+art) | 12,127,400 | Crowded and mixed intent: mockup frames/interiors, printable/vector sets, abstract backgrounds, and graffiti. Avoid another generic blank frame; test original print-ready artwork or a more specific interior/buyer brief. |
+| [botanical wedding invitation](https://stock.adobe.com/th/search/images?k=botanical+wedding+invitation) | 1,412,416 | Crowded with invitation suites, watercolor florals, wreaths, and culturally specific styles. A useful differentiation must specify a real design use or accurate regional tradition. |
+| [circus nursery decor](https://stock.adobe.com/th/search/images?k=circus+nursery+decor) | 1,137 | Narrow query with circus-themed nursery/interior intent. This is a test candidate, not proof of demand. |
+| [Afrobohemian home decor](https://stock.adobe.com/th/search/images?k=afrobohemian+home+decor) | 94 | Narrow query; visible results emphasize warm interiors, woven decor, textiles, earthy tones. Describe cultural materials accurately and avoid generic or falsely attributed motifs. |
+| [community art workshop](https://stock.adobe.com/th/search/images?k=community+art+workshop) | 306,964 | Broad and mixed: classes, teamwork, diverse groups, education and studio scenes. Specify a concrete workshop task/setting rather than generic raised hands. |
+| [climate adaptation agriculture](https://stock.adobe.com/th/search/images?k=climate+adaptation+agriculture) | 20,790 | Specific sustainability/agriculture phrase; use concrete practices and credible equipment, not abstract climate symbols. |
+| [accessible home design](https://stock.adobe.com/th/search/images?k=accessible+home+design) | 9,862 | Search results include accessible kitchens/bathrooms and independent-living scenes. Depict visible features accurately; don't make certification/compliance claims. |
+| [small business packaging](https://stock.adobe.com/th/search/images?k=small+business+packaging) | 210,053 | Significant catalog volume; packaging mockups and product presentation are common. Add a specific product, material, reusable/refill process, or point-of-sale use. |
+| [food photography regional cuisine](https://stock.adobe.com/th/search/images?k=food+photography+regional+cuisine) | 39,613 | Regional dishes appear across cuisines. Specific dish, ingredients, preparation, and truthful locale make briefs more searchable than “tasty food.” |
+| [healthcare telemedicine](https://stock.adobe.com/th/search/images?k=healthcare+telemedicine) | 197,657 | Broad healthcare/technology territory; use a clear patient/clinician task and realistic, unbranded interface/device details. |
+
+### Repeatable free workflow
+
+1. For a proposed theme, search Adobe Stock using the buyer's likely exact phrase and two narrower variants. Record the date, result count, and first 20 visible results (not just the count).
+2. Label visible results by buyer task, subject, setting, composition/copy space, and asset type. Note repeated patterns and plausible gaps; a gap may simply reflect a rare query.
+3. Keep the candidate only when it serves an explicit buyer and offers a visible difference from the first-page set. Reject ideas that are only palette/style changes or already represented by many near-identical mockups.
+4. After upload, use the account's own Contributor Insights and downloads/earnings as the validation signal. Revisit the table monthly; public competitor profiles cannot substitute for first-party results.
+
+This scan is intentionally manual and uses Adobe's public pages only. It adds no Vercel/API costs and does not create automated requests to Adobe. The in-app AI planner uses the qualitative guidance but does not claim to perform a live search or keyword-demand check.
 
 ## Limits and safeguards
 
-The profile order is not a guarantee that similar content will sell. It is biased toward each contributor's existing catalog and cannot establish market-wide demand, competition, recent velocity, or earnings. Adobe Stock does not publish a public per-keyword sales or search-volume dataset. Pinterest/Etsy trends likewise describe activity on those services, not Adobe Stock purchases. Each result remains a research candidate and needs human review for commercial utility, visual quality, release requirements, and factual accuracy.
+The profile order is not a guarantee that similar content will sell. It is biased toward each contributor's existing catalog and cannot establish market-wide demand, competition, recent velocity, or earnings. Public result counts describe the catalog returned for a phrase, not the number of searches or purchases. Adobe Stock does not publish a public per-keyword sales or search-volume dataset. Pinterest/Etsy trends likewise describe activity on those services, not Adobe Stock purchases. Each result remains a research candidate and needs human review for commercial utility, visual quality, release requirements, and factual accuracy.
 
 The planning prompt requests ten different subjects for the chosen day, prohibits artist imitation and asset recreation, and names concrete buyer applications. Images are not automatically checked against Adobe's full marketplace, so visual similarity must still be reviewed before submission. It also prohibits text, brands, and unsupported health/accessibility claims, and asks that cultural references be accurate to what is actually depicted.
 
