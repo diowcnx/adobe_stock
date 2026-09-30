@@ -47,7 +47,26 @@ async function runDailyStockWorkflow(
     await sendCreditDepletedEmergencyAlert({ credits: latestCredits });
   }
 
-  // 5. ส่งอีเมลประจำวันพร้อมข้อมูลและไฟล์แนบผ่าน SMTP2GO
+  const workflowResult: WorkflowResult = {
+    success: true,
+    timestamp: new Date().toISOString(),
+    generationMode: mode,
+    trend,
+    images: generatedImages,
+    credits: latestCredits,
+    emailDelivery: {
+      success: false,
+      recipient: process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com",
+      error: "Email dispatch pending",
+    },
+    durationMs: Date.now() - startTime,
+  };
+
+  // เก็บภาพใน shared durable storage ก่อนส่งลิงก์ เพื่อไม่ให้อีเมลชี้ไปยังข้อมูลชั่วคราว
+  const { saveLatestBatch } = await import("./batch-store");
+  const persistedResult = await saveLatestBatch(workflowResult);
+
+  // ส่งอีเมลหลังยืนยันว่าภาพและ Metadata พร้อมให้หน้าเว็บดาวน์โหลดแล้ว
   console.log("Dispatching email via SMTP2GO to hs5ckt@gmail.com...");
   const emailResult = await sendDailyStockEmail({
     trend,
@@ -59,13 +78,9 @@ async function runDailyStockWorkflow(
   const durationMs = Date.now() - startTime;
   console.log(`Workflow completed in ${durationMs}ms with email success: ${emailResult.success}`);
 
-  const workflowResult: WorkflowResult = {
+  const finalResult: WorkflowResult = {
+    ...persistedResult,
     success: emailResult.success,
-    timestamp: new Date().toISOString(),
-    generationMode: mode,
-    trend,
-    images: generatedImages,
-    credits: latestCredits,
     emailDelivery: {
       success: emailResult.success,
       recipient: process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com",
@@ -74,12 +89,9 @@ async function runDailyStockWorkflow(
     },
     durationMs,
   };
+  await saveLatestBatch(finalResult);
 
-  // บันทึกชุดภาพล่าสุดลงในระบบ เพื่อให้ผู้ใช้เปิดดาวน์โหลดบนหน้าเว็บได้ทันที
-  const { saveLatestBatch } = await import("./batch-store");
-  await saveLatestBatch(workflowResult);
-
-  return workflowResult;
+  return finalResult;
 }
 
 export async function executeDailyStockWorkflow(

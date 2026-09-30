@@ -71,4 +71,8 @@ npm run dev
 
 1. นำเข้า Repository `diowcnx/adobe_stock` เข้าสู่ Vercel Project ชื่อ `adobe_stock`
 2. ใส่ Environment Variables ในหน้า Project Settings
-3. Vercel จะเริ่มจับการทำงานของ `vercel.json` และสั่งรัน Cron Job ทุกวันเวลา 18:00 น. (11:00 UTC) โดยอัตโนมัติ
+3. ใน Project ไปที่ **Storage → Create Database → Blob** แล้วสร้าง Blob Store แบบ **Private** และเชื่อมต่อกับโปรเจกต์นี้ Vercel จะผูก `BLOB_STORE_ID` และการยืนยันตัวตน OIDC ให้กับ Functions โดยไม่ต้องใส่ Blob token ลงในโค้ด
+4. ตรวจสอบให้ Blob Store ใช้ Environment เดียวกับ Production แล้ว Redeploy โปรเจกต์
+5. Vercel จะเริ่มจับการทำงานของ `vercel.json` และสั่งรัน Cron Job ทุกวันเวลา 18:00 น. (11:00 UTC) โดยอัตโนมัติ
+
+ภาพและ Metadata จะถูกเก็บใน Private Blob แยกตามชุดที่สร้าง หน้าเว็บที่ล็อกอินแล้วจึงสามารถเปิดดูและดาวน์โหลดได้ข้าม Vercel Functions; หลังดาวน์โหลดครบ ระบบจะถามก่อนลบเฉพาะชุดนั้นออกจาก Storage

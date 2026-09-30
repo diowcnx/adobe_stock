@@ -58,6 +58,25 @@ interface SavedBatch {
   data: WorkflowResult;
 }
 
+function parseSavedBatches(value: unknown): SavedBatch[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is SavedBatch =>
+    isRecord(entry) &&
+    typeof entry.id === "string" &&
+    typeof entry.dateStr === "string" &&
+    typeof entry.theme === "string" &&
+    (entry.mode === "transparent_png" || entry.mode === "regular_scene") &&
+    typeof entry.imageCount === "number" &&
+    isWorkflowResult(entry.data),
+  );
+}
+
+function mergeSavedBatches(serverEntries: unknown, localEntries: unknown): SavedBatch[] {
+  const serverBatches = parseSavedBatches(serverEntries);
+  const serverIds = new Set(serverBatches.map((batch) => batch.id));
+  return [...serverBatches, ...parseSavedBatches(localEntries).filter((batch) => !serverIds.has(batch.id))];
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [credits, setCredits] = useState<OpenRouterCreditInfo | null>(null);
@@ -197,9 +216,19 @@ export default function Dashboard() {
       const res = await fetch("/api/latest-batch");
       if (res.ok) {
         const data = await res.json();
-        if (data.success && isWorkflowResult(data)) {
-          setLatestResult(data);
-          saveBatchToHistory(data);
+        const { batchHistory: historyPayload, ...latestBatch } = data;
+        const batchHistory: unknown = historyPayload;
+        if (Array.isArray(batchHistory)) {
+          const localHistory: unknown = JSON.parse(localStorage.getItem("adobe_stock_history") || "[]");
+          setSavedBatches(mergeSavedBatches(batchHistory, localHistory));
+        }
+        if (latestBatch.success && isWorkflowResult(latestBatch)) {
+          setLatestResult(latestBatch);
+          saveBatchToHistory(latestBatch);
+          if (Array.isArray(batchHistory)) {
+            const localHistory: unknown = JSON.parse(localStorage.getItem("adobe_stock_history") || "[]");
+            setSavedBatches(mergeSavedBatches(batchHistory, localHistory));
+          }
           selectTab("images");
         }
       }
@@ -297,7 +326,7 @@ export default function Dashboard() {
             const genRes = await fetch("/api/generate-item-image", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ item }),
+              body: JSON.stringify({ item, timestamp: initialBatch.timestamp }),
             });
             if (genRes.ok) {
               const genData = await genRes.json();
@@ -330,36 +359,68 @@ export default function Dashboard() {
         images: updatedImages,
       };
 
-      // 4. ส่งอีเมลแจ้งเตือนพร้อมไฟล์ CSV และลิงก์ดาวน์โหลดไปยัง hs5ckt@gmail.com ผ่าน SMTP2GO
-      setRunProgress("กำลังส่งอีเมลแจ้งเตือนไปยัง hs5ckt@gmail.com...");
+      // Persist images first so any email download link points to durable storage.
+      setRunProgress("กำลังบันทึกภาพลงพื้นที่จัดเก็บถาวร...");
+      let persistenceReady = false;
       try {
-        const emailRes = await fetch("/api/dispatch-email", {
+        const saveRes = await fetch("/api/save-batch", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(finalResult),
         });
-        if (emailRes.ok) {
+        const saveData = await saveRes.json();
+        if (!saveRes.ok || !saveData.success || !isWorkflowResult(saveData.batch)) {
+          throw new Error(saveData.error || "ไม่สามารถบันทึกชุดภาพลงพื้นที่ถาวรได้");
+        }
+        finalResult.images = saveData.batch.images;
+        persistenceReady = true;
+      } catch (error: unknown) {
+        console.error("Could not persist generated batch:", error);
+        finalResult.emailDelivery = {
+          success: false,
+          recipient: "web",
+          error: getErrorMessage(error, "Persistent storage failed; email was not sent"),
+        };
+        showNotice("บันทึกชุดภาพถาวรไม่สำเร็จ ระบบจะไม่ส่งอีเมลลิงก์ที่เปิดไม่ได้", "error");
+      }
+
+      // Dispatch only after persistence succeeds, so email links always work.
+      if (persistenceReady) {
+        setRunProgress("กำลังส่งอีเมลแจ้งเตือนไปยัง hs5ckt@gmail.com...");
+        try {
+          const emailRes = await fetch("/api/dispatch-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(finalResult),
+          });
           const emailData = await emailRes.json();
           finalResult.emailDelivery = {
-            success: Boolean(emailData.success),
+            success: emailRes.ok && Boolean(emailData.success),
             recipient: "hs5ckt@gmail.com",
             messageId: emailData.messageId,
-            error: emailData.error,
+            error: emailData.error || (!emailRes.ok ? "Email dispatch request failed" : undefined),
+          };
+        } catch (error: unknown) {
+          console.warn("Could not dispatch email:", error);
+          finalResult.emailDelivery = {
+            success: false,
+            recipient: "hs5ckt@gmail.com",
+            error: getErrorMessage(error, "Email dispatch failed"),
           };
         }
-      } catch (error: unknown) {
-        console.warn("Could not dispatch email:", error);
       }
 
       setLatestResult({ ...finalResult });
       saveBatchToHistory(finalResult);
 
       try {
-        await fetch("/api/save-batch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finalResult),
-        });
+        if (persistenceReady) {
+          await fetch("/api/save-batch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(finalResult),
+          });
+        }
       } catch {}
 
       void fetchCredits();
@@ -411,7 +472,7 @@ export default function Dashboard() {
     if (!confirmed) return;
 
     try {
-      const response = await fetch("/api/latest-batch", { method: "DELETE" });
+      const response = await fetch(`/api/latest-batch?timestamp=${encodeURIComponent(batch.timestamp)}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Server rejected batch deletion");
 
       const remaining = savedBatches.filter((saved) => saved.id !== batch.timestamp);

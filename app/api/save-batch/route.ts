@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid batch" }, { status: 400 });
     }
     const body: WorkflowResult = parsed;
-    await saveLatestBatch(body);
-    return NextResponse.json({ success: true });
+    const batch = await saveLatestBatch(body);
+    return NextResponse.json({ success: true, batch });
   } catch (error: unknown) {
     const validationResponse = validationErrorResponse(error);
     if (validationResponse) return validationResponse;
