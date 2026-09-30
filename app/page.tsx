@@ -1063,32 +1063,6 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Email Delivery Warning Banner if failed */}
-                {!latestResult.emailDelivery.success && (
-                  <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/80 text-amber-200 text-xs flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg">
-                    <div className="flex items-center gap-3">
-                      <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
-                      <div>
-                        <strong className="block text-amber-300 text-sm font-bold">
-                          ⚠️ อีเมลยังไม่ถูกส่งไปยัง hs5ckt@gmail.com
-                        </strong>
-                        <span className="text-slate-300">
-                          สาเหตุ: {latestResult.emailDelivery.error || "ไม่ได้ตั้งค่า SMTP2GO_API_KEY หรือ SENDER_EMAIL ไม่ได้รับการ Verify ในระบบ SMTP2GO"}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleTestEmail}
-                      disabled={testingEmail}
-                      className="shrink-0 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2"
-                    >
-                      <Mail className="w-3.5 h-3.5" />
-                      {testingEmail ? "Testing..." : "ทดสอบส่ง Email ทันที"}
-                    </button>
-                  </div>
-                )}
-
                 {/* Mode Indicator & Upscale Recommendation */}
                 <div
                   className={`p-4 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs ${
