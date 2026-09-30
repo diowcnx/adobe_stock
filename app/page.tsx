@@ -23,7 +23,8 @@ import {
   FolderArchive,
   ArrowDownToLine,
   Loader2,
-  History
+  History,
+  Trash2
 } from "lucide-react";
 import JSZip from "jszip";
 import { WorkflowResult, OpenRouterCreditInfo, StockImageItem } from "@/lib/types";
@@ -464,26 +465,31 @@ export default function Dashboard() {
 
   const [isZipping, setIsZipping] = useState(false);
   const [zipProgress, setZipProgress] = useState<string>("");
+  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
 
-  const deleteDownloadedBatch = async (batch: WorkflowResult) => {
+  const deleteCurrentBatch = async () => {
+    if (!latestResult || latestResult.images.length === 0) return;
     const confirmed = window.confirm(
-      "ดาวน์โหลด ZIP เริ่มต้นแล้ว\n\nต้องการลบชุดภาพนี้ออกจากระบบและประวัติในเบราว์เซอร์หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้",
+      `ยืนยันลบภาพทั้งหมด ${latestResult.images.length} ภาพในชุดนี้หรือไม่?\n\nระบบจะลบภาพและข้อมูลชุดนี้ออกจากที่เก็บถาวรและประวัติในเบราว์เซอร์ การลบไม่สามารถย้อนกลับได้`,
     );
     if (!confirmed) return;
 
+    setIsDeletingBatch(true);
     try {
-      const response = await fetch(`/api/latest-batch?timestamp=${encodeURIComponent(batch.timestamp)}`, { method: "DELETE" });
+      const response = await fetch(`/api/latest-batch?timestamp=${encodeURIComponent(latestResult.timestamp)}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Server rejected batch deletion");
 
-      const remaining = savedBatches.filter((saved) => saved.id !== batch.timestamp);
+      const remaining = savedBatches.filter((saved) => saved.id !== latestResult.timestamp);
       localStorage.setItem("adobe_stock_history", JSON.stringify(remaining));
       setSavedBatches(remaining);
       setLatestResult(remaining[0]?.data ?? null);
       if (remaining.length === 0) selectTab("overview");
-      alert("✅ ลบชุดภาพที่ดาวน์โหลดแล้วออกจากระบบเรียบร้อย");
+      showNotice("ลบภาพทั้งหมดในชุดนี้เรียบร้อยแล้ว", "success");
     } catch (error: unknown) {
       console.error("Batch deletion failed:", error);
-      alert("❌ ลบชุดภาพไม่สำเร็จ ระบบยังเก็บข้อมูลชุดนี้ไว้");
+      showNotice("ลบชุดภาพไม่สำเร็จ ระบบยังเก็บข้อมูลชุดนี้ไว้", "error");
+    } finally {
+      setIsDeletingBatch(false);
     }
   };
 
@@ -506,7 +512,6 @@ export default function Dashboard() {
       // 2. ดึงภาพทั้งหมดในชุด
       let count = 0;
       let addedImageCount = 0;
-      const expectedImageCount = batch.images.filter((image) => Boolean(image.imageUrl)).length;
       for (const img of batch.images) {
         if (img.imageUrl) {
           count++;
@@ -562,10 +567,8 @@ export default function Dashboard() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      if (addedImageCount === expectedImageCount) {
-        await deleteDownloadedBatch(batch);
-      } else {
-        alert(`⚠️ ZIP มีภาพ ${addedImageCount}/${expectedImageCount} ภาพ ระบบจึงยังไม่ลบชุดภาพนี้`);
+      if (addedImageCount < batch.images.filter((image) => Boolean(image.imageUrl)).length) {
+        showNotice(`ดาวน์โหลด ZIP แล้ว แต่มีภาพ ${addedImageCount}/${batch.images.filter((image) => Boolean(image.imageUrl)).length} ภาพ`, "error");
       }
     } catch (error: unknown) {
       console.error("ZIP creation error:", error);
@@ -1032,7 +1035,7 @@ export default function Dashboard() {
                         <strong className="text-slate-300">Seasonal Horizon:</strong> {latestResult.trend.seasonalRelevance}
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center justify-end gap-3">
                       <button
                         type="button"
                         onClick={downloadAllImagesZip}
@@ -1058,6 +1061,15 @@ export default function Dashboard() {
                       >
                         <FileSpreadsheet className="w-4 h-4" />
                         <span>Download CSV Only</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={deleteCurrentBatch}
+                        disabled={isDeletingBatch || isZipping}
+                        className="bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-md shadow-rose-950/40 disabled:opacity-50"
+                      >
+                        {isDeletingBatch ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        <span>{isDeletingBatch ? "กำลังลบภาพ..." : "ลบภาพทั้งหมด"}</span>
                       </button>
                     </div>
                   </div>
