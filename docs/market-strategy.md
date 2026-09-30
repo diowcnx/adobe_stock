@@ -73,6 +73,39 @@ Reviewed on 30 September 2026 using the public contributor portfolios' `?order=n
 
 The profiles span photos, illustration, and templates. This adds 16 profiles with usable visible first-page observations to the original ten (26 observations total); pages with unavailable, sparse, or non-descriptive results were not counted. The generator translates recurring *buyer tasks* (clear copy space, useful food/product details, authentic preparation, specific places, or explanatory concepts) into original briefs; it must not mimic any contributor's signature aesthetic. Template-only examples are treated as evidence of buyer contexts such as packaging, event collateral, or brand presentation—not as a request to reproduce a template.
 
+### Supplemental profile sample (50 profiles total)
+
+The following 24 public profiles broaden the sample into lifestyle, diverse people, travel, architecture, wildlife, and design templates. Public profile descriptions, featured collections, and indexed Adobe asset examples were used to identify the portfolio's visible subject/use-case range. **Adobe's text-only public indexing did not consistently expose these 24 profiles' `?order=nb_downloads` asset sequence**, so these rows are supplementary profile evidence, not 24 additional verified ranked portfolios. In total, 50 distinct profiles have been reviewed, with 26 ranked-first-page observations and 24 supplemental profile/asset samples.
+
+| Additional contributor profile | Visible portfolio focus / buyer-use signal |
+|---|---|
+| [Daniel](https://stock.adobe.com/contributor/208405187/daniel?order=nb_downloads) | Lifestyle portraits and emotional everyday scenes; authentic expression and intentional lighting. |
+| [Alex Fradkin](https://stock.adobe.com/contributor/207576003/alex-fradkin?order=nb_downloads) | Architecture and landscapes shaped by changing light; destination/editorial use. |
+| [Joerg Nicht](https://stock.adobe.com/contributor/207683494/joerg-nicht?order=nb_downloads) | Architecture, travel, and street photography; city texture and built-environment context. |
+| [Jeff Perigois](https://stock.adobe.com/contributor/209010053/jeff-perigois?order=nb_downloads) | Southeast Asian architecture and changing streetscapes; specific regional urban stories. |
+| [Taylor Nelson](https://stock.adobe.com/contributor/206873713/Taylor%20Nelson?order=nb_downloads) | Landscape, travel, and lifestyle from road-trip/adventure contexts. |
+| [Matt Dayka](https://stock.adobe.com/contributor/208314315/matt-dayka?order=nb_downloads) | Travel/documentary moments with a focus on straightforward, authentic scenes. |
+| [ClickAlps](https://stock.adobe.com/contributor/206868903/clickalps?order=nb_downloads) | Geographically precise alpine, Italian coastal, mountain, and regional travel scenes. |
+| [Ryan Longnecker](https://stock.adobe.com/contributor/206291801/ryan-longnecker?order=nb_downloads) | Outdoor and travel photography; landscapes and adventure settings. |
+| [Yusuke Okada](https://stock.adobe.com/contributor/207657355/yusuke-okada?order=nb_downloads) | Wildlife and nature in Japan, including snow monkeys, marine life, and landscapes. |
+| [Jan Wischnewski](https://stock.adobe.com/contributor/209641481/jan-wischnewski?order=nb_downloads) | Food photography informed by cooking, available light, recipes, and local food travel. |
+| [Cayla Zahoran](https://stock.adobe.com/contributor/207027078/cayla-zahoran?order=nb_downloads) | Commercial food imagery for cookbooks, magazines, and restaurants. |
+| [TONL](https://stock.adobe.com/contributor/207912627/TONL?order=nb_downloads) | Diverse people and lived experiences; emotional/social contexts rather than generic demographic posing. |
+| [LUMINA IMAGES](https://stock.adobe.com/contributor/206744685/lumina-images?order=nb_downloads) | Lifestyle, food, beauty, and portrait photography. |
+| [Refresh](https://stock.adobe.com/contributor/208503262/refresh?order=nb_downloads) | Editorial and business publication templates, planners, calendars, recipe books, and travel layouts. |
+| [The Royal Studio](https://stock.adobe.com/contributor/206808797/royal-studio?order=nb_downloads) | Urban/editorial books, music and culture event collateral, and expressive publication design. |
+| [forgraphic](https://stock.adobe.com/contributor/207161052/forgraphic?order=nb_downloads) | Practical product and marketing mockups: packaging, signage, stationery, apparel, and display contexts. |
+| [E-Type](https://stock.adobe.com/contributor/212202993/e-type?order=nb_downloads) | Reusable presentation, architecture portfolio, proposal, and brand-guideline templates. |
+| [Raya](https://stock.adobe.com/contributor/207472184/raya?order=nb_downloads) | Calendar/planner systems, educational worksheets, wedding stationery, and seasonal illustration layouts. |
+| [Eightonesix](https://stock.adobe.com/contributor/208413245/eightonesix?order=nb_downloads) | Product/brand mockups across packaging, apparel, food wraps, and event merchandise. |
+| [Pixelpick](https://stock.adobe.com/contributor/208820959/pixelpick?order=nb_downloads) | Architecture portfolios plus practical gardening, charity, education, real-estate, and cookbook templates. |
+| [PixWork](https://stock.adobe.com/contributor/207534164/pixwork?order=nb_downloads) | Architecture/interior portfolios, annual reports, business proposals, and travel/food publications. |
+| [ContestDesign](https://stock.adobe.com/contributor/207540979/contestdesign?order=nb_downloads) | Print/social templates, brand collateral, calendars, and editable graphic effects. |
+| [TypoEdition](https://stock.adobe.com/contributor/207871352/typoedition?order=nb_downloads) | Business/editorial templates including cybersecurity, construction, portfolios, and proposals. |
+| [SouthRay](https://stock.adobe.com/contributor/207538563/southray?order=nb_downloads) | Business collateral, newsletters, travel/social layouts, and industry-specific flyers. |
+
+These supplemental profiles reinforce a few actionable distinctions: buyer need is often a *format or task* (regional travel story, recipe/editorial package, recruitment/annual report, product packaging) rather than a broad visual category; human imagery benefits from genuine, emotionally specific situations; and a niche should be represented accurately, not only decorated in a trend style. The templates provide evidence of commercial use-cases, not permission to reproduce the template itself.
+
 ## No-cost search-page market scan
 
 On 30 September 2026, checked Adobe Stock image search pages in a normal browser with no login, paid API, or account changes. The first page was treated as a qualitative snapshot, and the displayed result count only as rough catalog supply for that exact phrase. Counts change over time and between query variants; they are not sales volume, keyword search volume, or a reliable count of competitors.
@@ -111,3 +144,4 @@ The planning prompt requests ten different subjects for the chosen day, prohibit
 - [Pinterest Predicts 2026](https://business.pinterest.com/pinterest-predicts/2026/funhaus/): search-interest signals for playful interiors and circus nurseries; they are Pinterest queries, not Adobe Stock downloads.
 - [Adobe Creative Trends 2026](https://business.adobe.com/resources/creative-trends-report.html): trend direction around play, connection, and local stories, not a ranking of Adobe Stock sales.
 - [Etsy Seller Trend Report: Spring/Summer 2026](https://www.etsy.com/ca/seller-handbook/article/1473931456647): Etsy search signals for wall decor and botanical wedding themes, not Adobe Stock demand.
+- Supplemental public Adobe Stock contributor profiles and linked asset examples were checked on 30 September 2026; profile pages are linked in the table above. Since the order parameter was not consistently verifiable for this supplemental set, do not treat those rows as ranked-download results.
