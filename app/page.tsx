@@ -30,11 +30,10 @@ import JSZip from "jszip";
 import { WorkflowResult, OpenRouterCreditInfo, StockImageItem } from "@/lib/types";
 import { generateMetadataCsv, getStockImageFilename } from "@/lib/csv";
 import { getErrorMessage, isRecord } from "@/lib/errors";
-import { BATCH_SIZE, getDailyCategory, getDailyScheduledMode, MONTHLY_CATEGORIES } from "@/lib/production-plan";
+import { BATCH_SIZE, getDailyCategory, MONTHLY_CATEGORIES } from "@/lib/production-plan";
 import { isWorkflowResult } from "@/lib/validation";
-import { getItemGenerationMode, summarizeConceptMix } from "@/lib/concept-mix";
+import { getItemGenerationMode, summarizeConceptPlan } from "@/lib/structured-concepts";
 
-type GenerationModeSelection = "auto" | "transparent_png" | "regular_scene";
 type DashboardTab = "overview" | "images" | "setup";
 
 interface UiNotice {
@@ -80,8 +79,8 @@ function mergeSavedBatches(serverEntries: unknown, localEntries: unknown): Saved
 }
 
 function getSavedBatchModeLabel(batch: SavedBatch): string {
-  const summary = batch.data.conceptMix || summarizeConceptMix(batch.data.images, batch.mode);
-  if (summary.enabled) return `🧩 ${summary.existingCount}+${summary.materialConceptCount} (${summary.transparentPngCount} PNG / ${summary.regularSceneCount} JPEG)`;
+  const summary = batch.data.conceptPlan || summarizeConceptPlan(batch.data.images, batch.mode);
+  if (summary.enabled) return `🧵 Structured ${summary.structuredCount} JPEG`;
   return batch.mode === "transparent_png" ? "🔲 PNG" : "🏞️ ฉาก";
 }
 
@@ -95,7 +94,6 @@ export default function Dashboard() {
   const [savedBatches, setSavedBatches] = useState<SavedBatch[]>([]);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
-  const [selectedMode, setSelectedMode] = useState<GenerationModeSelection>("auto");
   const [testingEmail, setTestingEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<TestEmailResult | null>(null);
   const [notice, setNotice] = useState<UiNotice | null>(null);
@@ -147,7 +145,6 @@ export default function Dashboard() {
     }
   };
 
-  const todayScheduledMode = getDailyScheduledMode();
   const todayCategory = getDailyCategory();
 
   const handleLogout = async () => {
@@ -290,7 +287,7 @@ export default function Dashboard() {
       const prepRes = await fetch("/api/prepare-batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: selectedMode }),
+        body: JSON.stringify({ mode: "auto" }),
       });
       const prepData = await prepRes.json();
       if (!prepRes.ok || !prepData.success) {
@@ -305,7 +302,7 @@ export default function Dashboard() {
         success: true,
         timestamp: new Date().toISOString(),
         generationMode: prepData.mode,
-        conceptMix: prepData.conceptMix,
+        conceptPlan: prepData.conceptPlan,
         trend: prepData.trend,
         images: prepData.items,
         credits: prepData.credits,
@@ -640,8 +637,8 @@ export default function Dashboard() {
     }
   };
 
-  const currentConceptMix = latestResult
-    ? latestResult.conceptMix || summarizeConceptMix(latestResult.images, latestResult.generationMode)
+  const currentConceptPlan = latestResult
+    ? latestResult.conceptPlan || summarizeConceptPlan(latestResult.images, latestResult.generationMode)
     : null;
 
   return (
@@ -678,24 +675,9 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* Generation Mode Selector */}
-            <select
-              value={selectedMode}
-              onChange={(event) => {
-                const value = event.target.value;
-                if (value === "auto" || value === "transparent_png" || value === "regular_scene") {
-                  setSelectedMode(value);
-                }
-              }}
-              className="bg-slate-800/90 border border-slate-700/80 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500 font-medium"
-              title="เลือกโหมดไฟล์สำหรับแนวคิดเดิม 5 ภาพ; Material Concept อีก 5 ภาพยังเป็น Regular Scene"
-            >
-              <option value="auto">
-                🔄 Auto: {todayScheduledMode === "transparent_png" ? "🔲 วันนี้โหมด Transparent PNG" : "🏞️ วันนี้โหมด Regular Scene"}
-              </option>
-              <option value="transparent_png">🔲 Existing 5: Transparent PNG</option>
-              <option value="regular_scene">🏞️ Existing 5: Regular Scene</option>
-            </select>
+            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="Structured Editorial Still Life จำนวน 18 ช่อง">
+              🧵 Editorial Still Life · 18 Fields
+            </div>
 
             {/* Run Button */}
             <button
@@ -901,8 +883,8 @@ export default function Dashboard() {
                   <span className="text-xs font-medium text-slate-400">SEO Keywords</span>
                   <TrendingUp className="w-4 h-4 text-amber-400" />
                 </div>
-                <div className="text-xl font-bold text-white">25 - 35 Tags</div>
-                <p className="text-xs text-slate-500 mt-1">Single words &amp; Top 10</p>
+                <div className="text-xl font-bold text-white">15 - 25 Tags</div>
+                <p className="text-xs text-slate-500 mt-1">Relevant phrases &amp; Top 10 prioritized</p>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -911,22 +893,22 @@ export default function Dashboard() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
-                  {todayCategory.name} · {todayScheduledMode === "transparent_png" ? "🔲 PNG" : "🏞️ JPEG"}
+                  🧵 Thai Editorial Still Life
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {todayScheduledMode === "transparent_png" ? "Filename: .png" : "Filename: .jpeg"}
+                  {todayCategory.name} · Filename: .jpeg
                 </p>
               </div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-              <h3 className="font-semibold text-white mb-3">Monthly buyer-use plan · 10 images per day</h3>
+              <h3 className="font-semibold text-white mb-3">Monthly buyer-use context · 10 structured images per day</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
                 {MONTHLY_CATEGORIES.map((category) => (
                   <div key={category.day} className={`rounded-xl border p-3 ${category.day === todayCategory.day ? "border-sky-500/60 bg-sky-950/40" : "border-slate-800 bg-slate-950/50"}`}>
                     <div className="text-[11px] text-slate-500">Day {category.day}</div>
                     <div className="text-xs font-semibold text-slate-200 mt-1">{category.name}</div>
-                    <div className="text-[10px] text-slate-500 mt-1">{category.mode === "transparent_png" ? "PNG assets" : "JPEG scene/art"}</div>
+                    <div className="text-[10px] text-slate-500 mt-1">Editorial Still Life JPEG</div>
                   </div>
                 ))}
               </div>
@@ -948,7 +930,7 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Creates 5 concepts from today&apos;s monthly theme and 5 distinct 7-Part Material Concepts, then shuffles the order.</p>
+                  <p className="text-slate-400">Creates 10 distinct concepts from the active 18-field Thai Editorial Still Life structure and today&apos;s buyer context.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
@@ -1090,7 +1072,7 @@ export default function Dashboard() {
                 {/* Mode Indicator & Upscale Recommendation */}
                 <div
                   className={`p-4 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs ${
-                    currentConceptMix?.enabled
+                    currentConceptPlan?.enabled
                       ? "bg-violet-950/40 border-violet-800/80 text-violet-200"
                       : latestResult.generationMode === "transparent_png"
                       ? "bg-sky-950/40 border-sky-800/80 text-sky-200"
@@ -1098,18 +1080,18 @@ export default function Dashboard() {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{currentConceptMix?.enabled ? "🧩" : latestResult.generationMode === "transparent_png" ? "🔲" : "🏞️"}</span>
+                    <span className="text-2xl">{currentConceptPlan?.enabled ? "🧵" : latestResult.generationMode === "transparent_png" ? "🔲" : "🏞️"}</span>
                     <div>
                       <strong className="block text-white text-sm font-bold">
-                        {currentConceptMix?.enabled
-                          ? `${currentConceptMix.existingCount} Existing + ${currentConceptMix.materialConceptCount} Material Concept (${currentConceptMix.transparentPngCount} PNG / ${currentConceptMix.regularSceneCount} JPEG)`
+                        {currentConceptPlan?.enabled
+                          ? `${currentConceptPlan.structuredCount} Structured Editorial Still Life (${currentConceptPlan.regularSceneCount} JPEG)`
                           : latestResult.generationMode === "transparent_png"
                           ? `100% Transparent PNG Set (พื้นหลังโปร่งใสทั้งชุด ${latestResult.images.length} ภาพ)`
                           : `100% Regular Commercial Stock Set (ภาพทั่วไปมีฉากหลังทั้งชุด ${latestResult.images.length} ภาพ)`}
                       </strong>
                       <span className="text-slate-300">
-                        {currentConceptMix?.enabled
-                          ? "แนวคิดเดิมรักษาโหมดตามหมวดประจำวัน ส่วน Material Concept เป็นฉากโฆษณา 16:9 แบบ JPEG และมีพื้นที่วางข้อความ"
+                        {currentConceptPlan?.enabled
+                          ? "ทุกภาพวางแผนด้วย Structure 18 ช่อง เน้นองค์ประกอบโฆษณา พื้นผิวสมจริง และเว้นพื้นที่สำหรับใส่ข้อความภายหลังโดยไม่สร้างตัวอักษรลงในภาพ"
                           : latestResult.generationMode === "transparent_png"
                           ? "💡 คำแนะนำการ Upscale: บันทึกไฟล์เป็น .PNG เท่านั้น เพื่อรักษาความโปร่งใส (Alpha Transparency) สำหรับส่งขายหมวด Isolated PNG"
                           : "💡 รูปภาพทั่วไปและงานศิลป์ใช้ชื่อไฟล์ .jpeg โดยองค์ประกอบภาพจะยึดตามหมวดประจำวัน"}
@@ -1117,7 +1099,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <span className="shrink-0 font-mono text-[11px] px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300">
-                    {currentConceptMix?.enabled ? "Concept mix: 5:5" : `Mode: ${latestResult.generationMode || "regular_scene"}`}
+                    {currentConceptPlan?.enabled ? "Structure: Thai Editorial Still Life v1" : `Mode: ${latestResult.generationMode || "regular_scene"}`}
                   </span>
                 </div>
 
@@ -1147,9 +1129,9 @@ export default function Dashboard() {
                               🔲 Transparent PNG
                             </span>
                           )}
-                          {img.conceptMode === "material_concept" && (
+                          {img.conceptMode === "structured_concept" && (
                             <span className="text-xs font-mono text-violet-300 bg-violet-950/70 px-2.5 py-0.5 rounded border border-violet-800/50 flex items-center gap-1 font-semibold">
-                              🧱 Material Concept
+                              🧵 Structured Still Life
                             </span>
                           )}
                           <span className="text-xs font-mono text-sky-400 bg-sky-950/50 px-2 py-0.5 rounded border border-sky-800/40">
@@ -1278,6 +1260,22 @@ export default function Dashboard() {
                               {img.prompt}
                             </div>
                           </div>
+
+                          {img.conceptStructure && (
+                            <details className="rounded-xl border border-violet-900/60 bg-violet-950/20 p-3">
+                              <summary className="cursor-pointer text-xs font-semibold text-violet-300 uppercase tracking-wider">
+                                USER_INPUT Structure · 18 Fields
+                              </summary>
+                              <dl className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {Object.entries(img.conceptStructure.fields).map(([field, value]) => (
+                                  <div key={field} className="rounded-lg border border-slate-800 bg-slate-950/70 p-2.5">
+                                    <dt className="text-[10px] font-semibold text-violet-300 break-all">{field}</dt>
+                                    <dd className="mt-1 text-xs text-slate-300 leading-relaxed">{value}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            </details>
+                          )}
 
                           {/* Keywords */}
                           <div>

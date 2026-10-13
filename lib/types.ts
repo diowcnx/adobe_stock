@@ -7,25 +7,43 @@ export interface MarketTrend {
 }
 
 export type GenerationMode = "transparent_png" | "regular_scene";
-export type ConceptMode = "existing" | "material_concept";
+export type ConceptMode = "existing" | "structured_concept";
 export type PlanningSource = "ai" | "curated_fallback";
+export type ConceptStructureType = "thai_editorial_still_life_v1";
 
-export interface MaterialStructure {
-  SUBJECT: string;
-  PRIMARY_MATERIAL: string;
-  SECONDARY_MATERIAL: string;
-  BACKGROUND: string;
-  SHADOW_STYLE: string;
-  VISUAL_STYLE: string;
-  COMMERCIAL_CONCEPT: string;
+export interface ThaiEditorialStillLifeStructure {
+  CAMPAIGN_THEME: string;
+  MAIN_CONCEPT: string;
+  CAMERA_ANGLE: string;
+  LENS_TYPE: string;
+  SHOT_TYPE: string;
+  LIGHTING: string;
+  BACKGROUND_BASE: string;
+  BACKGROUND_TEXTURE: string;
+  BACKGROUND_DETAILS: string;
+  CENTRAL_INSTALLATION: string;
+  PRIMARY_COMPONENTS: string;
+  SUPPORTING_ACCENT_1: string;
+  SUPPORTING_ACCENT_2: string;
+  MATERIAL_FOCUS: string;
+  COMPOSITION_LOGIC: string;
+  ATMOSPHERIC_STYLE: string;
+  COLOR_PALETTE: string;
+  TEXT_ELEMENTS: string;
 }
 
-export interface ConceptMixSummary {
+export interface ConceptStructurePayload {
+  type: ConceptStructureType;
+  fields: ThaiEditorialStillLifeStructure;
+}
+
+export interface ConceptPlanSummary {
   enabled: boolean;
-  existingCount: number;
-  materialConceptCount: number;
+  structuredCount: number;
+  legacyCount: number;
   transparentPngCount: number;
   regularSceneCount: number;
+  structureType: ConceptStructureType | null;
 }
 
 export interface StockImageItem {
@@ -42,7 +60,7 @@ export interface StockImageItem {
   isTransparent?: boolean;
   generationMode?: GenerationMode;
   conceptMode?: ConceptMode;
-  materialStructure?: MaterialStructure;
+  conceptStructure?: ConceptStructurePayload;
   planningSource?: PlanningSource;
   imageUrl?: string;
   imageBase64?: string;
@@ -62,7 +80,7 @@ export interface WorkflowResult {
   success: boolean;
   timestamp: string;
   generationMode?: GenerationMode;
-  conceptMix?: ConceptMixSummary;
+  conceptPlan?: ConceptPlanSummary;
   trend: MarketTrend;
   images: StockImageItem[];
   credits: OpenRouterCreditInfo;

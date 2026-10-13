@@ -1,50 +1,50 @@
 # Monthly buyer-use image strategy
 
-Every Bangkok calendar day maps to a different focused theme (days 1–31). A normal run makes five distinct briefs within that day's use case and five 7-Part Material Concept briefs. Months with 28–30 days simply do not use the unused final day(s); the next month starts at day 1 with the 31-theme plan again. Themes are grounded in observable portfolio patterns and practical buyer tasks, not represented as sales forecasts.
+Every Bangkok calendar day maps to a different buyer-use context (days 1–31). A normal run makes ten distinct Thai Editorial Still Life briefs using the active 18-field structure. Months with 28–30 days simply do not use the unused final day(s); the next month starts at day 1 with the 31-theme plan again. Themes are grounded in observable portfolio patterns and practical buyer tasks, not represented as sales forecasts.
 
-## Daily 5:5 concept mix
+## Structured Editorial Still Life v1
 
-Each daily batch remains capped at 10 paid image-generation requests. Five briefs continue to use the day-of-month buyer theme and its existing per-item output behavior. Five briefs use the material structure `SUBJECT`, `PRIMARY_MATERIAL`, `SECONDARY_MATERIAL`, `BACKGROUND`, `SHADOW_STYLE`, `VISUAL_STYLE`, and `COMMERCIAL_CONCEPT`.
+Each daily batch remains capped at 10 paid image-generation requests and one planning request. Every brief uses `CAMPAIGN_THEME`, `MAIN_CONCEPT`, `CAMERA_ANGLE`, `LENS_TYPE`, `SHOT_TYPE`, `LIGHTING`, `BACKGROUND_BASE`, `BACKGROUND_TEXTURE`, `BACKGROUND_DETAILS`, `CENTRAL_INSTALLATION`, `PRIMARY_COMPONENTS`, `SUPPORTING_ACCENT_1`, `SUPPORTING_ACCENT_2`, `MATERIAL_FOCUS`, `COMPOSITION_LOGIC`, `ATMOSPHERIC_STYLE`, `COLOR_PALETTE`, and `TEXT_ELEMENTS`.
 
-Material concepts are regular-scene 16:9 advertising compositions with a subject on one third and roughly 50–60% clean copy space on the opposite side. Existing transparent cutouts and full-bleed artwork do not inherit that rule. The final ten briefs are shuffled deterministically by Bangkok production date, so retries retain the same order while different days receive a different arrangement.
+The concepts use accessible materials such as silk, buttons, thread, flowers, coffee beans, rice, bamboo, leaves, ceramic and plain metal details to tell contemporary Thai stories through studio Editorial Still Life. All ten outputs are regular-scene JPEG images with varied advertising aspect ratios. `TEXT_ELEMENTS` describes clean layout space only; the generation prompt always forbids rendered lettering, logos and pseudo-text. Sacred objects, royal insignia, national emblems, protected textile patterns and stereotypical tourist props are excluded.
 
-Set `ENABLE_MATERIAL_MIX=false` to roll back to the legacy ten-concept planner. This switch changes planning only; it does not alter cron authentication, image count, persistence, email delivery, or the manual output-mode request contract.
+The final ten briefs are shuffled deterministically by Bangkok production date, so retries retain the same order while different days receive a different arrangement. Set `ENABLE_STRUCTURED_CONCEPTS=false` to roll back to the legacy ten-concept planner. This switch does not alter cron authentication, image count, persistence or email delivery.
 
 ## Monthly plan
 
-| Day | Unique daily theme | Typical buyer/use | Output |
+| Day | Daily buyer context | Typical buyer/use | Structured output |
 |---:|---|---|---|
-| 1 | Copy-space hospitality interiors | Hospitality marketers and interior publishers | JPEG scene |
-| 2 | Restaurant-ready food still life | Food publishers and restaurant marketers | JPEG scene |
-| 3 | Authentic family and companion-animal moments | Family brands and pet-care publishers | JPEG scene |
-| 4 | Botanical and culinary ingredient cutouts | Food and wellness designers | PNG assets |
-| 5 | Finance and business decision concepts | Financial services and business publishers | JPEG scene |
-| 6 | Destination-specific travel and city stories | Tourism boards and travel publishers | JPEG scene |
-| 7 | Expressive pet portraits and care | Veterinary services and animal welfare publishers | JPEG scene |
-| 8 | Botanical seamless pattern and surface design | Surface designers and stationery publishers | JPEG artwork |
-| 9 | Healthcare professionals in everyday practice | Healthcare and patient-education publishers | JPEG scene |
-| 10 | Regional ingredients and home cooking | Recipe publishers and food brands | JPEG scene |
-| 11 | Nature textures and leafy copy space | Wellness, gardening, and environmental publishers | JPEG scene |
-| 12 | Small-business product packaging scenes | Independent product brands | JPEG scene |
-| 13 | Playful circus-inspired children's rooms | Nursery publishers and family brands | JPEG scene |
-| 14 | Botanical wedding and event design elements | Wedding stationery designers | PNG assets |
-| 15 | Music, sound, and creative culture visuals | Music educators and event publishers | JPEG scene |
-| 16 | Everyday urban mobility and public transit | Mobility services and city publishers | JPEG scene |
-| 17 | Climate-smart gardens and food growing | Sustainability educators and urban agriculture | PNG assets |
-| 18 | Community arts and local maker events | Municipal arts programs and community groups | JPEG scene |
-| 19 | Cybersecurity and practical digital privacy | Technology and digital-literacy publishers | JPEG scene |
-| 20 | Contemporary kitchen and home renovation | Home brands and interior publishers | JPEG scene |
-| 21 | Accessible home details and inclusive living | Inclusive housing and community-service publishers | JPEG scene |
-| 22 | Original print-ready wall art | Interior stylists and print publishers | JPEG artwork |
-| 23 | Civic participation and community services | Civic organizations and public-service publishers | JPEG scene |
-| 24 | Learning through hands-on creativity | Education publishers and family-learning brands | JPEG scene |
-| 25 | Herbal wellness and garden-to-kitchen ingredients | Wellness and food editors | JPEG scene |
-| 26 | Craft textiles and material-led interiors | Home decor publishers | JPEG scene |
-| 27 | Wildlife and biodiversity field stories | Conservation educators and nature publishers | JPEG scene |
-| 28 | Movement, recovery, and inclusive fitness | Fitness and wellbeing publishers | JPEG scene |
-| 29 | Architecture, stairways, and usable space | Architects and real-estate publishers | JPEG scene |
-| 30 | Useful technology and human-computer interaction | Software teams and technology publishers | JPEG scene |
-| 31 | Seasonal gifting and handmade celebrations | Retailers and event publishers | JPEG scene |
+| 1 | Copy-space hospitality interiors | Hospitality marketers and interior publishers | Editorial Still Life JPEG |
+| 2 | Restaurant-ready food still life | Food publishers and restaurant marketers | Editorial Still Life JPEG |
+| 3 | Authentic family and companion-animal moments | Family brands and pet-care publishers | Editorial Still Life JPEG |
+| 4 | Botanical and culinary ingredient cutouts | Food and wellness designers | Editorial Still Life JPEG |
+| 5 | Finance and business decision concepts | Financial services and business publishers | Editorial Still Life JPEG |
+| 6 | Destination-specific travel and city stories | Tourism boards and travel publishers | Editorial Still Life JPEG |
+| 7 | Expressive pet portraits and care | Veterinary services and animal welfare publishers | Editorial Still Life JPEG |
+| 8 | Botanical seamless pattern and surface design | Surface designers and stationery publishers | Editorial Still Life JPEG |
+| 9 | Healthcare professionals in everyday practice | Healthcare and patient-education publishers | Editorial Still Life JPEG |
+| 10 | Regional ingredients and home cooking | Recipe publishers and food brands | Editorial Still Life JPEG |
+| 11 | Nature textures and leafy copy space | Wellness, gardening, and environmental publishers | Editorial Still Life JPEG |
+| 12 | Small-business product packaging scenes | Independent product brands | Editorial Still Life JPEG |
+| 13 | Playful circus-inspired children's rooms | Nursery publishers and family brands | Editorial Still Life JPEG |
+| 14 | Botanical wedding and event design elements | Wedding stationery designers | Editorial Still Life JPEG |
+| 15 | Music, sound, and creative culture visuals | Music educators and event publishers | Editorial Still Life JPEG |
+| 16 | Everyday urban mobility and public transit | Mobility services and city publishers | Editorial Still Life JPEG |
+| 17 | Climate-smart gardens and food growing | Sustainability educators and urban agriculture | Editorial Still Life JPEG |
+| 18 | Community arts and local maker events | Municipal arts programs and community groups | Editorial Still Life JPEG |
+| 19 | Cybersecurity and practical digital privacy | Technology and digital-literacy publishers | Editorial Still Life JPEG |
+| 20 | Contemporary kitchen and home renovation | Home brands and interior publishers | Editorial Still Life JPEG |
+| 21 | Accessible home details and inclusive living | Inclusive housing and community-service publishers | Editorial Still Life JPEG |
+| 22 | Original print-ready wall art | Interior stylists and print publishers | Editorial Still Life JPEG |
+| 23 | Civic participation and community services | Civic organizations and public-service publishers | Editorial Still Life JPEG |
+| 24 | Learning through hands-on creativity | Education publishers and family-learning brands | Editorial Still Life JPEG |
+| 25 | Herbal wellness and garden-to-kitchen ingredients | Wellness and food editors | Editorial Still Life JPEG |
+| 26 | Craft textiles and material-led interiors | Home decor publishers | Editorial Still Life JPEG |
+| 27 | Wildlife and biodiversity field stories | Conservation educators and nature publishers | Editorial Still Life JPEG |
+| 28 | Movement, recovery, and inclusive fitness | Fitness and wellbeing publishers | Editorial Still Life JPEG |
+| 29 | Architecture, stairways, and usable space | Architects and real-estate publishers | Editorial Still Life JPEG |
+| 30 | Useful technology and human-computer interaction | Software teams and technology publishers | Editorial Still Life JPEG |
+| 31 | Seasonal gifting and handmade celebrations | Retailers and event publishers | Editorial Still Life JPEG |
 
 ## Adobe Stock portfolio review
 

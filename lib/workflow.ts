@@ -30,8 +30,8 @@ async function runDailyStockWorkflow(
 
   // 2. วางแผน 10 briefs ตามหมวดประจำวันของเวลาไทย
   console.log(`Conducting market research (mode: ${forcedMode || "auto-scheduled"})...`);
-  const { trend, items, mode, conceptMix } = await conductMarketResearchAndGeneratePrompts(undefined, forcedMode);
-  console.log(`Resolved generation mode: ${mode} (${items.length} items; ${conceptMix.existingCount}:${conceptMix.materialConceptCount} concept mix)`);
+  const { trend, items, mode, conceptPlan } = await conductMarketResearchAndGeneratePrompts(undefined, forcedMode);
+  console.log(`Resolved generation mode: ${mode} (${items.length} items; ${conceptPlan.structuredCount} structured concepts)`);
 
   // 3. สร้างภาพจำนวนตามชุดประจำวันที่กำหนด
   console.log(`Generating ${items.length} commercial images for mode: ${mode}...`);
@@ -51,7 +51,7 @@ async function runDailyStockWorkflow(
     success: true,
     timestamp: new Date().toISOString(),
     generationMode: mode,
-    conceptMix,
+    conceptPlan,
     trend,
     images: generatedImages,
     credits: latestCredits,

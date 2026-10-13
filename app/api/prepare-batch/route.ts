@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const body = await readJsonBody(request, 1_024);
     const mode = parseGenerationMode(body.mode);
 
-    const { trend, items, mode: resolvedMode, conceptMix } = await conductMarketResearchAndGeneratePrompts(undefined, mode);
+    const { trend, items, mode: resolvedMode, conceptPlan } = await conductMarketResearchAndGeneratePrompts(undefined, mode);
     const credits = await getOpenRouterCredits();
 
     return NextResponse.json({
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       trend,
       items,
       mode: resolvedMode,
-      conceptMix,
+      conceptPlan,
       credits,
     });
   } catch (error: unknown) {

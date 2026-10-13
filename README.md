@@ -1,19 +1,21 @@
 # 📸 Adobe Stock Automated AI Generator & Daily Dispatcher
 
-ระบบสร้างภาพพร้อม SEO metadata ผ่าน OpenRouter วันละ 10 แนวคิด โดยผสม 5 แนวคิดจากธีมผู้ซื้อประจำวันกับ 5 แนวคิดแบบ 7-Part Material Concept แล้วสลับลำดับตามวันที่ ใช้สัญญาณจากโปรไฟล์ Adobe Stock และรายงานแนวโน้มสาธารณะเป็นแนวคิดตั้งต้น (ไม่ใช่ข้อมูลยอดขายรวมที่ยืนยันแล้ว) พร้อมตรวจเครดิตและจัดส่งอีเมลผ่าน SMTP2GO ทุกวันเวลา 18:00 น.
+ระบบสร้างภาพพร้อม SEO metadata ผ่าน OpenRouter วันละ 10 แนวคิด โดยทุกภาพใช้ Structured Editorial Still Life 18 ช่อง นำผ้าไหม กระดุม เส้นด้าย ดอกไม้ เมล็ดกาแฟ และวัสดุใกล้ตัวมาเล่าเรื่องไทยร่วมสมัยในภาพโฆษณาสตูดิโอ ใช้ธีมผู้ซื้อรายวันและสัญญาณสาธารณะเป็นบริบท (ไม่ใช่ข้อมูลยอดขายรวมที่ยืนยันแล้ว) พร้อมตรวจเครดิตและจัดส่งอีเมลผ่าน SMTP2GO ทุกวันเวลา 18:00 น.
 
 ---
 
 ## 🚀 คุณสมบัติเด่น (Features)
 
 1. **Market Research Engine**:
-   - ใช้แผน 31 ธีมผู้ซื้อที่แตกต่างกันตามวันที่ของเดือน และวางแผน 5 แนวคิดจากธีมเดิม + 5 แนวคิด Material Concept ต่อชุด
-   - Material Concept เก็บโครงสร้าง `SUBJECT`, `PRIMARY_MATERIAL`, `SECONDARY_MATERIAL`, `BACKGROUND`, `SHADOW_STYLE`, `VISUAL_STYLE`, `COMMERCIAL_CONCEPT` เพื่อให้ตรวจสอบที่มาของ Prompt ได้
-   - สำรวจหน้าแรกของ 10 โปรไฟล์สาธารณะด้วยการเรียง `order=nb_downloads` เพื่อหา buyer-use patterns โดยไม่เลียนแบบผู้สร้าง
+   - ใช้แผน 31 ธีมผู้ซื้อเป็นบริบท แล้วสร้าง Structured Editorial Still Life ที่ต่างกัน 10 แนวคิดต่อชุด
+   - เก็บ `USER_INPUT` ครบ 18 ช่อง ตั้งแต่ `CAMPAIGN_THEME`, กล้อง แสง ฉาก วัสดุ และองค์ประกอบ ไปจนถึง `TEXT_ELEMENTS` เพื่อให้ตรวจสอบ Prompt ได้
+   - ออกแบบเป็น Structure Registry เพื่อเพิ่ม Structure รูปแบบใหม่ภายหลังได้โดยยังรักษาชนิดข้อมูลของชุดเดิม
+   - สำรวจโปรไฟล์สาธารณะ 50 โปรไฟล์เพื่อหา buyer-use patterns โดยไม่เลียนแบบผู้สร้าง
    - แยกอันดับภายในโปรไฟล์และสัญญาณจาก Pinterest/Etsy/Adobe Creative Trends ออกจากยอดขาย Adobe Stock ที่ยังไม่มีข้อมูลยืนยัน
 2. **Adobe Stock Compliant Prompts & Metadata**:
    - สร้าง 10 Prompts ที่มี subject, buyer use และรายละเอียดภาพต่างกัน แทนการสร้างหลาย crop จากแนวคิดซ้ำ
-   - งาน Wall art สร้างตัว artwork เต็มภาพและ PNG cutout ไม่ถูกบังคับ copy space; Material Concept เป็นฉากโฆษณา 16:9 พร้อมพื้นที่สะอาดประมาณ 50–60%
+   - เน้น Editorial Still Life แบบงานถ่ายภาพสตูดิโอ วัสดุสมจริง การจัดองค์ประกอบเชิงแนวคิด และพื้นที่สำหรับใส่ข้อความภายหลัง
+   - `TEXT_ELEMENTS` ใช้กำหนดพื้นที่เลย์เอาต์ แต่ระบบห้ามสร้างตัวอักษร โลโก้ หรือตัวหนังสือจำลองลงในภาพ
    - ไม่มีเครื่องหมายการค้า โลโก้ หรือองค์ประกอบละเมิดลิขสิทธิ์
    - ให้ **SEO Title** กระชับ ชัดเจน
    - ให้ **Keywords 15-25 คำ** เรียงคำเฉพาะไว้ก่อนและตรวจความเกี่ยวข้อง
@@ -25,7 +27,7 @@
    - ส่งอีเมลตรงถึง `hs5ckt@gmail.com`
    - จัดรูปแบบ HTML สวยงาม พร้อมกล่อง Copy SEO Title และ Keywords
    - แนบ metadata CSV; ปุ่ม Dashboard ใช้ดาวน์โหลดภาพ ZIP หรือทีละภาพ
-   - ชื่อไฟล์และ CSV ใช้ `.jpeg` หรือ `.png` ตามโหมดของแต่ละภาพ จึงรองรับชุดผสมได้ถูกต้อง
+   - ชุด Structured Editorial Still Life ใช้ชื่อไฟล์ `.jpeg` ในภาพและ CSV อย่างสอดคล้องกัน
 5. **Daily Loop via Vercel Cron**:
    - ตั้งเวลาทำงานอัตโนมัติทุกวันเวลา 18:00 น. ตามเวลาไทย (`0 11 * * *` UTC)
    - มี Web Dashboard ให้กด "Run Today's Batch Now" เพื่อทดสอบและดูผลลัพธ์ได้ทันที
@@ -47,7 +49,7 @@
 | `CRON_SECRET` | Secret สุ่มป้องกัน Cron Endpoint ไม่ต่ำกว่า 32 ตัวอักษร | `openssl-rand-base64-32-output` |
 | `APP_URL` | URL หลักของแอปสำหรับลิงก์ในอีเมล | `https://your-app.vercel.app` |
 | `REMOTE_IMAGE_ALLOWED_HOSTS` | Hostname HTTPS ของภาพภายนอกที่อนุญาต คั่นด้วย comma (ห้ามใช้ wildcard) | `images.example-cdn.com` |
-| `ENABLE_MATERIAL_MIX` | เปิดชุดผสม 5:5 ตามค่าเริ่มต้น; ตั้ง `false` เพื่อ rollback เป็น planner เดิม 10 ภาพ | `true` |
+| `ENABLE_STRUCTURED_CONCEPTS` | เปิด Structured Editorial Still Life ทั้ง 10 ภาพตามค่าเริ่มต้น; ตั้ง `false` เพื่อ rollback เป็น planner เดิม | `true` |
 
 ---
 
@@ -72,7 +74,7 @@ npm run dev
 npm test
 ```
 
-การทดสอบครอบคลุม planner แบบ mock, curated fallback, ธีมครบทั้ง 31 วัน, โหมด PNG/JPEG รายภาพ, CSV และ rollback switch โดยไม่ใช้เครดิตสร้างภาพ
+การทดสอบครอบคลุม planner แบบ mock, ช่องข้อมูลครบ 18 รายการ, curated fallback, ธีมครบทั้ง 31 วัน, CSV และ rollback switch โดยไม่ใช้เครดิตสร้างภาพ
 
 ---
 
