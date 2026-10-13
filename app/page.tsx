@@ -1232,6 +1232,28 @@ export default function Dashboard() {
                             </div>
                           </div>
 
+                          {img.commercialIntent && (
+                            <div className="rounded-xl border border-amber-900/60 bg-amber-950/20 p-3">
+                              <div className="text-xs font-semibold text-amber-300 uppercase tracking-wider mb-3">
+                                Buyer Fit · ใครใช้ภาพนี้ และทำไมจึงควรซื้อ
+                              </div>
+                              <dl className="grid grid-cols-1 gap-2">
+                                <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-2.5">
+                                  <dt className="text-[10px] font-semibold text-amber-300 uppercase">Target buyer</dt>
+                                  <dd className="mt-1 text-xs text-slate-300 leading-relaxed">{img.commercialIntent.targetBuyer}</dd>
+                                </div>
+                                <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-2.5">
+                                  <dt className="text-[10px] font-semibold text-amber-300 uppercase">Intended use</dt>
+                                  <dd className="mt-1 text-xs text-slate-300 leading-relaxed">{img.commercialIntent.intendedUse}</dd>
+                                </div>
+                                <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-2.5">
+                                  <dt className="text-[10px] font-semibold text-amber-300 uppercase">Why license this image</dt>
+                                  <dd className="mt-1 text-xs text-slate-300 leading-relaxed">{img.commercialIntent.purchaseReason}</dd>
+                                </div>
+                              </dl>
+                            </div>
+                          )}
+
                           {/* Prompt */}
                           <div>
                             <div className="flex items-center justify-between mb-1">

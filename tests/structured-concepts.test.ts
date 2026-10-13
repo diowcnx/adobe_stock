@@ -41,7 +41,9 @@ function mockedPlan() {
   return {
     concepts: Array.from({ length: 10 }, (_, index) => ({
       title: `Thai Editorial Material Story ${index + 1}`,
-      buyerUse: `Commercial buyer application number ${index + 1}`,
+      targetBuyer: `Commercial design buyer segment number ${index + 1}`,
+      intendedUse: `Campaign hero and article opener application number ${index + 1}`,
+      purchaseReason: `Distinctive tactile story with flexible copy space and crop utility number ${index + 1}`,
       differentiation: `A unique installation material and camera treatment number ${index + 1}`,
       structure: structure(index + 1),
       keywords: keywords(`editorial ${index + 1}`),
@@ -63,6 +65,10 @@ function assertStructuredBatch(items: StockImageItem[]) {
     assert.match(item.filename || "", /\.jpeg$/);
     assert.ok(item.keywords.length >= 15 && item.keywords.length <= 25);
     assert.equal(item.conceptStructure?.type, THAI_EDITORIAL_STILL_LIFE_TYPE);
+    assert.ok(item.commercialIntent?.targetBuyer);
+    assert.ok(item.commercialIntent?.intendedUse);
+    assert.ok(item.commercialIntent?.purchaseReason);
+    assert.doesNotMatch(item.commercialIntent?.purchaseReason || "", /guaranteed|will sell|low competition|high demand|best.?seller/i);
     assert.equal(Object.keys(item.conceptStructure?.fields || {}).length, 18);
     for (const field of THAI_EDITORIAL_STILL_LIFE_FIELDS) assert.ok(item.conceptStructure?.fields[field]);
     assert.match(item.conceptStructure?.fields.TEXT_ELEMENTS || "", /(no|without|reserve|copy space)/i);

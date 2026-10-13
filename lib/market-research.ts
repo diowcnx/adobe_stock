@@ -1,6 +1,7 @@
 import { callOpenRouterJSON } from "./openrouter";
 import { isRecord } from "./errors";
 import type {
+  CommercialIntent,
   ConceptPlanSummary,
   MarketTrend,
   PlanningSource,
@@ -22,7 +23,7 @@ export { getDailyScheduledMode } from "./production-plan";
 
 interface StructuredConcept {
   title: string;
-  buyerUse: string;
+  commercialIntent: CommercialIntent;
   differentiation: string;
   structure: ThaiEditorialStillLifeStructure;
   keywords: string[];
@@ -297,13 +298,20 @@ function validateStructuredConcepts(value: unknown): StructuredConcept[] {
     if (!/(no|without|reserve|copy space)/i.test(structure.TEXT_ELEMENTS)) throw new Error("TEXT_ELEMENTS must prevent rendered text");
     const concept: StructuredConcept = {
       title: validateText(candidate.title, "title", 150),
-      buyerUse: validateText(candidate.buyerUse, "buyerUse"),
+      commercialIntent: {
+        targetBuyer: validateText(candidate.targetBuyer, "targetBuyer"),
+        intendedUse: validateText(candidate.intendedUse, "intendedUse"),
+        purchaseReason: validateText(candidate.purchaseReason, "purchaseReason"),
+      },
       differentiation: validateText(candidate.differentiation, "differentiation"),
       structure,
       keywords: validateKeywords(candidate.keywords),
     };
-    const searchable = `${concept.title} ${Object.values(structure).join(" ")}`;
+    const searchable = `${concept.title} ${Object.values(structure).join(" ")} ${Object.values(concept.commercialIntent).join(" ")}`;
     if (/adobe\s*stock|watermarked|best.?selling|royal insignia|national emblem/i.test(searchable)) throw new Error("Unsuitable structured concept");
+    if (/guaranteed|will sell|low competition|high demand|best.?seller/i.test(concept.commercialIntent.purchaseReason)) {
+      throw new Error("purchaseReason must describe visible utility, not unsupported market claims");
+    }
     return concept;
   });
   assertUniqueConcepts(concepts.map((concept) => [concept.title, concept.structure.CENTRAL_INSTALLATION]));
@@ -338,7 +346,11 @@ function createStructuredFallbacks(category: ReturnType<typeof getDailyCategory>
     const { title, differentiation, keywords, ...fields } = story;
     return {
       title,
-      buyerUse: category.buyer,
+      commercialIntent: {
+        targetBuyer: category.buyer,
+        intendedUse: `A campaign hero, editorial opener, social advertisement or packaging-support image for the ${category.name.toLowerCase()} brief, with flexible copy placement and crop options.`,
+        purchaseReason: `${differentiation} The deliberate copy space, adaptable crop and tactile material detail give a designer a distinctive, immediately usable campaign asset.`,
+      },
       differentiation,
       keywords,
       structure: {
@@ -366,7 +378,7 @@ function buildStructuredDrafts(concepts: StructuredConcept[], planningSource: Pl
     category: "Thai Editorial Still Life",
     aspectRatio: STILL_LIFE_ASPECT_RATIOS[index] || "4:5",
     composition: "advertising",
-    prompt: `${formatThaiEditorialStillLifePrompt(concept.structure)} Distinctive direction: ${concept.differentiation}. Intended buyer use (do not render text): ${concept.buyerUse}.`,
+    prompt: `${formatThaiEditorialStillLifePrompt(concept.structure)} Distinctive direction: ${concept.differentiation}. Target buyer (context only): ${concept.commercialIntent.targetBuyer}. Intended use (do not render text): ${concept.commercialIntent.intendedUse}. Licensing value to express visually: ${concept.commercialIntent.purchaseReason}.`,
     negativePrompt: "text, lettering, typography, numerals, logos, signatures, watermarks, preview overlays, branded objects, royal insignia, national emblems, religious objects, protected textile patterns, stereotypical tourist props, impossible material joints, plastic AI glossiness, duplicated objects",
     keywords: concept.keywords,
     modelUsed: "google/gemini-3.1-flash-lite-image",
@@ -374,6 +386,7 @@ function buildStructuredDrafts(concepts: StructuredConcept[], planningSource: Pl
     isTransparent: false,
     conceptMode: "structured_concept",
     conceptStructure: { type: THAI_EDITORIAL_STILL_LIFE_TYPE, fields: concept.structure },
+    commercialIntent: concept.commercialIntent,
     planningSource,
   }));
 }
@@ -409,12 +422,13 @@ async function planStructuredConcepts(
   const response = await callOpenRouterJSON<unknown>(
     `You are a commercial art director creating original Thai-inspired Editorial Still Life advertising images from accessible materials such as silk, buttons, thread, flowers, coffee beans, rice, bamboo, leaves, ceramic, paper and plain metal details.
 Return exactly ${BATCH_SIZE} concepts. Every concept must tell a different commercially useful story and use a different central installation, material combination, camera treatment and composition. Do not create recolors, crops or alternate angles of one arrangement.
-Each concept must contain title, buyerUse, differentiation, 15-25 accurate English keyword phrases in descending relevance, and a structure object with exactly these 18 non-empty string fields: ${THAI_EDITORIAL_STILL_LIFE_FIELDS.join(", ")}.
+Each concept must contain title, targetBuyer, intendedUse, purchaseReason, differentiation, 15-25 accurate English keyword phrases in descending relevance, and a structure object with exactly these 18 non-empty string fields: ${THAI_EDITORIAL_STILL_LIFE_FIELDS.join(", ")}.
+targetBuyer must name a realistic customer segment. intendedUse must name concrete placements and purposes such as a campaign hero, packaging-support visual, article opener or social advertisement. purchaseReason must explain why a designer would license this specific image instead of a generic alternative, grounded only in visible utility such as useful copy space, flexible crops, distinctive material storytelling and credible tactile detail.
 TEXT_ELEMENTS must explicitly say that no text is rendered and identify clean space reserved for typography added later. Titles describe visible content only.
 Prioritize believable studio construction, true material scale, detailed fibers and surfaces, coherent gravity, intentional shadows and an editorial composition. Use everyday Thai material references respectfully and specifically without making unverifiable origin claims.
 Do not use royal insignia, national emblems, flags, religious or sacred objects, protected textile patterns, famous designs, tourist clichés, brands, logos, readable text, pseudo-text, watermarks or artist imitation.
 No unsupported sales, demand, sustainability, cultural-authenticity or low-competition claims.
-Return pure JSON {"concepts":[{"title":"...","buyerUse":"...","differentiation":"...","structure":{"CAMPAIGN_THEME":"...","MAIN_CONCEPT":"...","CAMERA_ANGLE":"...","LENS_TYPE":"...","SHOT_TYPE":"...","LIGHTING":"...","BACKGROUND_BASE":"...","BACKGROUND_TEXTURE":"...","BACKGROUND_DETAILS":"...","CENTRAL_INSTALLATION":"...","PRIMARY_COMPONENTS":"...","SUPPORTING_ACCENT_1":"...","SUPPORTING_ACCENT_2":"...","MATERIAL_FOCUS":"...","COMPOSITION_LOGIC":"...","ATMOSPHERIC_STYLE":"...","COLOR_PALETTE":"...","TEXT_ELEMENTS":"No rendered text; reserve ... copy space ..."},"keywords":["..."]}]}.`,
+Return pure JSON {"concepts":[{"title":"...","targetBuyer":"...","intendedUse":"...","purchaseReason":"...","differentiation":"...","structure":{"CAMPAIGN_THEME":"...","MAIN_CONCEPT":"...","CAMERA_ANGLE":"...","LENS_TYPE":"...","SHOT_TYPE":"...","LIGHTING":"...","BACKGROUND_BASE":"...","BACKGROUND_TEXTURE":"...","BACKGROUND_DETAILS":"...","CENTRAL_INSTALLATION":"...","PRIMARY_COMPONENTS":"...","SUPPORTING_ACCENT_1":"...","SUPPORTING_ACCENT_2":"...","MATERIAL_FOCUS":"...","COMPOSITION_LOGIC":"...","ATMOSPHERIC_STYLE":"...","COLOR_PALETTE":"...","TEXT_ELEMENTS":"No rendered text; reserve ... copy space ..."},"keywords":["..."]}]}.`,
     `Bangkok production date: ${productionDate}. Today's buyer-use context is ${category.name}. Intended buyers: ${category.buyer}.
 Use the buyer context to shape ten distinct campaign stories, while keeping every output an original studio Editorial Still Life rather than a literal lifestyle scene.
 Directional starting points from the monthly plan: ${category.seeds.join("; ")}.

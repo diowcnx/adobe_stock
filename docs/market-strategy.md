@@ -8,6 +8,8 @@ Each daily batch remains capped at 10 paid image-generation requests and one pla
 
 The concepts use accessible materials such as silk, buttons, thread, flowers, coffee beans, rice, bamboo, leaves, ceramic and plain metal details to tell contemporary Thai stories through studio Editorial Still Life. All ten outputs are regular-scene JPEG images with varied advertising aspect ratios. `TEXT_ELEMENTS` describes clean layout space only; the generation prompt always forbids rendered lettering, logos and pseudo-text. Sacred objects, royal insignia, national emblems, protected textile patterns and stereotypical tourist props are excluded.
 
+Every structured concept also carries a structure-independent commercial-intent brief: the target buyer, concrete placements and purposes, and a reason to license that specific image instead of a generic alternative. Purchase reasons must be grounded in visible utility such as adaptable copy space, crop flexibility, distinctive material storytelling and credible tactile detail. They must not claim verified demand, low competition or guaranteed sales.
+
 The final ten briefs are shuffled deterministically by Bangkok production date, so retries retain the same order while different days receive a different arrangement. Set `ENABLE_STRUCTURED_CONCEPTS=false` to roll back to the legacy ten-concept planner. This switch does not alter cron authentication, image count, persistence or email delivery.
 
 ## Monthly plan

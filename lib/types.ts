@@ -37,6 +37,12 @@ export interface ConceptStructurePayload {
   fields: ThaiEditorialStillLifeStructure;
 }
 
+export interface CommercialIntent {
+  targetBuyer: string;
+  intendedUse: string;
+  purchaseReason: string;
+}
+
 export interface ConceptPlanSummary {
   enabled: boolean;
   structuredCount: number;
@@ -61,6 +67,7 @@ export interface StockImageItem {
   generationMode?: GenerationMode;
   conceptMode?: ConceptMode;
   conceptStructure?: ConceptStructurePayload;
+  commercialIntent?: CommercialIntent;
   planningSource?: PlanningSource;
   imageUrl?: string;
   imageBase64?: string;

@@ -40,7 +40,15 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
     const fields = value.conceptStructure.fields;
     if (!THAI_EDITORIAL_STILL_LIFE_FIELDS.every((field) => isBoundedString(fields[field], 700))) return false;
   }
+  if (value.commercialIntent !== undefined) {
+    if (!isRecord(value.commercialIntent)) return false;
+    if (!isBoundedString(value.commercialIntent.targetBuyer, 1400) ||
+      !isBoundedString(value.commercialIntent.intendedUse, 1400) ||
+      !isBoundedString(value.commercialIntent.purchaseReason, 1400)) return false;
+    if (/guaranteed|will sell|low competition|high demand|best.?seller/i.test(value.commercialIntent.purchaseReason)) return false;
+  }
   if (value.conceptMode === "structured_concept" && value.conceptStructure === undefined) return false;
+  if (value.conceptMode === "structured_concept" && value.commercialIntent === undefined) return false;
   if (value.conceptMode === "structured_concept" && (
     value.generationMode !== "regular_scene" || value.isTransparent === true ||
     value.composition !== "advertising"
