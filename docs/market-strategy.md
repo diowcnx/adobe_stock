@@ -1,6 +1,14 @@
 # Monthly buyer-use image strategy
 
-Every Bangkok calendar day maps to a different focused theme (days 1–31). A normal run makes ten distinct briefs within that day's use case. Months with 28–30 days simply do not use the unused final day(s); the next month starts at day 1 with the 31-theme plan again. Themes are grounded in observable portfolio patterns and practical buyer tasks, not represented as sales forecasts.
+Every Bangkok calendar day maps to a different focused theme (days 1–31). A normal run makes five distinct briefs within that day's use case and five 7-Part Material Concept briefs. Months with 28–30 days simply do not use the unused final day(s); the next month starts at day 1 with the 31-theme plan again. Themes are grounded in observable portfolio patterns and practical buyer tasks, not represented as sales forecasts.
+
+## Daily 5:5 concept mix
+
+Each daily batch remains capped at 10 paid image-generation requests. Five briefs continue to use the day-of-month buyer theme and its existing per-item output behavior. Five briefs use the material structure `SUBJECT`, `PRIMARY_MATERIAL`, `SECONDARY_MATERIAL`, `BACKGROUND`, `SHADOW_STYLE`, `VISUAL_STYLE`, and `COMMERCIAL_CONCEPT`.
+
+Material concepts are regular-scene 16:9 advertising compositions with a subject on one third and roughly 50–60% clean copy space on the opposite side. Existing transparent cutouts and full-bleed artwork do not inherit that rule. The final ten briefs are shuffled deterministically by Bangkok production date, so retries retain the same order while different days receive a different arrangement.
+
+Set `ENABLE_MATERIAL_MIX=false` to roll back to the legacy ten-concept planner. This switch changes planning only; it does not alter cron authentication, image count, persistence, email delivery, or the manual output-mode request contract.
 
 ## Monthly plan
 

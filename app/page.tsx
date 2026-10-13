@@ -32,6 +32,7 @@ import { generateMetadataCsv, getStockImageFilename } from "@/lib/csv";
 import { getErrorMessage, isRecord } from "@/lib/errors";
 import { BATCH_SIZE, getDailyCategory, getDailyScheduledMode, MONTHLY_CATEGORIES } from "@/lib/production-plan";
 import { isWorkflowResult } from "@/lib/validation";
+import { getItemGenerationMode, summarizeConceptMix } from "@/lib/concept-mix";
 
 type GenerationModeSelection = "auto" | "transparent_png" | "regular_scene";
 type DashboardTab = "overview" | "images" | "setup";
@@ -76,6 +77,12 @@ function mergeSavedBatches(serverEntries: unknown, localEntries: unknown): Saved
   const serverBatches = parseSavedBatches(serverEntries);
   const serverIds = new Set(serverBatches.map((batch) => batch.id));
   return [...serverBatches, ...parseSavedBatches(localEntries).filter((batch) => !serverIds.has(batch.id))];
+}
+
+function getSavedBatchModeLabel(batch: SavedBatch): string {
+  const summary = batch.data.conceptMix || summarizeConceptMix(batch.data.images, batch.mode);
+  if (summary.enabled) return `🧩 ${summary.existingCount}+${summary.materialConceptCount} (${summary.transparentPngCount} PNG / ${summary.regularSceneCount} JPEG)`;
+  return batch.mode === "transparent_png" ? "🔲 PNG" : "🏞️ ฉาก";
 }
 
 export default function Dashboard() {
@@ -298,6 +305,7 @@ export default function Dashboard() {
         success: true,
         timestamp: new Date().toISOString(),
         generationMode: prepData.mode,
+        conceptMix: prepData.conceptMix,
         trend: prepData.trend,
         images: prepData.items,
         credits: prepData.credits,
@@ -632,6 +640,10 @@ export default function Dashboard() {
     }
   };
 
+  const currentConceptMix = latestResult
+    ? latestResult.conceptMix || summarizeConceptMix(latestResult.images, latestResult.generationMode)
+    : null;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Top Navigation */}
@@ -676,13 +688,13 @@ export default function Dashboard() {
                 }
               }}
               className="bg-slate-800/90 border border-slate-700/80 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500 font-medium"
-              title="เลือกโหมดตามหมวดประจำวันอัตโนมัติ หรือบังคับโหมดใดโหมดหนึ่ง"
+              title="เลือกโหมดไฟล์สำหรับแนวคิดเดิม 5 ภาพ; Material Concept อีก 5 ภาพยังเป็น Regular Scene"
             >
               <option value="auto">
                 🔄 Auto: {todayScheduledMode === "transparent_png" ? "🔲 วันนี้โหมด Transparent PNG" : "🏞️ วันนี้โหมด Regular Scene"}
               </option>
-              <option value="transparent_png">🔲 Force Transparent PNG Set (พื้นหลังโปร่งใส 100%)</option>
-              <option value="regular_scene">🏞️ Force Regular Stock Set (มีฉากหลังปกติ 100%)</option>
+              <option value="transparent_png">🔲 Existing 5: Transparent PNG</option>
+              <option value="regular_scene">🏞️ Existing 5: Regular Scene</option>
             </select>
 
             {/* Run Button */}
@@ -844,7 +856,7 @@ export default function Dashboard() {
               >
                 {savedBatches.map((b, idx) => (
                   <option key={b.id} value={b.id}>
-                    {idx === 0 ? "🌟 [ล่าสุด] " : ""}{b.dateStr} &bull; {b.mode === "transparent_png" ? "🔲 PNG" : "🏞️ ฉาก"} ({b.imageCount} ภาพ)
+                    {idx === 0 ? "🌟 [ล่าสุด] " : ""}{b.dateStr} &bull; {getSavedBatchModeLabel(b)} ({b.imageCount} ภาพ)
                   </option>
                 ))}
               </select>
@@ -936,7 +948,7 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Creates {BATCH_SIZE} focused concepts for one of 31 distinct daily themes, reducing image-generation calls per batch.</p>
+                  <p className="text-slate-400">Creates 5 concepts from today&apos;s monthly theme and 5 distinct 7-Part Material Concepts, then shuffles the order.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
@@ -1078,28 +1090,34 @@ export default function Dashboard() {
                 {/* Mode Indicator & Upscale Recommendation */}
                 <div
                   className={`p-4 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs ${
-                    latestResult.generationMode === "transparent_png"
+                    currentConceptMix?.enabled
+                      ? "bg-violet-950/40 border-violet-800/80 text-violet-200"
+                      : latestResult.generationMode === "transparent_png"
                       ? "bg-sky-950/40 border-sky-800/80 text-sky-200"
                       : "bg-emerald-950/40 border-emerald-800/80 text-emerald-200"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{latestResult.generationMode === "transparent_png" ? "🔲" : "🏞️"}</span>
+                    <span className="text-2xl">{currentConceptMix?.enabled ? "🧩" : latestResult.generationMode === "transparent_png" ? "🔲" : "🏞️"}</span>
                     <div>
                       <strong className="block text-white text-sm font-bold">
-                        {latestResult.generationMode === "transparent_png"
+                        {currentConceptMix?.enabled
+                          ? `${currentConceptMix.existingCount} Existing + ${currentConceptMix.materialConceptCount} Material Concept (${currentConceptMix.transparentPngCount} PNG / ${currentConceptMix.regularSceneCount} JPEG)`
+                          : latestResult.generationMode === "transparent_png"
                           ? `100% Transparent PNG Set (พื้นหลังโปร่งใสทั้งชุด ${latestResult.images.length} ภาพ)`
                           : `100% Regular Commercial Stock Set (ภาพทั่วไปมีฉากหลังทั้งชุด ${latestResult.images.length} ภาพ)`}
                       </strong>
                       <span className="text-slate-300">
-                        {latestResult.generationMode === "transparent_png"
+                        {currentConceptMix?.enabled
+                          ? "แนวคิดเดิมรักษาโหมดตามหมวดประจำวัน ส่วน Material Concept เป็นฉากโฆษณา 16:9 แบบ JPEG และมีพื้นที่วางข้อความ"
+                          : latestResult.generationMode === "transparent_png"
                           ? "💡 คำแนะนำการ Upscale: บันทึกไฟล์เป็น .PNG เท่านั้น เพื่อรักษาความโปร่งใส (Alpha Transparency) สำหรับส่งขายหมวด Isolated PNG"
                           : "💡 รูปภาพทั่วไปและงานศิลป์ใช้ชื่อไฟล์ .jpeg โดยองค์ประกอบภาพจะยึดตามหมวดประจำวัน"}
                       </span>
                     </div>
                   </div>
                   <span className="shrink-0 font-mono text-[11px] px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300">
-                    Mode: {latestResult.generationMode === "transparent_png" ? "transparent_png" : "regular_scene"}
+                    {currentConceptMix?.enabled ? "Concept mix: 5:5" : `Mode: ${latestResult.generationMode || "regular_scene"}`}
                   </span>
                 </div>
 
@@ -1124,9 +1142,14 @@ export default function Dashboard() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          {(img.isTransparent || latestResult.generationMode === "transparent_png") && (
+                          {getItemGenerationMode(img, latestResult.generationMode) === "transparent_png" && (
                             <span className="text-xs font-mono text-cyan-300 bg-cyan-950/70 px-2.5 py-0.5 rounded border border-cyan-800/50 flex items-center gap-1 font-semibold">
                               🔲 Transparent PNG
+                            </span>
+                          )}
+                          {img.conceptMode === "material_concept" && (
+                            <span className="text-xs font-mono text-violet-300 bg-violet-950/70 px-2.5 py-0.5 rounded border border-violet-800/50 flex items-center gap-1 font-semibold">
+                              🧱 Material Concept
                             </span>
                           )}
                           <span className="text-xs font-mono text-sky-400 bg-sky-950/50 px-2 py-0.5 rounded border border-sky-800/40">

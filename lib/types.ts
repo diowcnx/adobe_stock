@@ -6,6 +6,28 @@ export interface MarketTrend {
   buyerDemandRating: "High" | "Very High" | "Trending Commercial" | "Research Candidate";
 }
 
+export type GenerationMode = "transparent_png" | "regular_scene";
+export type ConceptMode = "existing" | "material_concept";
+export type PlanningSource = "ai" | "curated_fallback";
+
+export interface MaterialStructure {
+  SUBJECT: string;
+  PRIMARY_MATERIAL: string;
+  SECONDARY_MATERIAL: string;
+  BACKGROUND: string;
+  SHADOW_STYLE: string;
+  VISUAL_STYLE: string;
+  COMMERCIAL_CONCEPT: string;
+}
+
+export interface ConceptMixSummary {
+  enabled: boolean;
+  existingCount: number;
+  materialConceptCount: number;
+  transparentPngCount: number;
+  regularSceneCount: number;
+}
+
 export interface StockImageItem {
   id: number;
   seoTitle: string;
@@ -18,7 +40,10 @@ export interface StockImageItem {
   modelUsed: string;
   filename?: string;
   isTransparent?: boolean;
-  generationMode?: "transparent_png" | "regular_scene";
+  generationMode?: GenerationMode;
+  conceptMode?: ConceptMode;
+  materialStructure?: MaterialStructure;
+  planningSource?: PlanningSource;
   imageUrl?: string;
   imageBase64?: string;
   costEstimate?: string;
@@ -36,7 +61,8 @@ export interface OpenRouterCreditInfo {
 export interface WorkflowResult {
   success: boolean;
   timestamp: string;
-  generationMode?: "transparent_png" | "regular_scene";
+  generationMode?: GenerationMode;
+  conceptMix?: ConceptMixSummary;
   trend: MarketTrend;
   images: StockImageItem[];
   credits: OpenRouterCreditInfo;

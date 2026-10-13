@@ -1,5 +1,6 @@
-import { MarketTrend, OpenRouterCreditInfo, StockImageItem } from "./types";
+import { ConceptMixSummary, MarketTrend, OpenRouterCreditInfo, StockImageItem } from "./types";
 import { generateMetadataCsv } from "./csv";
+import { summarizeConceptMix } from "./concept-mix";
 
 interface Smtp2goSendResponse {
   data?: {
@@ -60,8 +61,9 @@ export async function sendDailyStockEmail({
   const downloadUrl = `${appUrl}/?tab=images`;
 
   // สร้างเนื้อหาอีเมลแบบแจ้งเตือนสั้นกระชับ (ตัดรายละเอียด Title และ Keywords ออกตามคำขอของผู้ใช้)
-  const htmlBody = generateNotificationEmailHtml(todayStr, trend, images.length, credits, csvFilename, mode, downloadUrl);
-  const textBody = generateNotificationEmailPlainText(todayStr, trend, images.length, credits, csvFilename, mode, downloadUrl);
+  const conceptMix = summarizeConceptMix(images, mode);
+  const htmlBody = generateNotificationEmailHtml(todayStr, trend, images.length, credits, csvFilename, mode, conceptMix, downloadUrl);
+  const textBody = generateNotificationEmailPlainText(todayStr, trend, images.length, credits, csvFilename, mode, conceptMix, downloadUrl);
 
   // แนบไฟล์ CSV ข้อมูล Metadata (Filename, Title, Keywords)
   const csvContent = generateMetadataCsv(images, mode);
@@ -89,7 +91,9 @@ export async function sendDailyStockEmail({
       ? `🚨 [แจ้งเตือน: เครดิตเหลือ $${credits.remainingCredits.toFixed(4)}] `
       : "";
 
-    const modeTag = mode === "transparent_png" ? "[🔲 Transparent PNG Set]" : "[🏞️ Regular Scene Set]";
+    const modeTag = conceptMix.enabled
+      ? `[🧩 ${conceptMix.existingCount}+${conceptMix.materialConceptCount} Mixed Concept Set]`
+      : mode === "transparent_png" ? "[🔲 Transparent PNG Set]" : "[🏞️ Regular Scene Set]";
     const payload = {
       api_key: key,
       to: [toEmail],
@@ -146,9 +150,11 @@ function generateNotificationEmailHtml(
   credits: OpenRouterCreditInfo,
   csvFilename: string,
   mode: "transparent_png" | "regular_scene",
+  conceptMix: ConceptMixSummary,
   downloadUrl: string
 ): string {
   const isTransparent = mode === "transparent_png";
+  const isMixed = conceptMix.enabled;
 
   return `
 <!DOCTYPE html>
@@ -194,12 +200,14 @@ function generateNotificationEmailHtml(
     <!-- Details Summary Grid -->
     <div style="padding: 24px; background-color: #f8fafc;">
       <!-- Mode & Upscale Recommendation -->
-      <div style="background-color: #ffffff; border: 1.5px solid ${isTransparent ? "#38bdf8" : "#10b981"}; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-        <div style="color: ${isTransparent ? "#0284c7" : "#059669"}; font-size: 14px; font-weight: 800; margin-bottom: 4px;">
-          ${isTransparent ? "🔲 โหมดวันนี้: ชุดภาพ PNG พื้นหลังโปร่งใส (100% Alpha Cutout)" : "🏞️ โหมดวันนี้: ชุดภาพทั่วไปหรืองานศิลป์ตามหมวดประจำวัน"}
+      <div style="background-color: #ffffff; border: 1.5px solid ${isMixed ? "#8b5cf6" : isTransparent ? "#38bdf8" : "#10b981"}; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+        <div style="color: ${isMixed ? "#7c3aed" : isTransparent ? "#0284c7" : "#059669"}; font-size: 14px; font-weight: 800; margin-bottom: 4px;">
+          ${isMixed ? `🧩 ชุดผสม: ${conceptMix.existingCount} Existing + ${conceptMix.materialConceptCount} Material Concept` : isTransparent ? "🔲 โหมดวันนี้: ชุดภาพ PNG พื้นหลังโปร่งใส (100% Alpha Cutout)" : "🏞️ โหมดวันนี้: ชุดภาพทั่วไปหรืองานศิลป์ตามหมวดประจำวัน"}
         </div>
         <div style="color: #475569; font-size: 13px; line-height: 1.4;">
-          ${isTransparent
+          ${isMixed
+            ? `ไฟล์ในชุดนี้มี <strong>${conceptMix.transparentPngCount} PNG</strong> และ <strong>${conceptMix.regularSceneCount} JPEG</strong> ตามโหมดของแต่ละภาพ กรุณา Upscale และบันทึกตามนามสกุลใน CSV`
+            : isTransparent
             ? "ชุดนี้เป็นภาพ Isolated Cutout ทั้งหมด กรุณาเลือกบันทึกผลลัพธ์เป็น <strong>.PNG</strong> เพื่อรักษาความโปร่งใส"
             : "ชุดนี้ใช้ชื่อไฟล์ <strong>.jpeg</strong> โดยองค์ประกอบภาพยึดตามโจทย์ของหมวดประจำวัน"}
         </div>
@@ -264,11 +272,14 @@ function generateNotificationEmailPlainText(
   credits: OpenRouterCreditInfo,
   csvFilename: string,
   mode: "transparent_png" | "regular_scene",
+  conceptMix: ConceptMixSummary,
   downloadUrl: string
 ): string {
-  const modeLabel = mode === "transparent_png"
-    ? "🔲 ชุดภาพ PNG พื้นหลังโปร่งใส (แนะนำ Save เป็น .PNG)"
-    : "🏞️ ชุดภาพทั่วไปหรืองานศิลป์ตามหมวดประจำวัน (ชื่อไฟล์ .jpeg)";
+  const modeLabel = conceptMix.enabled
+    ? `🧩 ${conceptMix.existingCount} Existing + ${conceptMix.materialConceptCount} Material Concept (${conceptMix.transparentPngCount} PNG / ${conceptMix.regularSceneCount} JPEG)`
+    : mode === "transparent_png"
+      ? "🔲 ชุดภาพ PNG พื้นหลังโปร่งใส (แนะนำ Save เป็น .PNG)"
+      : "🏞️ ชุดภาพทั่วไปหรืองานศิลป์ตามหมวดประจำวัน (ชื่อไฟล์ .jpeg)";
 
   let text = `📸 Adobe Stock Daily Dispatch - ${todayStr}\n\n`;
   text += `ภาพชุดใหม่ ${imageCount} ภาพสร้างเสร็จสมบูรณ์แล้ว!\n\n`;
