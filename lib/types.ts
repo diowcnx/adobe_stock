@@ -6,6 +6,52 @@ export interface MarketTrend {
   buyerDemandRating: "High" | "Very High" | "Trending Commercial" | "Research Candidate";
 }
 
+export type GenerationMode = "transparent_png" | "regular_scene";
+export type ConceptMode = "existing" | "structured_concept";
+export type PlanningSource = "ai" | "curated_fallback";
+export type ConceptStructureType = "thai_editorial_still_life_v1";
+
+export interface ThaiEditorialStillLifeStructure {
+  CAMPAIGN_THEME: string;
+  MAIN_CONCEPT: string;
+  CAMERA_ANGLE: string;
+  LENS_TYPE: string;
+  SHOT_TYPE: string;
+  LIGHTING: string;
+  BACKGROUND_BASE: string;
+  BACKGROUND_TEXTURE: string;
+  BACKGROUND_DETAILS: string;
+  CENTRAL_INSTALLATION: string;
+  PRIMARY_COMPONENTS: string;
+  SUPPORTING_ACCENT_1: string;
+  SUPPORTING_ACCENT_2: string;
+  MATERIAL_FOCUS: string;
+  COMPOSITION_LOGIC: string;
+  ATMOSPHERIC_STYLE: string;
+  COLOR_PALETTE: string;
+  TEXT_ELEMENTS: string;
+}
+
+export interface ConceptStructurePayload {
+  type: ConceptStructureType;
+  fields: ThaiEditorialStillLifeStructure;
+}
+
+export interface CommercialIntent {
+  targetBuyer: string;
+  intendedUse: string;
+  purchaseReason: string;
+}
+
+export interface ConceptPlanSummary {
+  enabled: boolean;
+  structuredCount: number;
+  legacyCount: number;
+  transparentPngCount: number;
+  regularSceneCount: number;
+  structureType: ConceptStructureType | null;
+}
+
 export interface StockImageItem {
   id: number;
   seoTitle: string;
@@ -18,7 +64,11 @@ export interface StockImageItem {
   modelUsed: string;
   filename?: string;
   isTransparent?: boolean;
-  generationMode?: "transparent_png" | "regular_scene";
+  generationMode?: GenerationMode;
+  conceptMode?: ConceptMode;
+  conceptStructure?: ConceptStructurePayload;
+  commercialIntent?: CommercialIntent;
+  planningSource?: PlanningSource;
   imageUrl?: string;
   imageBase64?: string;
   costEstimate?: string;
@@ -36,7 +86,8 @@ export interface OpenRouterCreditInfo {
 export interface WorkflowResult {
   success: boolean;
   timestamp: string;
-  generationMode?: "transparent_png" | "regular_scene";
+  generationMode?: GenerationMode;
+  conceptPlan?: ConceptPlanSummary;
   trend: MarketTrend;
   images: StockImageItem[];
   credits: OpenRouterCreditInfo;

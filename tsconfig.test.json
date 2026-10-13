@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "incremental": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "outDir": ".test-dist",
+    "rootDir": ".",
+    "plugins": []
+  },
+  "include": [
+    "next-env.d.ts",
+    "tests/**/*.test.ts",
+    "lib/structured-concepts.ts",
+    "lib/csv.ts",
+    "lib/errors.ts",
+    "lib/market-research.ts",
+    "lib/openrouter.ts",
+    "lib/production-plan.ts",
+    "lib/types.ts",
+    "lib/validation.ts"
+  ]
+}

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js && node -e \"require('node:fs').rmSync('.test-dist',{recursive:true,force:true})\""
   },
   "dependencies": {
     "@types/jszip": "^3.4.0",
