@@ -334,17 +334,19 @@ export default function Dashboard() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ item, timestamp: initialBatch.timestamp }),
             });
-            if (genRes.ok) {
-              const genData = await genRes.json();
-              if (genData.imageUrl) {
-                const targetIdx = updatedImages.findIndex((x) => x.id === item.id);
-                if (targetIdx !== -1) {
-                  updatedImages[targetIdx] = {
-                    ...updatedImages[targetIdx],
-                    imageUrl: genData.imageUrl,
-                  };
-                  setLatestResult((prev) => prev ? { ...prev, images: [...updatedImages] } : prev);
-                }
+            const genData = await genRes.json();
+            const targetIdx = updatedImages.findIndex((x) => x.id === item.id);
+            if (targetIdx !== -1) {
+              updatedImages[targetIdx] = {
+                ...updatedImages[targetIdx],
+                imageUrl: genRes.ok && genData.imageUrl ? genData.imageUrl : undefined,
+                description: genRes.ok && genData.imageUrl
+                  ? undefined
+                  : getErrorMessage(genData.error, "ภาพไม่ผ่านการตรวจคุณภาพ"),
+              };
+              setLatestResult((prev) => prev ? { ...prev, images: [...updatedImages] } : prev);
+              if (!genData.imageUrl) {
+                console.warn(`Image #${item.id} was not accepted:`, genData.error);
               }
             }
           } catch (itemErr) {
@@ -364,6 +366,7 @@ export default function Dashboard() {
         ...initialBatch,
         images: updatedImages,
       };
+      const rejectedImageCount = finalResult.images.filter((image) => !image.imageUrl).length;
 
       // Persist images first so any email download link points to durable storage.
       setRunProgress("กำลังบันทึกภาพลงพื้นที่จัดเก็บถาวร...");
@@ -391,7 +394,7 @@ export default function Dashboard() {
       }
 
       // Dispatch only after persistence succeeds, so email links always work.
-      if (persistenceReady) {
+      if (persistenceReady && rejectedImageCount === 0) {
         setRunProgress("กำลังส่งอีเมลแจ้งเตือนไปยัง hs5ckt@gmail.com...");
         try {
           const emailRes = await fetch("/api/dispatch-email", {
@@ -414,6 +417,14 @@ export default function Dashboard() {
             error: getErrorMessage(error, "Email dispatch failed"),
           };
         }
+      } else if (persistenceReady) {
+        finalResult.success = false;
+        finalResult.emailDelivery = {
+          success: false,
+          recipient: "hs5ckt@gmail.com",
+          error: `Quality gate rejected ${rejectedImageCount} image(s); incomplete batch was not emailed`,
+        };
+        showNotice(`ระบบคัดภาพที่ไม่ผ่านออก ${rejectedImageCount} ภาพ และยังไม่ส่งอีเมลชุดที่ไม่ครบ`, "error");
       }
 
       setLatestResult({ ...finalResult });
@@ -1155,8 +1166,10 @@ export default function Dashboard() {
                               />
                             </div>
                           ) : (
-                            <div className="w-full h-48 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center text-slate-500 text-xs">
-                              Preview generated
+                            <div className="w-full min-h-48 bg-slate-950 rounded-xl border border-slate-800 flex flex-col items-center justify-center text-center text-xs px-4 gap-2">
+                              <AlertCircle className="w-5 h-5 text-amber-400" />
+                              <span className="text-slate-400">ไม่มีภาพที่ผ่านการตรวจคุณภาพ</span>
+                              {img.description && <span className="text-amber-300 leading-relaxed">{img.description}</span>}
                             </div>
                           )}
 

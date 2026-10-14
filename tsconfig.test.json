@@ -16,6 +16,7 @@
     "lib/structured-concepts.ts",
     "lib/csv.ts",
     "lib/errors.ts",
+    "lib/image-quality.ts",
     "lib/market-research.ts",
     "lib/openrouter.ts",
     "lib/production-plan.ts",

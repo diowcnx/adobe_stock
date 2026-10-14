@@ -103,7 +103,7 @@ export function summarizeConceptPlan(
 
 export function formatThaiEditorialStillLifePrompt(fields: ThaiEditorialStillLifeStructure): string {
   return [
-    `Create an original Thai editorial still-life advertising image for the campaign theme: ${fields.CAMPAIGN_THEME}.`,
+    `Create an original Thai editorial still-life advertising photograph. Use this campaign idea only as invisible creative direction and never typeset or display it: ${fields.CAMPAIGN_THEME}.`,
     `Express this visual metaphor: ${fields.MAIN_CONCEPT}.`,
     `Camera and framing: ${fields.CAMERA_ANGLE}; ${fields.LENS_TYPE}; ${fields.SHOT_TYPE}.`,
     `Lighting: ${fields.LIGHTING}.`,
@@ -114,7 +114,8 @@ export function formatThaiEditorialStillLifePrompt(fields: ThaiEditorialStillLif
     `Material realism: ${fields.MATERIAL_FOCUS}.`,
     `Composition: ${fields.COMPOSITION_LOGIC}.`,
     `Atmosphere: ${fields.ATMOSPHERIC_STYLE}. Color palette: ${fields.COLOR_PALETTE}.`,
-    `Typography plan: ${fields.TEXT_ELEMENTS}. Do not render any letters, words, numerals, logos or pseudo-text in the image; preserve any requested text area as clean copy space for later design work.`,
+    "Do not render any letters, words, numerals, captions, titles, logos or pseudo-text in the image. The TEXT_ELEMENTS field is metadata for a human designer and must not become visible image content. Leave any useful negative space only as a natural uncluttered area of the photographed physical background; never create a blank title panel, header, footer, card, border or graphic text box.",
+    "Make one full-bleed photograph. The physical scene and its background must continue naturally to all four edges with no frame, mat, white margin, canvas border, inset image, poster layout or page mockup.",
     "Use culturally respectful, non-sacred everyday Thai material references. Do not use royal insignia, national emblems, religious objects, protected textile patterns or stereotypical tourist props.",
   ].join(" ");
 }

@@ -72,7 +72,10 @@ function assertStructuredBatch(items: StockImageItem[]) {
     assert.equal(Object.keys(item.conceptStructure?.fields || {}).length, 18);
     for (const field of THAI_EDITORIAL_STILL_LIFE_FIELDS) assert.ok(item.conceptStructure?.fields[field]);
     assert.match(item.conceptStructure?.fields.TEXT_ELEMENTS || "", /(no|without|reserve|copy space)/i);
-    assert.match(item.prompt, /Do not render any letters, words, numerals, logos or pseudo-text/);
+    assert.match(item.prompt, /Do not render any letters, words, numerals,.*logos or pseudo-text/);
+    assert.match(item.prompt, /full-bleed photograph/);
+    assert.match(item.prompt, /no frame, mat, white margin, canvas border, inset image, poster layout or page mockup/i);
+    assert.doesNotMatch(item.prompt, /reserve clean copy space number/i);
   }
 }
 

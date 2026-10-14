@@ -104,7 +104,7 @@ const FALLBACK_STORIES: FallbackStory[] = [
     SUPPORTING_ACCENT_1: "two glossy green leaves for botanical contrast",
     SUPPORTING_ACCENT_2: "a single mother-of-pearl button outside the circle",
     MATERIAL_FOCUS: "fresh petal translucency, silk sheen, ceramic glaze and iridescent shell detail",
-    COMPOSITION_LOGIC: "open circle centered low with a clean upper third for later campaign typography",
+    COMPOSITION_LOGIC: "open circle centered low with a calm upper third that remains part of the celadon surface",
     ATMOSPHERIC_STYLE: "gracious, calm, contemporary and sensorial",
     COLOR_PALETTE: "jasmine white, celadon green, leaf green and soft pearl",
     keywords: ["jasmine welcome concept", "Thai hospitality still life", "jasmine buds", "celadon surface", "silk ribbon", "editorial advertising", "botanical studio photo", "open circle composition", "premium hospitality", "copy space", "flower texture", "mother of pearl button", "calm campaign", "Thai inspired", "material realism"],
@@ -355,7 +355,7 @@ function createStructuredFallbacks(category: ReturnType<typeof getDailyCategory>
       keywords,
       structure: {
         ...fields,
-        CAMPAIGN_THEME: `${category.name}: ${title}`,
+        CAMPAIGN_THEME: `${category.name}: a material-led contemporary Thai visual story`,
         TEXT_ELEMENTS: "No rendered text; reserve the specified clean copy space for typography added later by a designer",
       },
     };
@@ -424,6 +424,7 @@ async function planStructuredConcepts(
 Return exactly ${BATCH_SIZE} concepts. Every concept must tell a different commercially useful story and use a different central installation, material combination, camera treatment and composition. Do not create recolors, crops or alternate angles of one arrangement.
 Each concept must contain title, targetBuyer, intendedUse, purchaseReason, differentiation, 15-25 accurate English keyword phrases in descending relevance, and a structure object with exactly these 18 non-empty string fields: ${THAI_EDITORIAL_STILL_LIFE_FIELDS.join(", ")}.
 targetBuyer must name a realistic customer segment. intendedUse must name concrete placements and purposes such as a campaign hero, packaging-support visual, article opener or social advertisement. purchaseReason must explain why a designer would license this specific image instead of a generic alternative, grounded only in visible utility such as useful copy space, flexible crops, distinctive material storytelling and credible tactile detail.
+CAMPAIGN_THEME is invisible art direction, not a title treatment. It must not repeat the SEO title or ask for visible lettering, a poster, card, header, footer, frame, border or blank graphic panel.
 TEXT_ELEMENTS must explicitly say that no text is rendered and identify clean space reserved for typography added later. Titles describe visible content only.
 Prioritize believable studio construction, true material scale, detailed fibers and surfaces, coherent gravity, intentional shadows and an editorial composition. Use everyday Thai material references respectfully and specifically without making unverifiable origin claims.
 Do not use royal insignia, national emblems, flags, religious or sacred objects, protected textile patterns, famous designs, tourist clichés, brands, logos, readable text, pseudo-text, watermarks or artist imitation.

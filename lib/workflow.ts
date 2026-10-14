@@ -67,6 +67,23 @@ async function runDailyStockWorkflow(
   const { saveLatestBatch } = await import("./batch-store");
   const persistedResult = await saveLatestBatch(workflowResult);
 
+  const rejectedImages = generatedImages.filter((image) => !image.imageUrl);
+  if (rejectedImages.length > 0) {
+    const failedResult: WorkflowResult = {
+      ...persistedResult,
+      success: false,
+      emailDelivery: {
+        success: false,
+        recipient: process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com",
+        error: `Quality gate rejected ${rejectedImages.length} image(s); incomplete batch was not emailed`,
+      },
+      durationMs: Date.now() - startTime,
+    };
+    console.warn(`Quality gate left ${rejectedImages.length} image(s) unavailable; skipping ready-to-download email.`);
+    await saveLatestBatch(failedResult);
+    return failedResult;
+  }
+
   // ส่งอีเมลหลังยืนยันว่าภาพและ Metadata พร้อมให้หน้าเว็บดาวน์โหลดแล้ว
   console.log("Dispatching email via SMTP2GO to hs5ckt@gmail.com...");
   const emailResult = await sendDailyStockEmail({

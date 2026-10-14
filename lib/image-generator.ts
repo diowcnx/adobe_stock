@@ -2,6 +2,7 @@ import sharp from "sharp";
 import { StockImageItem } from "./types";
 import { getErrorMessage } from "./errors";
 import { fetchAllowlistedImage, validateRemoteImageUrl } from "./remote-image";
+import { assessGeneratedImageQuality } from "./image-quality";
 
 const OPENROUTER_API_BASE = "https://openrouter.ai/api/v1";
 const MAX_INPUT_PIXELS = 40_000_000;
@@ -208,6 +209,8 @@ export async function generateSingleImage(
       const mandatoryExclusions = [
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
+        "The scene or physical background must extend fully to all four image edges. No outer border, mat, frame, canvas margin, poster, card, blank header, blank footer, title panel, inset image, mockup, or page-within-the-image.",
+        "Any copy space must remain a natural uninterrupted part of the photographed physical background inside the full-bleed scene; never turn copy space into a white rectangle or graphic panel.",
         item.negativePrompt ? `Also exclude: ${item.negativePrompt}.` : "",
       ].filter(Boolean).join(" ");
 
@@ -215,7 +218,7 @@ export async function generateSingleImage(
         ? `Create an isolated commercial design element on a pure solid white studio background. Centered floating subject, razor-sharp clean silhouette cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic tactile physical materials, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.composition === "artwork"
           ? `Create the original full-bleed artwork itself, not a photograph of a print, room, frame or mockup. Follow the specified artistic medium and composition with detailed print-friendly texture. Do not reserve advertising copy space. ${sanitizedPrompt}. ${mandatoryExclusions}`
-          : `Create an art-directed commercial scene. Authentic materials, tactile textures, natural lighting, believable geometry and copy space appropriate to the brief. No plastic AI glossiness. Follow the intended medium and visual details: ${sanitizedPrompt}. ${mandatoryExclusions}`;
+          : `Create a single full-bleed art-directed commercial scene whose photographed background reaches every edge of the final image. Authentic materials, tactile textures, natural lighting and believable geometry. Leave useful natural negative space within the physical scene when requested, but never add a layout panel or margin. No plastic AI glossiness. Follow the intended medium and visual details: ${sanitizedPrompt}. ${mandatoryExclusions}`;
 
       const payload: Record<string, unknown> = {
         model,
@@ -334,6 +337,14 @@ export async function generateSingleImage(
             imageUrl: `data:image/png;base64,${base64}`,
           };
         } else {
+          if (process.env.IMAGE_QUALITY_GATE?.trim().toLowerCase() !== "false") {
+            const quality = await assessGeneratedImageQuality(extractedBuffer, key);
+            if (!quality.passed) {
+              lastError = `Quality gate rejected image (${quality.source}): ${quality.issues.join("; ")}`;
+              console.warn(`[Item #${item.id}] ${lastError}`);
+              continue;
+            }
+          }
           const compressedBuffer = await sharp(extractedBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
             .jpeg({ quality: 95, chromaSubsampling: "4:4:4" })
             .toBuffer();
