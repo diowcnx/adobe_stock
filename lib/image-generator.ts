@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { StockImageItem } from "./types";
+import { ImageQualityReview, StockImageItem } from "./types";
 import { getErrorMessage } from "./errors";
 import { fetchAllowlistedImage, validateRemoteImageUrl } from "./remote-image";
 import { assessGeneratedImageQuality } from "./image-quality";
@@ -27,6 +27,29 @@ export const MODEL_GEMINI_IMAGE = "google/gemini-3.1-flash-lite-image";
 
 export const DEFAULT_IMAGE_MODEL = MODEL_GEMINI_IMAGE;
 export const MODEL_TRANSPARENT_PRIMARY = MODEL_GEMINI_IMAGE;
+export const MAX_QUALITY_RETRIES = 3;
+
+interface GeneratedImageResult {
+  imageUrl: string;
+  error?: string;
+  qualityReview?: ImageQualityReview;
+}
+
+function compactQualityIssue(issues: string[]): string {
+  const issue = issues.join("; ").replace(/\s+/g, " ").trim();
+  return (issue || "The image did not satisfy the no-text, full-bleed quality rules").slice(0, 500);
+}
+
+export function buildQualityRetryDirection(attempt: number, issues: string[]): string {
+  const rejectedFor = compactQualityIssue(issues);
+  const variation = [
+    "Re-stage the physical objects in a clearly different arrangement and move the focal subject to a new position.",
+    "Use a different camera angle, crop, lighting direction, and background treatment from the rejected rendering.",
+    "Radically simplify and redesign the scene as an organic asymmetric studio still life on one continuous physical surface.",
+  ][Math.min(Math.max(attempt - 1, 0), 2)];
+
+  return `QUALITY REPLACEMENT ${attempt}/${MAX_QUALITY_RETRIES}: The previous rendering was rejected because: ${rejectedFor}. Do not reproduce or merely retouch the rejected composition. ${variation} Remove every rejected defect. Keep the physical scene full-bleed to all four edges, with no frame, border, mat, card, poster, header, footer, sign-like alignment, typography, symbols, pseudo-text, watermark, or logo. Generate a genuinely new alternative while preserving only the commercial subject and buyer use.`;
+}
 
 function sanitizeImagePrompt(prompt: string): string {
   return prompt
@@ -170,7 +193,7 @@ export async function ensureGenuineAlphaTransparency(inputBuffer: Buffer): Promi
 export async function generateSingleImage(
   item: StockImageItem,
   apiKey?: string
-): Promise<{ imageUrl: string; error?: string }> {
+): Promise<GeneratedImageResult> {
   const key = apiKey || process.env.OPENROUTER_API_KEY;
 
   if (!key) {
@@ -186,15 +209,16 @@ export async function generateSingleImage(
     ? item.generationMode === "transparent_png"
     : item.isTransparent === true;
 
-  // A timed-out provider request may still be billed. Never automatically
-  // submit a replacement request or upgrade to a more expensive image model.
-  const modelsToTry = [DEFAULT_IMAGE_MODEL];
-
   let lastError = "";
+  const rejectionReasons: string[] = [];
+  const model = DEFAULT_IMAGE_MODEL;
 
-  for (const model of modelsToTry) {
+  // Only an explicit QA rejection triggers another billed image request. A
+  // timeout/provider error can still have been billed, so it is never retried.
+  for (let attemptIndex = 0; attemptIndex <= MAX_QUALITY_RETRIES; attemptIndex++) {
     try {
-      console.log(`[Item #${item.id}] Calling OpenRouter model ${model} (mode: ${isTransparent ? "transparent_png" : "regular_scene"})...`);
+      const attemptNumber = attemptIndex + 1;
+      console.log(`[Item #${item.id}] Calling OpenRouter model ${model} (mode: ${isTransparent ? "transparent_png" : "regular_scene"}, attempt: ${attemptNumber})...`);
 
       const basePrompt = sanitizeImagePrompt(item.prompt);
       const sanitizedPrompt = isTransparent
@@ -214,11 +238,14 @@ export async function generateSingleImage(
         item.negativePrompt ? `Also exclude: ${item.negativePrompt}.` : "",
       ].filter(Boolean).join(" ");
 
-      const userContent = isTransparent
+      const originalUserContent = isTransparent
         ? `Create an isolated commercial design element on a pure solid white studio background. Centered floating subject, razor-sharp clean silhouette cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic tactile physical materials, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.composition === "artwork"
           ? `Create the original full-bleed artwork itself, not a photograph of a print, room, frame or mockup. Follow the specified artistic medium and composition with detailed print-friendly texture. Do not reserve advertising copy space. ${sanitizedPrompt}. ${mandatoryExclusions}`
           : `Create a single full-bleed art-directed commercial scene whose photographed background reaches every edge of the final image. Authentic materials, tactile textures, natural lighting and believable geometry. Leave useful natural negative space within the physical scene when requested, but never add a layout panel or margin. No plastic AI glossiness. Follow the intended medium and visual details: ${sanitizedPrompt}. ${mandatoryExclusions}`;
+      const userContent = attemptIndex > 0
+        ? `${originalUserContent} ${buildQualityRetryDirection(attemptIndex, rejectionReasons)}`
+        : originalUserContent;
 
       const payload: Record<string, unknown> = {
         model,
@@ -249,8 +276,7 @@ export async function generateSingleImage(
       if (!response.ok) {
         lastError = `OpenRouter API returned ${response.status}`;
         console.error(`[Item #${item.id}] ${lastError}`);
-        if (![408, 429, 500, 502, 503, 504].includes(response.status)) break;
-        continue;
+        break;
       }
 
       const result = (await response.json()) as OpenRouterImageResponse;
@@ -312,13 +338,13 @@ export async function generateSingleImage(
           directUrl = validateRemoteImageUrl(directUrl).toString();
         } catch {
           lastError = "Generated image URL is not from an allowlisted host";
-          continue;
+          break;
         }
       }
 
       if (extractedBuffer && extractedBuffer.byteLength > MAX_IMAGE_BYTES) {
         lastError = "Generated image exceeds the size limit";
-        continue;
+        break;
       }
 
       // ถ้าเป็นโหมดโปร่งใสและได้เป็น hosted URL ให้ดึง Buffer มาทำ True Alpha
@@ -340,9 +366,24 @@ export async function generateSingleImage(
           if (process.env.IMAGE_QUALITY_GATE?.trim().toLowerCase() !== "false") {
             const quality = await assessGeneratedImageQuality(extractedBuffer, key);
             if (!quality.passed) {
-              lastError = `Quality gate rejected image (${quality.source}): ${quality.issues.join("; ")}`;
+              const reason = compactQualityIssue(quality.issues);
+              rejectionReasons.push(reason);
+              lastError = `Quality gate rejected image (${quality.source}): ${reason}`;
               console.warn(`[Item #${item.id}] ${lastError}`);
-              continue;
+              if (attemptIndex < MAX_QUALITY_RETRIES) continue;
+
+              const compressedRejectedBuffer = await sharp(extractedBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
+                .jpeg({ quality: 95, chromaSubsampling: "4:4:4" })
+                .toBuffer();
+              return {
+                imageUrl: `data:image/jpeg;base64,${compressedRejectedBuffer.toString("base64")}`,
+                qualityReview: {
+                  status: "accepted_after_retry_limit",
+                  attempts: attemptNumber,
+                  rejectionCount: rejectionReasons.length,
+                  rejectionReasons,
+                },
+              };
             }
           }
           const compressedBuffer = await sharp(extractedBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
@@ -351,6 +392,12 @@ export async function generateSingleImage(
           const base64 = compressedBuffer.toString("base64");
           return {
             imageUrl: `data:image/jpeg;base64,${base64}`,
+            qualityReview: {
+              status: rejectionReasons.length > 0 ? "passed_after_retries" : "passed",
+              attempts: attemptNumber,
+              rejectionCount: rejectionReasons.length,
+              rejectionReasons,
+            },
           };
         }
       }
@@ -362,9 +409,11 @@ export async function generateSingleImage(
       }
 
       lastError = `No image data in response from ${model}`;
+      break;
     } catch (error: unknown) {
       lastError = getErrorMessage(error, "Image generation failed");
       console.warn(`[Item #${item.id}] Error with ${model}:`, lastError);
+      break;
     }
   }
 
@@ -395,7 +444,10 @@ export async function generateAllStockImages(
             ...item,
             modelUsed: item.modelUsed || (item.isTransparent ? MODEL_TRANSPARENT_PRIMARY : DEFAULT_IMAGE_MODEL),
             imageUrl: result.imageUrl || undefined,
-            description: result.error ? `Error: ${result.error}` : undefined,
+            qualityReview: result.qualityReview,
+            description: result.qualityReview?.status === "accepted_after_retry_limit"
+              ? `QA warning: ${result.qualityReview.rejectionReasons.join("; ")}`
+              : result.error ? `Error: ${result.error}` : undefined,
           };
         } catch (error: unknown) {
           console.error(`Failed generating image #${item.id}:`, error);

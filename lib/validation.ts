@@ -6,6 +6,7 @@ const IMAGE_MODES = new Set(["transparent_png", "regular_scene"]);
 const CONCEPT_MODES = new Set(["existing", "structured_concept"]);
 const PLANNING_SOURCES = new Set(["ai", "curated_fallback"]);
 const ASPECT_RATIOS = new Set(["16:9", "3:2", "4:5", "1:1"]);
+const IMAGE_QUALITY_STATUSES = new Set(["passed", "passed_after_retries", "accepted_after_retry_limit"]);
 
 function isBoundedString(value: unknown, maxLength: number): value is string {
   return typeof value === "string" && value.length > 0 && value.length <= maxLength;
@@ -56,6 +57,19 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (value.filename !== undefined && !isBoundedString(value.filename, 240)) return false;
   if (value.imageUrl !== undefined && !isBoundedString(value.imageUrl, 35_000_000)) return false;
   if (value.imageBase64 !== undefined && !isBoundedString(value.imageBase64, 35_000_000)) return false;
+  if (value.description !== undefined && !isBoundedString(value.description, 4_000)) return false;
+  if (value.qualityReview !== undefined) {
+    if (!isRecord(value.qualityReview)) return false;
+    if (!IMAGE_QUALITY_STATUSES.has(String(value.qualityReview.status))) return false;
+    if (!Number.isInteger(value.qualityReview.attempts) || Number(value.qualityReview.attempts) < 1 || Number(value.qualityReview.attempts) > 4) return false;
+    if (!Number.isInteger(value.qualityReview.rejectionCount) || Number(value.qualityReview.rejectionCount) < 0 || Number(value.qualityReview.rejectionCount) > 4) return false;
+    if (!Array.isArray(value.qualityReview.rejectionReasons) || value.qualityReview.rejectionReasons.length > 12) return false;
+    if (!value.qualityReview.rejectionReasons.every((reason) => isBoundedString(reason, 500))) return false;
+    if (Number(value.qualityReview.rejectionCount) !== value.qualityReview.rejectionReasons.length) return false;
+    if (value.qualityReview.status === "passed" && (value.qualityReview.attempts !== 1 || value.qualityReview.rejectionCount !== 0)) return false;
+    if (value.qualityReview.status === "passed_after_retries" && Number(value.qualityReview.rejectionCount) < 1) return false;
+    if (value.qualityReview.status === "accepted_after_retry_limit" && (value.qualityReview.attempts !== 4 || value.qualityReview.rejectionCount !== 4)) return false;
+  }
   if (value.generationMode !== undefined && parseGenerationMode(value.generationMode) === undefined) return false;
   return true;
 }

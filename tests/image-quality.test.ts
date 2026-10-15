@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import sharp from "sharp";
 import { assessGeneratedImageQuality, detectUnintendedLightBorder } from "../lib/image-quality";
+import { buildQualityRetryDirection, generateSingleImage } from "../lib/image-generator";
+import type { StockImageItem } from "../lib/types";
 
 async function solidImage(background: string): Promise<Buffer> {
   return sharp({ create: { width: 256, height: 256, channels: 3, background } }).jpeg().toBuffer();
@@ -59,6 +61,108 @@ test("vision guard accepts a full-bleed scene with no text", async () => {
   try {
     const result = await assessGeneratedImageQuality(await solidImage("#52715a"), "test-key");
     assert.deepEqual(result, { passed: true, issues: [], source: "vision_guard" });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+const testItem: StockImageItem = {
+  id: 1,
+  seoTitle: "Thai Silk Editorial Still Life",
+  category: "Editorial Still Life",
+  aspectRatio: "4:5",
+  composition: "advertising",
+  prompt: "Thai silk, buttons and flowers arranged on a tactile studio surface",
+  keywords: ["silk", "buttons", "flowers"],
+  modelUsed: "test-model",
+  generationMode: "regular_scene",
+};
+
+test("retry direction explicitly changes the rejected composition", () => {
+  const direction = buildQualityRetryDirection(2, ["title text appears in a blank header panel"]);
+  assert.match(direction, /genuinely new alternative/i);
+  assert.match(direction, /different camera angle/i);
+  assert.match(direction, /title text appears/i);
+  assert.match(direction, /no frame, border, mat/i);
+});
+
+test("generator replaces a QA-rejected image and records the successful retry", async () => {
+  const originalFetch = globalThis.fetch;
+  const image = await solidImage("#52715a");
+  const prompts: string[] = [];
+  let qaCalls = 0;
+
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    if (body.model === "google/gemini-3.1-flash-lite-image") {
+      prompts.push(body.messages[0].content);
+      return new Response(JSON.stringify({
+        choices: [{ message: { images: [{ b64_json: image.toString("base64") }] } }],
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+
+    qaCalls++;
+    const passed = qaCalls === 2;
+    return new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({
+        passed,
+        hasText: !passed,
+        hasArtificialBorder: false,
+        hasPosterLayout: !passed,
+        issues: passed ? [] : ["title text appears in a blank header panel"],
+      }) } }],
+    }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+
+  try {
+    const result = await generateSingleImage(testItem, "test-key");
+    assert.match(result.imageUrl, /^data:image\/jpeg;base64,/);
+    assert.deepEqual(result.qualityReview, {
+      status: "passed_after_retries",
+      attempts: 2,
+      rejectionCount: 1,
+      rejectionReasons: ["title text appears in a blank header panel"],
+    });
+    assert.equal(prompts.length, 2);
+    assert.doesNotMatch(prompts[0], /QUALITY REPLACEMENT/);
+    assert.match(prompts[1], /QUALITY REPLACEMENT 1\/3/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("generator returns the latest image with all rejection reasons after three replacements", async () => {
+  const originalFetch = globalThis.fetch;
+  const image = await solidImage("#52715a");
+  let imageCalls = 0;
+
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    if (body.model === "google/gemini-3.1-flash-lite-image") {
+      imageCalls++;
+      return new Response(JSON.stringify({
+        choices: [{ message: { images: [{ b64_json: image.toString("base64") }] } }],
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    return new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({
+        passed: false,
+        hasText: false,
+        hasArtificialBorder: true,
+        hasPosterLayout: false,
+        issues: ["artificial white border around the image"],
+      }) } }],
+    }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+
+  try {
+    const result = await generateSingleImage(testItem, "test-key");
+    assert.match(result.imageUrl, /^data:image\/jpeg;base64,/);
+    assert.equal(imageCalls, 4);
+    assert.equal(result.qualityReview?.status, "accepted_after_retry_limit");
+    assert.equal(result.qualityReview?.attempts, 4);
+    assert.equal(result.qualityReview?.rejectionCount, 4);
+    assert.equal(result.qualityReview?.rejectionReasons.length, 4);
   } finally {
     globalThis.fetch = originalFetch;
   }

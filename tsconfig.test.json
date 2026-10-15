@@ -17,9 +17,11 @@
     "lib/csv.ts",
     "lib/errors.ts",
     "lib/image-quality.ts",
+    "lib/image-generator.ts",
     "lib/market-research.ts",
     "lib/openrouter.ts",
     "lib/production-plan.ts",
+    "lib/remote-image.ts",
     "lib/types.ts",
     "lib/validation.ts"
   ]

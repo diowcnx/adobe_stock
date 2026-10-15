@@ -340,9 +340,12 @@ export default function Dashboard() {
               updatedImages[targetIdx] = {
                 ...updatedImages[targetIdx],
                 imageUrl: genRes.ok && genData.imageUrl ? genData.imageUrl : undefined,
-                description: genRes.ok && genData.imageUrl
-                  ? undefined
-                  : getErrorMessage(genData.error, "ภาพไม่ผ่านการตรวจคุณภาพ"),
+                qualityReview: genData.qualityReview,
+                description: genData.qualityReview?.status === "accepted_after_retry_limit"
+                  ? `QA warning: ${genData.qualityReview.rejectionReasons.join("; ")}`
+                  : genRes.ok && genData.imageUrl
+                    ? undefined
+                    : getErrorMessage(genData.error, "สร้างภาพไม่สำเร็จ"),
               };
               setLatestResult((prev) => prev ? { ...prev, images: [...updatedImages] } : prev);
               if (!genData.imageUrl) {
@@ -1155,16 +1158,29 @@ export default function Dashboard() {
                         {/* Image Preview */}
                         <div className="lg:col-span-4 flex flex-col justify-center space-y-3">
                           {img.imageUrl ? (
-                            <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-inner group relative">
-                              <NextImage
-                                src={img.imageUrl}
-                                alt={img.seoTitle}
-                                width={640}
-                                height={480}
-                                unoptimized
-                                className="w-full h-auto object-cover max-h-64"
-                              />
-                            </div>
+                            <>
+                              <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-inner group relative">
+                                <NextImage
+                                  src={img.imageUrl}
+                                  alt={img.seoTitle}
+                                  width={640}
+                                  height={480}
+                                  unoptimized
+                                  className="w-full h-auto object-cover max-h-64"
+                                />
+                              </div>
+                              {img.qualityReview?.status === "passed_after_retries" && (
+                                <div className="rounded-xl border border-emerald-800/70 bg-emerald-950/30 px-3 py-2 text-xs text-emerald-200 leading-relaxed">
+                                  ผ่าน QA หลังสร้างภาพทดแทน {img.qualityReview.rejectionCount} ครั้ง
+                                </div>
+                              )}
+                              {img.qualityReview?.status === "accepted_after_retry_limit" && (
+                                <div role="alert" className="rounded-xl border border-amber-700/80 bg-amber-950/40 px-3 py-2 text-xs text-amber-100 leading-relaxed">
+                                  <strong className="block text-amber-300 mb-1">ส่งภาพล่าสุดหลังลองทดแทนครบ 3 ครั้ง</strong>
+                                  <span>เหตุผลที่ QA ปฏิเสธ: {img.qualityReview.rejectionReasons.join("; ")}</span>
+                                </div>
+                              )}
+                            </>
                           ) : (
                             <div className="w-full min-h-48 bg-slate-950 rounded-xl border border-slate-800 flex flex-col items-center justify-center text-center text-xs px-4 gap-2">
                               <AlertCircle className="w-5 h-5 text-amber-400" />

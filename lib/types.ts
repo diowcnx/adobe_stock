@@ -52,6 +52,18 @@ export interface ConceptPlanSummary {
   structureType: ConceptStructureType | null;
 }
 
+export type ImageQualityStatus =
+  | "passed"
+  | "passed_after_retries"
+  | "accepted_after_retry_limit";
+
+export interface ImageQualityReview {
+  status: ImageQualityStatus;
+  attempts: number;
+  rejectionCount: number;
+  rejectionReasons: string[];
+}
+
 export interface StockImageItem {
   id: number;
   seoTitle: string;
@@ -73,6 +85,7 @@ export interface StockImageItem {
   imageBase64?: string;
   costEstimate?: string;
   description?: string;
+  qualityReview?: ImageQualityReview;
 }
 
 export interface OpenRouterCreditInfo {

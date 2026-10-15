@@ -6,7 +6,7 @@ import { isStockImageItem } from "@/lib/validation";
 import { persistGeneratedImage } from "@/lib/batch-store";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 90;
+export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
       success: Boolean(imageUrl),
       imageUrl,
       error: result.error,
+      qualityReview: result.qualityReview,
     });
   } catch (error: unknown) {
     const validationResponse = validationErrorResponse(error);

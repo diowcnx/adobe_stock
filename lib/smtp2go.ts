@@ -62,8 +62,8 @@ export async function sendDailyStockEmail({
 
   // สร้างเนื้อหาอีเมลแบบแจ้งเตือนสั้นกระชับ (ตัดรายละเอียด Title และ Keywords ออกตามคำขอของผู้ใช้)
   const conceptPlan = summarizeConceptPlan(images, mode);
-  const htmlBody = generateNotificationEmailHtml(todayStr, trend, images.length, credits, csvFilename, mode, conceptPlan, downloadUrl);
-  const textBody = generateNotificationEmailPlainText(todayStr, trend, images.length, credits, csvFilename, mode, conceptPlan, downloadUrl);
+  const htmlBody = generateNotificationEmailHtml(todayStr, trend, images, credits, csvFilename, mode, conceptPlan, downloadUrl);
+  const textBody = generateNotificationEmailPlainText(todayStr, trend, images, credits, csvFilename, mode, conceptPlan, downloadUrl);
 
   // แนบไฟล์ CSV ข้อมูล Metadata (Filename, Title, Keywords)
   const csvContent = generateMetadataCsv(images, mode);
@@ -94,11 +94,13 @@ export async function sendDailyStockEmail({
     const modeTag = conceptPlan.enabled
       ? `[🧵 Structured Editorial Still Life Set]`
       : mode === "transparent_png" ? "[🔲 Transparent PNG Set]" : "[🏞️ Regular Scene Set]";
+    const qaWarningCount = images.filter((image) => image.qualityReview?.status === "accepted_after_retry_limit").length;
+    const qaSubjectTag = qaWarningCount > 0 ? `[⚠️ QA ${qaWarningCount}] ` : "";
     const payload = {
       api_key: key,
       to: [toEmail],
       sender: fromEmail,
-      subject: `${subjectPrefix}📸 ${modeTag} ชุดภาพใหม่ ${images.length} ภาพพร้อมดาวน์โหลดแล้ว (${todayStr})`,
+      subject: `${subjectPrefix}${qaSubjectTag}📸 ${modeTag} ชุดภาพใหม่ ${images.length} ภาพพร้อมดาวน์โหลดแล้ว (${todayStr})`,
       html_body: htmlBody,
       text_body: textBody,
       attachments,
@@ -146,7 +148,7 @@ export async function sendDailyStockEmail({
 function generateNotificationEmailHtml(
   todayStr: string,
   trend: MarketTrend,
-  imageCount: number,
+  images: StockImageItem[],
   credits: OpenRouterCreditInfo,
   csvFilename: string,
   mode: "transparent_png" | "regular_scene",
@@ -155,6 +157,18 @@ function generateNotificationEmailHtml(
 ): string {
   const isTransparent = mode === "transparent_png";
   const isStructured = conceptPlan.enabled;
+  const imageCount = images.length;
+  const replacedImages = images.filter((image) => image.qualityReview?.status === "passed_after_retries");
+  const warnedImages = images.filter((image) => image.qualityReview?.status === "accepted_after_retry_limit");
+  const qaSummaryHtml = replacedImages.length === 0 && warnedImages.length === 0
+    ? ""
+    : `<div style="padding: 0 24px 24px 24px; background-color: #f8fafc;">
+        <div style="background-color: ${warnedImages.length > 0 ? "#fffbeb" : "#ecfdf5"}; border: 1px solid ${warnedImages.length > 0 ? "#f59e0b" : "#10b981"}; border-radius: 12px; padding: 16px;">
+          <div style="font-size: 14px; font-weight: 800; color: ${warnedImages.length > 0 ? "#92400e" : "#065f46"}; margin-bottom: 6px;">ผลตรวจคุณภาพภาพทดแทน</div>
+          ${replacedImages.length > 0 ? `<div style="font-size: 12px; color: #065f46; margin-bottom: 6px;">✅ มี ${replacedImages.length} ภาพที่ผ่าน QA หลังสร้างภาพทดแทน</div>` : ""}
+          ${warnedImages.length > 0 ? `<div style="font-size: 12px; color: #92400e; line-height: 1.5;">⚠️ ส่งครบทั้งชุดตามกติกา แต่มี ${warnedImages.length} ภาพที่ยังถูก QA ปฏิเสธหลังลองสร้างภาพทดแทนครบ 3 ครั้ง:<ul style="margin: 8px 0 0 18px; padding: 0;">${warnedImages.map((image) => `<li style="margin-bottom: 5px;"><strong>Image #${image.id}</strong>: ${escapeHtml(image.qualityReview?.rejectionReasons.join("; ") || "ไม่ผ่านเกณฑ์คุณภาพ")}</li>`).join("")}</ul></div>` : ""}
+        </div>
+      </div>`;
 
   return `
 <!DOCTYPE html>
@@ -250,6 +264,8 @@ function generateNotificationEmailHtml(
       </div>
     </div>
 
+    ${qaSummaryHtml}
+
     <!-- Footer -->
     <div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 20px 24px; border-top: 1px solid #f1f5f9;">
       <p style="margin: 0 0 4px 0;">ระบบอัตโนมัติ Adobe Stock Daily Dispatcher บน Vercel</p>
@@ -268,13 +284,16 @@ function generateNotificationEmailHtml(
 function generateNotificationEmailPlainText(
   todayStr: string,
   trend: MarketTrend,
-  imageCount: number,
+  images: StockImageItem[],
   credits: OpenRouterCreditInfo,
   csvFilename: string,
   mode: "transparent_png" | "regular_scene",
   conceptPlan: ConceptPlanSummary,
   downloadUrl: string
 ): string {
+  const imageCount = images.length;
+  const replacedImages = images.filter((image) => image.qualityReview?.status === "passed_after_retries");
+  const warnedImages = images.filter((image) => image.qualityReview?.status === "accepted_after_retry_limit");
   const modeLabel = conceptPlan.enabled
     ? `🧵 Structured Editorial Still Life ${conceptPlan.structuredCount} ภาพ (${conceptPlan.regularSceneCount} JPEG)`
     : mode === "transparent_png"
@@ -290,6 +309,16 @@ function generateNotificationEmailPlainText(
   text += `📎 ไฟล์แนบ: ${csvFilename} (สำหรับอัปโหลดข้อมูล Title/Keywords ขึ้น Adobe Stock)\n\n`;
   text += `ธีมวันนี้: ${trend.theme}\n`;
   text += `${trend.commercialReasoning}\n\n`;
+  if (replacedImages.length > 0) {
+    text += `✅ มี ${replacedImages.length} ภาพที่ผ่าน QA หลังสร้างภาพทดแทน\n`;
+  }
+  if (warnedImages.length > 0) {
+    text += `⚠️ ส่งครบทั้งชุด แต่มี ${warnedImages.length} ภาพที่ยังถูก QA ปฏิเสธหลังลองทดแทนครบ 3 ครั้ง:\n`;
+    for (const image of warnedImages) {
+      text += `- Image #${image.id}: ${image.qualityReview?.rejectionReasons.join("; ") || "ไม่ผ่านเกณฑ์คุณภาพ"}\n`;
+    }
+    text += "\n";
+  }
   text += `เปิดหน้าเว็บด้านบนเพื่อเริ่มดาวน์โหลดภาพทั้งหมดทันทีครับ`;
 
   return text;
