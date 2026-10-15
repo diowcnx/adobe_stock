@@ -907,7 +907,7 @@ export default function Dashboard() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
-                  🧵 Thai Editorial Still Life
+                  🧵 Buyer-Context Editorial Still Life
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   {todayCategory.name} · Filename: .jpeg
@@ -944,7 +944,7 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Creates 10 distinct concepts from the active 18-field Thai Editorial Still Life structure and today&apos;s buyer context.</p>
+                  <p className="text-slate-400">Creates 10 distinct concepts from the 18-field buyer-context structure, matching materials and local cues to the intended market instead of defaulting to one country.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
@@ -1113,7 +1113,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <span className="shrink-0 font-mono text-[11px] px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300">
-                    {currentConceptPlan?.enabled ? "Structure: Thai Editorial Still Life v1" : `Mode: ${latestResult.generationMode || "regular_scene"}`}
+                    {currentConceptPlan?.enabled ? "Structure: Buyer-Context Editorial Still Life" : `Mode: ${latestResult.generationMode || "regular_scene"}`}
                   </span>
                 </div>
 

@@ -11,7 +11,7 @@ import type {
 import { generateUniqueStockFilename } from "./csv";
 import { BATCH_SIZE, getBangkokDate, getDailyCategory, getDailyScheduledMode, type GenerationMode } from "./production-plan";
 import {
-  formatThaiEditorialStillLifePrompt,
+  formatBuyerContextEditorialStillLifePrompt,
   shuffleForProductionDate,
   STILL_LIFE_ASPECT_RATIOS,
   summarizeConceptPlan,
@@ -342,8 +342,24 @@ function fallbackKeywords(seed: string, categoryName: string, mode: GenerationMo
 }
 
 function createStructuredFallbacks(category: ReturnType<typeof getDailyCategory>): StructuredConcept[] {
-  return FALLBACK_STORIES.map((story) => {
-    const { title, differentiation, keywords, ...fields } = story;
+  const materialSets = [
+    ["warm limestone slab", "unbleached linen, matte ceramic and brushed brass", "soft mineral grain", "sand, cream, clay and brass"],
+    ["weathered oak board", "wool thread, recycled paper and dark steel", "honest wood grain", "oak, charcoal, rust and ivory"],
+    ["pale terrazzo surface", "clear glass, cotton cord and glazed tile", "fine aggregate detail", "sage, white, amber and stone"],
+    ["deep slate panel", "folded paper, graphite and silver wire", "subtle cleft texture", "slate, white, graphite and silver"],
+    ["matte plaster surface", "linen ribbon, dried botanicals and plain wood", "hand-troweled variation", "oat, olive, umber and warm white"],
+    ["cork work surface", "natural rubber, cotton canvas and aluminum", "fine porous grain", "cork, navy, aluminum and cream"],
+    ["cool concrete slab", "recycled card, ceramic pieces and steel pins", "small mineral pores", "concrete, cobalt, terracotta and black"],
+    ["soft felt-covered panel", "wool felt, paper cord and frosted glass", "dense textile fibers", "burgundy, blush, smoke and cream"],
+    ["dark walnut surface", "clear acrylic, fine cord and matte stone", "straight polished grain", "walnut, clear, moss and chalk"],
+    ["light maple board", "plain cotton, paper shapes and copper wire", "quiet close wood grain", "maple, sky blue, copper and white"],
+  ] as const;
+
+  return FALLBACK_STORIES.map((story, index) => {
+    const seed = category.seeds[index] || story.title;
+    const materials = materialSets[index];
+    const title = seed.charAt(0).toUpperCase() + seed.slice(1);
+    const differentiation = `Translate ${seed} into a tactile studio-built metaphor with a distinct material system and camera treatment, avoiding generic category symbols or location stereotypes.`;
     return {
       title,
       commercialIntent: {
@@ -352,10 +368,25 @@ function createStructuredFallbacks(category: ReturnType<typeof getDailyCategory>
         purchaseReason: `${differentiation} The deliberate copy space, adaptable crop and tactile material detail give a designer a distinctive, immediately usable campaign asset.`,
       },
       differentiation,
-      keywords,
+      keywords: fallbackKeywords(seed, category.name, "regular_scene"),
       structure: {
-        ...fields,
-        CAMPAIGN_THEME: `${category.name}: a material-led contemporary Thai visual story`,
+        CAMPAIGN_THEME: `${category.name}: a buyer-relevant material story designed for ${category.buyer}`,
+        MAIN_CONCEPT: `the practical and emotional value of ${seed}, expressed through physical materials rather than literal signage`,
+        CAMERA_ANGLE: story.CAMERA_ANGLE,
+        LENS_TYPE: story.LENS_TYPE,
+        SHOT_TYPE: story.SHOT_TYPE,
+        LIGHTING: story.LIGHTING,
+        BACKGROUND_BASE: materials[0],
+        BACKGROUND_TEXTURE: materials[2],
+        BACKGROUND_DETAILS: "restrained tonal variation that remains part of one continuous full-bleed physical surface",
+        CENTRAL_INSTALLATION: `an original three-dimensional studio interpretation of ${seed}`,
+        PRIMARY_COMPONENTS: materials[1],
+        SUPPORTING_ACCENT_1: "one small locally appropriate everyday material chosen only when it supports the buyer context",
+        SUPPORTING_ACCENT_2: "a restrained unbranded geometric accent for scale and visual rhythm",
+        MATERIAL_FOCUS: `credible scale, joins, fibers, reflections and surface wear across ${materials[1]}`,
+        COMPOSITION_LOGIC: story.COMPOSITION_LOGIC,
+        ATMOSPHERIC_STYLE: story.ATMOSPHERIC_STYLE,
+        COLOR_PALETTE: materials[3],
         TEXT_ELEMENTS: "No rendered text; reserve the specified clean copy space for typography added later by a designer",
       },
     };
@@ -375,11 +406,11 @@ function createLegacyFallbacks(category: ReturnType<typeof getDailyCategory>, mo
 function buildStructuredDrafts(concepts: StructuredConcept[], planningSource: PlanningSource): StockImageDraft[] {
   return concepts.map((concept, index) => ({
     seoTitle: concept.title,
-    category: "Thai Editorial Still Life",
+    category: "Buyer-Context Editorial Still Life",
     aspectRatio: STILL_LIFE_ASPECT_RATIOS[index] || "4:5",
     composition: "advertising",
-    prompt: `${formatThaiEditorialStillLifePrompt(concept.structure)} Distinctive direction: ${concept.differentiation}. Target buyer (context only): ${concept.commercialIntent.targetBuyer}. Intended use (do not render text): ${concept.commercialIntent.intendedUse}. Licensing value to express visually: ${concept.commercialIntent.purchaseReason}.`,
-    negativePrompt: "text, lettering, typography, numerals, logos, signatures, watermarks, preview overlays, branded objects, royal insignia, national emblems, religious objects, protected textile patterns, stereotypical tourist props, impossible material joints, plastic AI glossiness, duplicated objects",
+    prompt: `${formatBuyerContextEditorialStillLifePrompt(concept.structure)} Distinctive direction: ${concept.differentiation}. Target buyer (context only): ${concept.commercialIntent.targetBuyer}. Intended use (do not render text): ${concept.commercialIntent.intendedUse}. Licensing value to express visually: ${concept.commercialIntent.purchaseReason}.`,
+    negativePrompt: "text, lettering, typography, numerals, logos, signatures, watermarks, preview overlays, branded objects, flags, political symbols, sacred objects, protected cultural patterns, token cultural costumes, stereotypical tourist props, impossible material joints, plastic AI glossiness, duplicated objects",
     keywords: concept.keywords,
     modelUsed: "google/gemini-3.1-flash-lite-image",
     generationMode: "regular_scene",
@@ -420,20 +451,20 @@ async function planStructuredConcepts(
   category: ReturnType<typeof getDailyCategory>, productionDate: string,
 ): Promise<StructuredConcept[]> {
   const response = await callOpenRouterJSON<unknown>(
-    `You are a commercial art director creating original Thai-inspired Editorial Still Life advertising images from accessible materials such as silk, buttons, thread, flowers, coffee beans, rice, bamboo, leaves, ceramic, paper and plain metal details.
+    `You are a commercial art director creating original buyer-context Editorial Still Life advertising images for an international image marketplace. Start with the target buyer, intended placement and likely end-user environment, then select accessible materials, color, seasonality and spatial cues that make the image useful in that market.
 Return exactly ${BATCH_SIZE} concepts. Every concept must tell a different commercially useful story and use a different central installation, material combination, camera treatment and composition. Do not create recolors, crops or alternate angles of one arrangement.
 Each concept must contain title, targetBuyer, intendedUse, purchaseReason, differentiation, 15-25 accurate English keyword phrases in descending relevance, and a structure object with exactly these 18 non-empty string fields: ${THAI_EDITORIAL_STILL_LIFE_FIELDS.join(", ")}.
 targetBuyer must name a realistic customer segment. intendedUse must name concrete placements and purposes such as a campaign hero, packaging-support visual, article opener or social advertisement. purchaseReason must explain why a designer would license this specific image instead of a generic alternative, grounded only in visible utility such as useful copy space, flexible crops, distinctive material storytelling and credible tactile detail.
 CAMPAIGN_THEME is invisible art direction, not a title treatment. It must not repeat the SEO title or ask for visible lettering, a poster, card, header, footer, frame, border or blank graphic panel.
 TEXT_ELEMENTS must explicitly say that no text is rendered and identify clean space reserved for typography added later. Titles describe visible content only.
-Prioritize believable studio construction, true material scale, detailed fibers and surfaces, coherent gravity, intentional shadows and an editorial composition. Use everyday Thai material references respectfully and specifically without making unverifiable origin claims.
-Do not use royal insignia, national emblems, flags, religious or sacred objects, protected textile patterns, famous designs, tourist clichés, brands, logos, readable text, pseudo-text, watermarks or artist imitation.
+Prioritize believable studio construction, true material scale, detailed fibers and surfaces, coherent gravity, intentional shadows and an editorial composition. Do not default to Thai or Southeast Asian references. Across the ten concepts, create an internationally useful portfolio: some visually neutral and adaptable, and some accurately grounded in different buyer regions when the brief benefits from locality. Vary climate, season, architecture cues, everyday materials and color language across at least three world regions; never mix unrelated cultural signals merely for decoration.
+Do not use national emblems, flags, political identifiers, religious or sacred objects, protected cultural patterns, famous designs, token costumes, tourist clichés, brands, logos, readable text, pseudo-text, watermarks or artist imitation.
 No unsupported sales, demand, sustainability, cultural-authenticity or low-competition claims.
 Return pure JSON {"concepts":[{"title":"...","targetBuyer":"...","intendedUse":"...","purchaseReason":"...","differentiation":"...","structure":{"CAMPAIGN_THEME":"...","MAIN_CONCEPT":"...","CAMERA_ANGLE":"...","LENS_TYPE":"...","SHOT_TYPE":"...","LIGHTING":"...","BACKGROUND_BASE":"...","BACKGROUND_TEXTURE":"...","BACKGROUND_DETAILS":"...","CENTRAL_INSTALLATION":"...","PRIMARY_COMPONENTS":"...","SUPPORTING_ACCENT_1":"...","SUPPORTING_ACCENT_2":"...","MATERIAL_FOCUS":"...","COMPOSITION_LOGIC":"...","ATMOSPHERIC_STYLE":"...","COLOR_PALETTE":"...","TEXT_ELEMENTS":"No rendered text; reserve ... copy space ..."},"keywords":["..."]}]}.`,
-    `Bangkok production date: ${productionDate}. Today's buyer-use context is ${category.name}. Intended buyers: ${category.buyer}.
+    `Production date (used only for portfolio scheduling): ${productionDate}. Today's buyer-use context is ${category.name}. Intended buyers: ${category.buyer}.
 Use the buyer context to shape ten distinct campaign stories, while keeping every output an original studio Editorial Still Life rather than a literal lifestyle scene.
 Directional starting points from the monthly plan: ${category.seeds.join("; ")}.
-Portfolio and public search observations are visual-positioning signals only, not proof of sales or demand. Differentiate through concept, material, construction, camera, lighting and composition.`,
+For each concept, decide whether a globally neutral treatment or a specific end-market context is more useful. If local context is chosen, state it in CAMPAIGN_THEME and make every material and seasonal cue accurate to that context. Portfolio and public search observations are visual-positioning signals only, not proof of sales or demand. Differentiate through concept, material, construction, camera, lighting and composition.`,
     "google/gemini-3.1-flash-lite",
   );
   if (!isRecord(response)) throw new Error("Invalid structured planning response");
@@ -490,11 +521,11 @@ export async function conductMarketResearchAndGeneratePrompts(
     conceptPlan,
     trend: {
       theme: structuredEnabled
-        ? `Day ${category.day} · ${category.name} — 10 Thai Editorial Still Life concepts`
+        ? `Day ${category.day} · ${category.name} — 10 buyer-context Editorial Still Life concepts`
         : `Day ${category.day} · ${category.name} — ${BATCH_SIZE} legacy concepts`,
       targetMarket: category.buyer,
-      commercialReasoning: `${planningSource === "curated_fallback" ? "Curated fallback briefs; AI planning unavailable." : "AI-developed briefs based on the active structured-concept schema."} ${structuredEnabled ? "All ten images use the 18-field Thai Editorial Still Life structure." : "Structured concepts are disabled by rollback switch."} No live sales, competition or keyword-volume validation; review before submission.`,
-      seasonalRelevance: `Bangkok ${productionDate}; monthly buyer context day ${category.day}/31. Validate cultural and material details manually.`,
+      commercialReasoning: `${planningSource === "curated_fallback" ? "Curated fallback briefs; AI planning unavailable." : "AI-developed briefs based on the active structured-concept schema."} ${structuredEnabled ? "All ten images use the 18-field buyer-context Editorial Still Life structure, without defaulting to one country." : "Structured concepts are disabled by rollback switch."} No live sales, competition or keyword-volume validation; review before submission.`,
+      seasonalRelevance: `Production date ${productionDate}; monthly buyer context day ${category.day}/31. Validate any regional, cultural and seasonal details manually.`,
       buyerDemandRating: "Research Candidate",
     },
   };

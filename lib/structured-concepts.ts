@@ -32,7 +32,7 @@ export const THAI_EDITORIAL_STILL_LIFE_FIELDS: Array<keyof ThaiEditorialStillLif
 /** Registry entry kept separate so future structures can be added without changing saved-item semantics. */
 export const CONCEPT_STRUCTURE_REGISTRY = [{
   type: THAI_EDITORIAL_STILL_LIFE_TYPE,
-  label: "Thai Editorial Still Life",
+  label: "Buyer-Context Editorial Still Life",
   version: 1,
   fields: THAI_EDITORIAL_STILL_LIFE_FIELDS,
 }] as const;
@@ -101,9 +101,9 @@ export function summarizeConceptPlan(
   };
 }
 
-export function formatThaiEditorialStillLifePrompt(fields: ThaiEditorialStillLifeStructure): string {
+export function formatBuyerContextEditorialStillLifePrompt(fields: ThaiEditorialStillLifeStructure): string {
   return [
-    `Create an original Thai editorial still-life advertising photograph. Use this campaign idea only as invisible creative direction and never typeset or display it: ${fields.CAMPAIGN_THEME}.`,
+    `Create an original buyer-context editorial still-life advertising photograph. Use this campaign idea only as invisible creative direction and never typeset or display it: ${fields.CAMPAIGN_THEME}.`,
     `Express this visual metaphor: ${fields.MAIN_CONCEPT}.`,
     `Camera and framing: ${fields.CAMERA_ANGLE}; ${fields.LENS_TYPE}; ${fields.SHOT_TYPE}.`,
     `Lighting: ${fields.LIGHTING}.`,
@@ -116,6 +116,9 @@ export function formatThaiEditorialStillLifePrompt(fields: ThaiEditorialStillLif
     `Atmosphere: ${fields.ATMOSPHERIC_STYLE}. Color palette: ${fields.COLOR_PALETTE}.`,
     "Do not render any letters, words, numerals, captions, titles, logos or pseudo-text in the image. The TEXT_ELEMENTS field is metadata for a human designer and must not become visible image content. Leave any useful negative space only as a natural uncluttered area of the photographed physical background; never create a blank title panel, header, footer, card, border or graphic text box.",
     "Make one full-bleed photograph. The physical scene and its background must continue naturally to all four edges with no frame, mat, white margin, canvas border, inset image, poster layout or page mockup.",
-    "Use culturally respectful, non-sacred everyday Thai material references. Do not use royal insignia, national emblems, religious objects, protected textile patterns or stereotypical tourist props.",
+    "Choose people-free objects, materials, architecture cues, seasonality and color language that suit the intended buyer and use. Do not default to Thailand or add cultural identity unless the brief genuinely calls for it. When a location is specified, use accurate contemporary everyday details rather than token costumes, flags, sacred objects, protected patterns, political symbols or tourist stereotypes.",
   ].join(" ");
 }
+
+/** Backward-compatible export for callers and saved schema names created before the buyer-context update. */
+export const formatThaiEditorialStillLifePrompt = formatBuyerContextEditorialStillLifePrompt;

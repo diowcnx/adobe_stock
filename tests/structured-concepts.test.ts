@@ -40,7 +40,7 @@ function structure(index: number): ThaiEditorialStillLifeStructure {
 function mockedPlan() {
   return {
     concepts: Array.from({ length: 10 }, (_, index) => ({
-      title: `Thai Editorial Material Story ${index + 1}`,
+      title: `Buyer Context Editorial Material Story ${index + 1}`,
       targetBuyer: `Commercial design buyer segment number ${index + 1}`,
       intendedUse: `Campaign hero and article opener application number ${index + 1}`,
       purchaseReason: `Distinctive tactile story with flexible copy space and crop utility number ${index + 1}`,
@@ -75,6 +75,8 @@ function assertStructuredBatch(items: StockImageItem[]) {
     assert.match(item.prompt, /Do not render any letters, words, numerals,.*logos or pseudo-text/);
     assert.match(item.prompt, /full-bleed photograph/);
     assert.match(item.prompt, /no frame, mat, white margin, canvas border, inset image, poster layout or page mockup/i);
+    assert.doesNotMatch(item.prompt, /Create an original Thai editorial/i);
+    assert.match(item.prompt, /Do not default to Thailand/i);
     assert.doesNotMatch(item.prompt, /reserve clean copy space number/i);
   }
 }
@@ -178,7 +180,7 @@ test("all 31 buyer contexts keep valid structured fallback metadata", async () =
       const date = new Date(Date.UTC(2026, 9, day, 5)).toISOString();
       const result = await conductMarketResearchAndGeneratePrompts(date);
       assertStructuredBatch(result.items);
-      assert.equal(result.trend.theme.includes("10 Thai Editorial Still Life concepts"), true);
+      assert.equal(result.trend.theme.includes("10 buyer-context Editorial Still Life concepts"), true);
     }
   } finally {
     console.warn = originalWarn;
