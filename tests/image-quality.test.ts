@@ -47,6 +47,7 @@ test("vision guard rejects rendered text and poster layouts", async () => {
     choices: [{ message: { content: JSON.stringify({
       passed: false,
       hasText: true,
+      hasVisibleHumanFace: false,
       hasArtificialBorder: false,
       hasPosterLayout: true,
       isImmediatelyRecognizable: false,
@@ -74,6 +75,7 @@ test("vision guard accepts a full-bleed scene with no text", async () => {
     choices: [{ message: { content: JSON.stringify({
       passed: true,
       hasText: false,
+      hasVisibleHumanFace: false,
       hasArtificialBorder: false,
       hasPosterLayout: false,
       isImmediatelyRecognizable: true,
@@ -87,14 +89,14 @@ test("vision guard accepts a full-bleed scene with no text", async () => {
 
   try {
     const result = await assessGeneratedImageQuality(await solidImage("#52715a"), "test-key");
-    assert.deepEqual(result, { passed: true, issues: [], source: "vision_guard" });
+    assert.deepEqual(result, { passed: true, issues: [], source: "vision_guard", faceCheckCompleted: true, hasVisibleHumanFace: false });
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
 const testItem: StockImageItem = {
-  generationBriefVersion: "literal-jpeg-v1",
+  generationBriefVersion: "literal-jpeg-no-faces-v2",
   id: 1,
   seoTitle: "Parent Fastening Child Raincoat Before Walk",
   category: "Commercial Story",
@@ -105,6 +107,49 @@ const testItem: StockImageItem = {
   modelUsed: "test-model",
   generationMode: "regular_scene",
 };
+
+test("visible faces are withheld after the retry limit even when QA is configured off", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalGate = process.env.IMAGE_QUALITY_GATE;
+  process.env.IMAGE_QUALITY_GATE = "false";
+  const image = await solidImage("#52715a");
+  let imageCalls = 0;
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    if (body.model === "google/gemini-3.1-flash-lite-image") {
+      imageCalls++;
+      assert.match(body.messages[0].content, /No visible human faces anywhere/);
+      return new Response(JSON.stringify({
+        choices: [{ message: { images: [{ b64_json: image.toString("base64") }] } }],
+      }));
+    }
+    return new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({
+        passed: true,
+        hasVisibleHumanFace: true,
+        hasText: false,
+        hasArtificialBorder: false,
+        hasPosterLayout: false,
+        isImmediatelyRecognizable: true,
+        hasClearLiteralStory: true,
+        hasClearCommercialUse: true,
+        hasCutoutDamage: false,
+        hasMultipleConfusingSubjects: false,
+        issues: [],
+      }) } }],
+    }));
+  };
+  try {
+    const result = await generateSingleImage(testItem, "test-key");
+    assert.equal(imageCalls, 4);
+    assert.equal(result.imageUrl, "");
+    assert.match(result.error || "", /visible human face remains/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalGate === undefined) delete process.env.IMAGE_QUALITY_GATE;
+    else process.env.IMAGE_QUALITY_GATE = originalGate;
+  }
+});
 
 test("retry direction explicitly changes the rejected composition", () => {
   const direction = buildQualityRetryDirection(2, ["title text appears in a blank header panel"]);
@@ -135,6 +180,7 @@ test("generator replaces a QA-rejected image and records the successful retry", 
       choices: [{ message: { content: JSON.stringify({
         passed,
         hasText: !passed,
+        hasVisibleHumanFace: false,
         hasArtificialBorder: false,
         hasPosterLayout: !passed,
         isImmediatelyRecognizable: passed,
@@ -181,6 +227,7 @@ test("generator returns the latest image with all rejection reasons after three 
       choices: [{ message: { content: JSON.stringify({
         passed: false,
         hasText: false,
+        hasVisibleHumanFace: false,
         hasArtificialBorder: true,
         hasPosterLayout: false,
         isImmediatelyRecognizable: true,
@@ -229,6 +276,7 @@ test("transparent PNG is blocked before any billed request", async () => {
       choices: [{ message: { content: JSON.stringify({
         passed,
         hasText: false,
+        hasVisibleHumanFace: false,
         hasArtificialBorder: false,
         hasPosterLayout: false,
         isImmediatelyRecognizable: passed,

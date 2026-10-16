@@ -49,7 +49,11 @@ export const MONTHLY_CATEGORIES = ORIGINAL_MONTHLY_CATEGORIES.map((entry) => {
     day: entry.day,
     mode: "regular_scene" as const,
     kind: "advertising" as const,
-    seeds: source.seeds.map((seed) => {
+    seeds: source.seeds.map((seed: string) => {
+      if (seed.includes("dentist showing a mirror")) return "close-up of gloved dental staff hands preparing examination tools on a clinic tray, framed below all heads";
+      if (seed.includes("at eye level")) return "nurse and older adult reviewing a care plan at a clinic desk, photographed directly from behind with both faces fully out of view";
+      seed = seed.replace("with faces indistinct", "seen strictly from behind with no faces visible")
+        .replace("with hands in action and faces distant", "with hands in action and all heads outside the frame");
       if (seed === "abstract paper graph and calculator arranged for a budgeting article") return "small business owner checking expenses with a calculator at a shop counter";
       if (seed.includes("as a savings metaphor")) return "parent and teenager putting coins into a savings jar at a kitchen table";
       return seed;

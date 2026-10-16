@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import { getErrorMessage, isRecord } from "./errors";
+import { NO_VISIBLE_FACE_RULE } from "./generation-policy";
 
 const OPENROUTER_API_BASE = "https://openrouter.ai/api/v1";
 const DEFAULT_QA_MODEL = "google/gemini-3.1-flash-lite";
@@ -9,6 +10,8 @@ export interface ImageQualityResult {
   passed: boolean;
   issues: string[];
   source: "pixel_guard" | "vision_guard";
+  hasVisibleHumanFace?: boolean;
+  faceCheckCompleted?: boolean;
 }
 
 export interface ImageQualityContext {
@@ -104,9 +107,10 @@ export async function assessGeneratedImageQuality(
               text: `Inspect only the visible pixels of this generated commercial image. Expected title: ${context.expectedTitle}. Intended buyer use: ${context.intendedUse || "general commercial design"}. Mode: ${context.mode}.
 Reject it if ANY readable or pseudo-readable letters, words, numerals, captions, title, logo, signature or watermark appear anywhere. Also reject a poster/card/mockup layout, blank header/footer panel, outer frame, mat, border, canvas margin, or image placed inside another page.
 Apply a strict two-second clarity test: an ordinary viewer must immediately name the main subject and understand the literal action or practical purpose without reading metadata or guessing a symbolic metaphor. Reject abstract assemblages, surreal hybrids, unrelated object piles, ambiguous sculptures, decorative material metaphors, or scenes whose buyer use is not visually clear.
+Mandatory face rule: ${NO_VISIBLE_FACE_RULE} Set hasVisibleHumanFace=true if any human face or part of a face is visible, however small, blurred or obscured. Human backs, hands and bodies with all faces outside the frame are allowed. Animal faces are allowed.
 For transparent_png, the dark gray shown around the subject represents transparency. Require exactly one intact, familiar, opaque subject with a simple readable silhouette. Its normal practical function must be obvious, but it does not need to show an action; set hasClearLiteralStory=true when the single object and its normal use are immediately clear. Reject missing chunks, accidental transparent holes through solid areas, ragged/dirty/haloed edges, fragmented pieces, multiple unrelated objects, or a result that does not visibly match the expected title.
 For regular_scene, require one coherent recognizable real-world subject and setting with an obvious commercial application. A stationary meal, interior, animal or landscape is valid without an action; set hasClearLiteralStory=true when its literal subject and purpose are clear. Natural copy space is allowed only when it remains part of the photographed setting.
-Return pure JSON only: {"passed":true|false,"hasText":true|false,"hasArtificialBorder":true|false,"hasPosterLayout":true|false,"isImmediatelyRecognizable":true|false,"hasClearLiteralStory":true|false,"hasClearCommercialUse":true|false,"hasCutoutDamage":true|false,"hasMultipleConfusingSubjects":true|false,"issues":["short factual issue"]}. If uncertain, reject.`,
+Return pure JSON only: {"passed":true|false,"hasVisibleHumanFace":true|false,"hasText":true|false,"hasArtificialBorder":true|false,"hasPosterLayout":true|false,"isImmediatelyRecognizable":true|false,"hasClearLiteralStory":true|false,"hasClearCommercialUse":true|false,"hasCutoutDamage":true|false,"hasMultipleConfusingSubjects":true|false,"issues":["short factual issue"]}. If uncertain, reject.`,
             },
             { type: "image_url", image_url: { url: dataUrl } },
           ],
@@ -124,7 +128,7 @@ Return pure JSON only: {"passed":true|false,"hasText":true|false,"hasArtificialB
     if (typeof rawContent !== "string") throw new Error("quality inspection returned no result");
     const match = rawContent.match(/\{[\s\S]*\}/);
     const report: unknown = JSON.parse(match?.[0] || rawContent);
-    if (!isRecord(report) || typeof report.passed !== "boolean" ||
+    if (!isRecord(report) || typeof report.passed !== "boolean" || typeof report.hasVisibleHumanFace !== "boolean" ||
       typeof report.hasText !== "boolean" || typeof report.hasArtificialBorder !== "boolean" ||
       typeof report.hasPosterLayout !== "boolean" || typeof report.isImmediatelyRecognizable !== "boolean" ||
       typeof report.hasClearLiteralStory !== "boolean" || typeof report.hasClearCommercialUse !== "boolean" ||
@@ -133,13 +137,16 @@ Return pure JSON only: {"passed":true|false,"hasText":true|false,"hasArtificialB
       throw new Error("quality inspection returned an invalid report");
     }
     const issues = report.issues.filter((issue): issue is string => typeof issue === "string").slice(0, 5);
-    const passed = report.passed && !report.hasText && !report.hasArtificialBorder && !report.hasPosterLayout &&
+    if (report.hasVisibleHumanFace) issues.unshift("visible human face detected; reframe from behind or below the neck");
+    const passed = report.passed && !report.hasVisibleHumanFace && !report.hasText && !report.hasArtificialBorder && !report.hasPosterLayout &&
       report.isImmediatelyRecognizable && report.hasClearLiteralStory && report.hasClearCommercialUse &&
       !report.hasMultipleConfusingSubjects && (context.mode !== "transparent_png" || !report.hasCutoutDamage);
     return {
       passed,
       issues: passed ? [] : issues.length > 0 ? issues : ["image failed the recognizability, literal-story, commercial-use or technical-quality checks"],
       source: "vision_guard",
+      faceCheckCompleted: true,
+      hasVisibleHumanFace: report.hasVisibleHumanFace,
     };
   } catch (error: unknown) {
     return {

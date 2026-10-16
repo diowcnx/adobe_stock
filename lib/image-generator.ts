@@ -3,7 +3,7 @@ import { ImageQualityReview, StockImageItem } from "./types";
 import { getErrorMessage } from "./errors";
 import { fetchAllowlistedImage, validateRemoteImageUrl } from "./remote-image";
 import { assessGeneratedImageQuality } from "./image-quality";
-import { getGenerationBlockReason } from "./generation-policy";
+import { getGenerationBlockReason, NO_VISIBLE_FACE_RULE } from "./generation-policy";
 
 const OPENROUTER_API_BASE = "https://openrouter.ai/api/v1";
 const MAX_INPUT_PIXELS = 40_000_000;
@@ -231,6 +231,7 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
+        NO_VISIBLE_FACE_RULE,
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
         isTransparent
@@ -364,7 +365,7 @@ export async function generateSingleImage(
         if (isTransparent) {
           console.log(`[Item #${item.id}] Ensuring genuine alpha transparency with sharp...`);
           const transparentPngBuffer = await ensureGenuineAlphaTransparency(extractedBuffer);
-          if (process.env.IMAGE_QUALITY_GATE?.trim().toLowerCase() !== "false") {
+          {
             const quality = await assessGeneratedImageQuality(transparentPngBuffer, key, {
               mode: "transparent_png",
               expectedTitle: item.seoTitle,
@@ -398,7 +399,7 @@ export async function generateSingleImage(
             },
           };
         } else {
-          if (process.env.IMAGE_QUALITY_GATE?.trim().toLowerCase() !== "false") {
+          {
             const quality = await assessGeneratedImageQuality(extractedBuffer, key, {
               mode: "regular_scene",
               expectedTitle: item.seoTitle,
@@ -410,6 +411,15 @@ export async function generateSingleImage(
               lastError = `Quality gate rejected image (${quality.source}): ${reason}`;
               console.warn(`[Item #${item.id}] ${lastError}`);
               if (attemptIndex < MAX_QUALITY_RETRIES) continue;
+
+              if (quality.hasVisibleHumanFace || !quality.faceCheckCompleted) {
+                return {
+                  imageUrl: "",
+                  error: quality.hasVisibleHumanFace
+                    ? "Image withheld: visible human face remains after the replacement limit."
+                    : "Image withheld: the required no-visible-face inspection could not be completed.",
+                };
+              }
 
               const compressedRejectedBuffer = await sharp(extractedBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
                 .jpeg({ quality: 95, chromaSubsampling: "4:4:4" })

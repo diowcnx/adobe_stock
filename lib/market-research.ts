@@ -2,7 +2,7 @@ import type { ConceptPlanSummary, MarketTrend, StockImageItem } from "./types";
 import { BATCH_SIZE, getBangkokDate, getDailyCategory, type GenerationMode } from "./production-plan";
 import { generateUniqueStockFilename } from "./csv";
 import { summarizeConceptPlan } from "./structured-concepts";
-import { GENERATION_BRIEF_VERSION } from "./generation-policy";
+import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
 
 export { getDailyScheduledMode } from "./production-plan";
 
@@ -36,7 +36,7 @@ export async function conductMarketResearchAndGeneratePrompts(
       "natural light", "commercial photography", "authentic setting", "detail",
       "unbranded", "composition", "horizontal image", "visual communication",
       "natural colors", "real world", "clear subject", "advertising",
-    ])].slice(0, 25);
+    ])].filter(keyword => keyword.length <= 100).slice(0, 25);
     return {
       id: index + 1,
       seoTitle: title,
@@ -50,9 +50,10 @@ export async function conductMarketResearchAndGeneratePrompts(
         "Use believable geometry, anatomy, materials and natural lighting. Show enough of the real setting to make the subject understandable at a glance.",
         "Do not reinterpret the subject as a miniature, sculpture, diorama, craft project, symbolic installation, abstract metaphor or collage.",
         "Use only props that naturally belong to the subject. Keep the main subject visually clear with useful natural space for a designer's crop.",
+        NO_VISIBLE_FACE_RULE,
         "No rendered text, letters, logos, signatures, watermarks, frames, white borders, inset images or graphic panels.",
       ].join(" "),
-      negativePrompt: "abstract metaphor, symbolic objects, miniature scene, diorama, surreal hybrid, object collage, artificial border, text, logo, watermark",
+      negativePrompt: "visible human face, facial features, side profile, partial face, reflected face, background faces, abstract metaphor, symbolic objects, miniature scene, diorama, surreal hybrid, object collage, artificial border, text, logo, watermark",
       keywords,
       modelUsed: "google/gemini-3.1-flash-lite-image",
       generationMode: mode,

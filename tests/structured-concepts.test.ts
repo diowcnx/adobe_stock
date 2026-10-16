@@ -19,6 +19,8 @@ test("all 31 daily plans produce valid JPEG briefs without paid planning or conc
         assert.equal(item.generationMode, "regular_scene");
         assert.equal(item.isTransparent, false);
         assert.equal(item.conceptStructure, undefined);
+        assert.match(item.prompt, /No visible human faces anywhere/);
+        assert.match(item.negativePrompt || "", /visible human face/);
         assert.equal(isStockImageItem(item), true);
         assert.equal(getGenerationBlockReason(item), undefined);
         assert.match(item.filename || "", /\.jpeg$/);
