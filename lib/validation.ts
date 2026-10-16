@@ -28,7 +28,13 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (typeof value.aspectRatio !== "string" || !ASPECT_RATIOS.has(value.aspectRatio)) return false;
   if (!isBoundedString(value.prompt, 8_000)) return false;
   if (!isBoundedString(value.modelUsed, 200)) return false;
-  if ([value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure].filter(field => field !== undefined).length > 1) return false;
+  if ([value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure].filter(field => field !== undefined).length > 1) return false;
+  if (value.dualMaterialStructure !== undefined) {
+    if (!isRecord(value.dualMaterialStructure)) return false;
+    const fields = ["SUBJECT", "PRIMARY_MATERIAL", "SECONDARY_MATERIAL", "BACKGROUND", "SHADOW_STYLE", "VISUAL_STYLE"];
+    if (Object.keys(value.dualMaterialStructure).length !== fields.length ||
+        !fields.every(field => isBoundedString((value.dualMaterialStructure as Record<string, unknown>)[field], 700))) return false;
+  }
   if (value.materialArtStructure !== undefined) {
     if (!isRecord(value.materialArtStructure) ||
         Object.keys(value.materialArtStructure).length !== THAI_EDITORIAL_STILL_LIFE_FIELDS.length ||

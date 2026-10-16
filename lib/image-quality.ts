@@ -22,6 +22,7 @@ export interface ImageQualityContext {
   isExhibitionBooth?: boolean;
   isResortMasterplan?: boolean;
   isMaterialArt?: boolean;
+  isDualMaterial?: boolean;
 }
 
 /** Detect the common AI failure where a portrait image is placed inside white side mats. */
@@ -72,7 +73,7 @@ export async function assessGeneratedImageQuality(
     expectedTitle: "commercial image",
   },
 ): Promise<ImageQualityResult> {
-  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isResortMasterplan && !context.isMaterialArt && await detectUnintendedLightBorder(inputBuffer)) {
+  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isResortMasterplan && !context.isMaterialArt && !context.isDualMaterial && await detectUnintendedLightBorder(inputBuffer)) {
     return {
       passed: false,
       issues: ["unintended white border or mat around the image"],
@@ -110,7 +111,9 @@ export async function assessGeneratedImageQuality(
               type: "text",
               text: `Inspect only the visible pixels of this generated commercial image. Expected title: ${context.expectedTitle}. Intended buyer use: ${context.intendedUse || "general commercial design"}. Mode: ${context.mode}.
 Reject it if ANY readable or pseudo-readable letters, words, numerals, captions, title, logo, signature or watermark appear anywhere. Also reject a poster/card/mockup layout, blank header/footer panel, outer frame, mat, border, canvas margin, or image placed inside another page.
-${context.isMaterialArt
+${context.isDualMaterial
+  ? "This is an INTENTIONAL DUAL-MATERIAL SCULPTURE. Require exactly one intact, immediately recognizable subject made from two distinct construction materials. The primary material should define the main volume and the secondary material a connected accent. Accept unexpected material combinations and deliberate sculptural anatomy while requiring convincing textures, coherent joins and support, a readable silhouette and natural studio shadows. Animal faces and recognizable stylized organ shapes are allowed; human faces are not. Reject extra objects, multiple disconnected subjects, random patchwork, unnecessary third materials, illegible shapes, melted textures, lettering, people or portrait busts. A neutral studio background and breathing room are intentional, not artificial borders. Set hasClearLiteralStory=true when the subject and material contrast are clear."
+  : context.isMaterialArt
   ? "This is an INTENTIONAL MATERIAL-ART STILL-LIFE PHOTOGRAPH or Editorial Still Life brand image. Accept a dominant raw-material artwork OR a recognizable hero product in restrained conceptual staging for fashion, beauty, advertising or lifestyle. A normal product need not transform into a sculpture. Accept visual metaphor when named products/materials, arrangement and buyer use are clear. Require photographic texture, realistic scale, intact product geometry, coherent physical support, natural contact shadows and continuous studio background. Supporting objects must contribute to the same concept and stay secondary. Require framing and breathing room suited to the canvas, with no cropped hero or letterboxing. Reject clutter, unrelated piles, illegible elaborate symbolism, multiple competing motifs, hardware fusion, architecture, flat sketch rendering, text or people. Natural background and copy space are intentional, not artificial mats. Set hasClearLiteralStory=true when the campaign concept is readable."
   : context.isResortMasterplan
   ? "This is an ARCHITECTURAL PROJECT MASTERPLAN SKETCH, not a photograph. Require a coherent elevated bird's-eye oblique view showing the complete project, category-appropriate amenities, buildings, landscape/terrain and connected circulation at consistent scale. Use the expected title and intended use to determine the project category: schools, community parks, workplaces and housing do not require pools, waterparks or villas. Reject irrelevant amenities that contradict the category. Require fine ink/graphite linework, plentiful unpainted warm-white paper and sparse pastel tints at any specified water, roofs and planting. White paper and quiet title-free negative space are intentional, NOT artificial borders or blank poster panels. Reject actual drawn frames or inset sheets, cropped site, frontal booth views, saturated photorealistic renders, disconnected paths, floating buildings or incomprehensible zoning. Set hasClearLiteralStory=true when the site program and planning relationships are understandable. No title, lettering, labels, scale bars, legends, people or visible faces."
@@ -121,7 +124,9 @@ ${context.isMaterialArt
   : "Apply a strict two-second clarity test: an ordinary viewer must immediately name the main subject and understand the literal action or practical purpose without reading metadata or guessing a symbolic metaphor. Reject abstract assemblages, surreal hybrids, unrelated object piles, ambiguous sculptures, decorative material metaphors, or scenes whose buyer use is not visually clear."}
 Mandatory face rule: ${NO_VISIBLE_FACE_RULE} Set hasVisibleHumanFace=true if any human face or part of a face is visible, however small, blurred or obscured. Human backs, hands and bodies with all faces outside the frame are allowed. Animal faces are allowed.
 For transparent_png, the dark gray shown around the subject represents transparency. Require exactly one intact, familiar, opaque subject with a simple readable silhouette. Its normal practical function must be obvious, but it does not need to show an action; set hasClearLiteralStory=true when the single object and its normal use are immediately clear. Reject missing chunks, accidental transparent holes through solid areas, ragged/dirty/haloed edges, fragmented pieces, multiple unrelated objects, or a result that does not visibly match the expected title.
-${context.isMaterialArt
+${context.isDualMaterial
+  ? "The single two-material sculpture on the requested background IS the final artwork. Do not demand a food-hardware pairing, an advertising product with props, a building or an everyday action. Preserve its non-human-face subject and material contrast."
+  : context.isMaterialArt
   ? "The photographed material artwork on its physical surface IS the correct setting. Do not require a real-world lifestyle action, a food-hardware joint, booth structure or project plan. Reject genuine frames or inset page layouts, while accepting natural negative space on the same surface."
   : context.isResortMasterplan
   ? "The paper drawing itself is the final artwork, with no visible page edge or mockup. Accept linework and pale watercolor as the requested medium; do not demand food/hardware textures, architectural photorealism or a lifestyle setting."

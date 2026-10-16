@@ -4,11 +4,11 @@ Replaces ordinary monthly photography with the user's seven-field USER_INPUT str
 CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
-Each batch now contains four structures: food pairs selected from 16 matched
+Each batch now contains five structures: food pairs selected from 16 matched
 concepts, exhibition booths selected from 12 templates and architectural masterplan
 sketches selected from 12 templates, plus material-art still lifes selected from
-16 category-specific editorial still-life recipes. Ten images are distributed 3/3/2/2, rotating
-the extra slots by Bangkok day, then shuffled. Each type is sampled without
+16 category-specific editorial still-life recipes, and 8 dual-material sculptures.
+Ten images are distributed two per structure, then shuffled. Each type is sampled without
 duplicates within the batch. Booths use the user's 17-field specification;
 masterplans use the user's 8-field specification.
 Food pairs use system randomness.
@@ -65,7 +65,7 @@ typography. QA and retry rules preserve the sketch medium, complete site
 boundary, coherent zoning, paths and perspective. They do not require
 photorealism, frontal booth views or food fusion.
 
-All four structures output JPEG without people or lettering. No live image
+All five structures output JPEG without people or lettering. No live image
 generation is required to prepare the briefs.
 
 Structures are reusable across suitable buyer categories. Booths include crafts,
@@ -99,6 +99,17 @@ and deriving horizontal, vertical or square composition logic from it.
 Background material and camera treatment vary compatibly with the subject;
 upright hero products use a frontal three-quarter view. All variants retain
 No text, no people, full-bleed physical studio backgrounds and JPEG output.
+
+The fifth structure is Dual Material, with exactly SUBJECT, PRIMARY_MATERIAL,
+SECONDARY_MATERIAL, BACKGROUND, SHADOW_STYLE and VISUAL_STYLE.
+It builds one recognizable animal, flower, organ-shaped sculpture, household
+object or other appropriate form from two contrasting materials. The primary
+material defines the main volume; a connected secondary accent preserves a
+simple readable silhouette. No extra construction material, props or faces.
+Animal features and non-portrait sculptural organ forms are allowed under the
+human-face rule. No medical accuracy claims are made for organ-shaped artworks.
+Dedicated QA and retries preserve the subject and both materials without
+applying the food-hardware fusion, booth, masterplan or editorial staging rules.
 
 Old ordinary-photography briefs are blocked before paid generation. Refresh and
 prepare a new batch after deployment. Historical downloads remain available.

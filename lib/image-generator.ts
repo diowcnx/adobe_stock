@@ -231,7 +231,9 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        item.materialArtStructure
+        item.dualMaterialStructure
+          ? "Render exactly the specified recognizable sculpture made from the named primary and secondary materials, joined as one intact subject. No extra construction materials, props, people or lettering; continuous studio background and specified shadows."
+        : item.materialArtStructure
           ? "Render the specified single Editorial Still Life arrangement: a clear hero product or material-built artwork with restrained conceptual staging. Use only named objects/materials and minimal requested background detail; photographic surfaces and natural contact shadows. No people or rendered text."
         : item.masterplanStructure
           ? "Render the complete project masterplan as fine architectural sketch linework with sparse pastel tints on continuous warm-white paper. Use an elevated bird's-eye overview, category-appropriate buildings and amenities, readable zones and coherent terrain. Water features are allowed only when explicitly specified. No people, lettering, title, labels or extra objects."
@@ -252,6 +254,8 @@ export async function generateSingleImage(
 
       const originalUserContent = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : item.dualMaterialStructure
+          ? `Create one sculptural art object from two contrasting materials. The named subject silhouette must be familiar and intact, with realistic primary-material volume and a restrained secondary-material accent. Honor the six-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.materialArtStructure
           ? `Create an original Editorial Still Life studio photograph. Use the named hero product or raw materials in one clearly readable conceptual arrangement, with realistic textures and natural contact shadows on a continuous studio surface. Adapt composition to the requested aspect ratio, keeping the hero complete and room for later buyer typography. Preserve the eighteen-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.masterplanStructure
@@ -266,6 +270,8 @@ export async function generateSingleImage(
       const userContent = attemptIndex > 0
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
+            : item.dualMaterialStructure
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME subject using the SAME two named materials. Simplify the silhouette until instantly recognizable, keep the primary material dominant, and attach the secondary accent coherently. Fix texture, support and specified shadow. No third material, props, lettering, people, hardware substitution, architecture or diagram.`
             : item.materialArtStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-stage the SAME material-art motif using the SAME raw materials and named hero products, retaining their recognizable normal shapes. Simplify the arrangement, remove unnecessary accents, fix scale and physical support, preserve clear negative space and credible texture. Adapt spacing to the actual canvas without cropping the hero. Keep one readable Editorial Still Life arrangement on a continuous studio background, no lettering, people, hardware fusion, architecture or poster layout.`
             : item.masterplanStructure
@@ -432,6 +438,7 @@ export async function generateSingleImage(
               isExhibitionBooth: Boolean(item.boothStructure),
               isResortMasterplan: Boolean(item.masterplanStructure),
               isMaterialArt: Boolean(item.materialArtStructure),
+              isDualMaterial: Boolean(item.dualMaterialStructure),
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

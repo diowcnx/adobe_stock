@@ -75,6 +75,7 @@ export interface FoodFusionStructure {
 }
 
 export interface StockImageItem {
+  dualMaterialStructure?: DualMaterialStructure;
   materialArtStructure?: ThaiEditorialStillLifeStructure;
   masterplanStructure?: ResortMasterplanStructure;
   boothStructure?: ExhibitionBoothStructure;
@@ -101,6 +102,15 @@ export interface StockImageItem {
   costEstimate?: string;
   description?: string;
   qualityReview?: ImageQualityReview;
+}
+
+export interface DualMaterialStructure {
+  SUBJECT: string;
+  PRIMARY_MATERIAL: string;
+  SECONDARY_MATERIAL: string;
+  BACKGROUND: string;
+  SHADOW_STYLE: string;
+  VISUAL_STYLE: string;
 }
 
 export interface ResortMasterplanStructure {

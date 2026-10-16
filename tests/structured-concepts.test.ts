@@ -48,7 +48,7 @@ test("structures adapt merchandise, buildings, amenities and buyers to their cat
   assert.match(school.prompt, /Add pools and slides ONLY when explicitly included/);
 });
 
-test("all four structures rotate a 3/3/2/2 split without paid planning", async () => {
+test("all five structures contribute two valid distinct briefs without paid planning", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
@@ -63,10 +63,9 @@ test("all four structures rotate a 3/3/2/2 split without paid planning", async (
         result.items.filter(item => item.boothStructure).length,
         result.items.filter(item => item.masterplanStructure).length,
         result.items.filter(item => item.materialArtStructure).length,
+        result.items.filter(item => item.dualMaterialStructure).length,
       ];
-      assert.deepEqual([...counts].sort(), [2, 2, 3, 3]);
-      assert.equal(counts[day % 4], 3);
-      assert.equal(counts[(day + 1) % 4], 3);
+      assert.deepEqual(counts, [2, 2, 2, 2, 2]);
       assert.deepEqual(result.items.map(item => item.id), [1,2,3,4,5,6,7,8,9,10]);
       assert.equal(new Set(result.items.map(item => item.filename)).size, 10);
       for (const item of result.items) {
@@ -95,11 +94,17 @@ test("all four structures rotate a 3/3/2/2 split without paid planning", async (
           assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
           const invalid = { ...item.masterplanStructure, PROJECT_THEME: "" };
           assert.equal(isStockImageItem({ ...item, masterplanStructure: invalid }), false);
-        } else {
+        } else if (item.materialArtStructure) {
           assert.equal(Object.keys(item.materialArtStructure || {}).length, 18);
           assert.equal(item.materialArtStructure?.TEXT_ELEMENTS, "No text");
           assert.match(item.prompt, /single clearly readable CENTRAL_INSTALLATION/);
           assert.equal(isStockImageItem({ ...item, materialArtStructure: { ...item.materialArtStructure, TEXT_ELEMENTS: "Render a title" } }), false);
+          assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
+        } else {
+          assert.equal(Object.keys(item.dualMaterialStructure || {}).length, 6);
+          assert.match(item.prompt, /exactly one complete, immediately recognizable silhouette/);
+          assert.match(item.prompt, /Add no third construction material/);
+          assert.equal(isStockImageItem({ ...item, dualMaterialStructure: { ...item.dualMaterialStructure, PRIMARY_MATERIAL: "" } }), false);
           assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
         }
         assert.doesNotMatch(item.prompt, /Do not reinterpret the subject|Set this photograph in contemporary Thailand/);
