@@ -4,7 +4,11 @@ Replaces ordinary monthly photography with the user's seven-field USER_INPUT str
 CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
-Each batch selects 10 unique pairs from 16 matched concepts using system randomness.
+Each batch now selects 5 unique food pairs from 16 matched concepts and 5
+unique exhibition-booth designs from 8 compatible templates, then shuffles the
+combined 10 images. The exhibition-booth structure has 17 fields following the
+user-provided root-and-branch Thai craft pavilion specification.
+Food pairs use system randomness.
 Angles and neutral matte backgrounds vary independently. Pairs can recur across
 batches; this is not a guarantee of lifetime uniqueness. Preparation makes no paid
 planning calls. Scheduled and manual runs use the same planner.
@@ -33,6 +37,20 @@ QA accepts deliberate fusion while checking a single connected hero, recognizabl
 food and hardware, joint quality, realistic materials, text/framing and visible
 faces. Replacements preserve the chosen pair and studio structure. The existing
 three-replacement cap and warning behavior remain.
+
+Booths use strict frontal orthographic elevation, complete canopy and platform,
+pure white studio backdrop, organized craft merchandise, believable connections
+and blank signage surfaces. The no-lettering rule takes priority over the sample
+brand name and subtitle so designers can add their own typography. Thai craft
+identity comes from material choices and merchandise.
+
+Booth QA permits intentional white presentation space, checks structure and
+camera angle, and uses a booth-specific retry prompt. It must not apply the
+food-fusion requirement to architectural objects.
+
+Both structures remain JPEG with no people or visible human faces. Historic
+downloads and saved metadata remain readable. Future structures can be represented
+separately without merging incompatible USER_INPUT fields.
 
 Old ordinary-photography briefs are blocked before paid generation. Refresh and
 prepare a new batch after deployment. Historical downloads remain available.

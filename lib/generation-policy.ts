@@ -10,7 +10,7 @@ export function getGenerationBlockReason(item: StockImageItem): string | undefin
     return "PNG generation is disabled. Prepare a new JPEG batch.";
   }
   if (item.conceptMode === "structured_concept" || item.conceptStructure ||
-      item.generationBriefVersion !== GENERATION_BRIEF_VERSION || !item.fusionStructure) {
+      item.generationBriefVersion !== GENERATION_BRIEF_VERSION || Boolean(item.fusionStructure) === Boolean(item.boothStructure)) {
     return "This is a retired generation brief. Refresh the page and prepare a new JPEG batch.";
   }
   return undefined;

@@ -75,6 +75,7 @@ export interface FoodFusionStructure {
 }
 
 export interface StockImageItem {
+  boothStructure?: ExhibitionBoothStructure;
   fusionStructure?: FoodFusionStructure;
   generationBriefVersion?: string;
   id: number;
@@ -98,6 +99,26 @@ export interface StockImageItem {
   costEstimate?: string;
   description?: string;
   qualityReview?: ImageQualityReview;
+}
+
+export interface ExhibitionBoothStructure {
+  BOOTH_CONCEPT: string;
+  VIEW_ANGLE: string;
+  BACKGROUND_STYLE: string;
+  BOOTH_STRUCTURE: string;
+  PRIMARY_SIGNAGE: string;
+  GRAPHIC_BACKDROP: string;
+  DECORATIVE_MARKS: string;
+  LEFT_FEATURE_ELEMENT: string;
+  RIGHT_FEATURE_ELEMENT: string;
+  DISPLAY_FIXTURES: string;
+  PRODUCT_DISPLAY: string;
+  MATERIAL_PALETTE: string;
+  SIDE_DECORATION: string;
+  FLOOR_TREATMENT: string;
+  LIGHTING_STYLE: string;
+  DESIGN_FOCUS: string;
+  VISUAL_STYLE: string;
 }
 
 export interface OpenRouterCreditInfo {

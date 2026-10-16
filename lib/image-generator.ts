@@ -231,7 +231,9 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        "Use only the single food-hardware hybrid described in the brief; no people, scenery or extra cultural props.",
+        item.boothStructure
+          ? "Render only the complete exhibition booth and specified merchandise. Strict frontal orthographic view on continuous pure white studio background. Preserve the canopy, platform, shelves, access and blank signage. No people, lettering or surrounding event hall."
+          : "Use only the single food-hardware hybrid described in the brief; no people, scenery or extra cultural props.",
         NO_VISIBLE_FACE_RULE,
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
@@ -246,6 +248,8 @@ export async function generateSingleImage(
 
       const originalUserContent = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : item.boothStructure
+          ? `Create a full-size premium exhibition-booth architectural visualization on a seamless pure white studio background, strictly frontal orthographic elevation, all architecture visible. Balanced white negative space is studio backdrop, not a frame. Follow the booth USER_INPUT structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.fusionStructure
           ? `Create one minimalist surrealist still-life photograph: exactly one seamless organic-food/mechanical-hardware hybrid on a matte studio surface, with generous natural copy space and a soft contact shadow. The physical background fills every edge. Preserve recognizable food and hardware textures and the specified clean fusion joint. ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.composition === "artwork"
@@ -254,6 +258,8 @@ export async function generateSingleImage(
       const userContent = attemptIndex > 0
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
+            : item.boothStructure
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME exhibition-booth design, retaining its architectural structure, merchandise and palette. Fix camera to strict frontal orthographic, show the full canopy and platform, use plausible connected supports and organized shelving, keep pure white studio background and soft contact shadows. No people, text, logo, surrounding hall or food-hardware hybrid. Blank signs are intentional.`
             : item.fusionStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild exactly the same specified food-hardware pair as ONE seamless hybrid. Correct the joint and recognizable material textures; simplify the silhouette. Preserve the minimalist matte background, soft contact shadow, no people, no text and no additional props. Do not replace it with a literal lifestyle scene.`
               : buildQualityRetryDirection(attemptIndex, rejectionReasons)}`
@@ -411,6 +417,7 @@ export async function generateSingleImage(
               expectedTitle: item.seoTitle,
               intendedUse: item.commercialIntent?.intendedUse,
               isFoodFusion: Boolean(item.fusionStructure),
+              isExhibitionBooth: Boolean(item.boothStructure),
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

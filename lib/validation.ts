@@ -28,6 +28,13 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (typeof value.aspectRatio !== "string" || !ASPECT_RATIOS.has(value.aspectRatio)) return false;
   if (!isBoundedString(value.prompt, 8_000)) return false;
   if (!isBoundedString(value.modelUsed, 200)) return false;
+  if (value.fusionStructure !== undefined && value.boothStructure !== undefined) return false;
+  if (value.boothStructure !== undefined) {
+    if (!isRecord(value.boothStructure)) return false;
+    const fields = ["BOOTH_CONCEPT", "VIEW_ANGLE", "BACKGROUND_STYLE", "BOOTH_STRUCTURE", "PRIMARY_SIGNAGE", "GRAPHIC_BACKDROP", "DECORATIVE_MARKS", "LEFT_FEATURE_ELEMENT", "RIGHT_FEATURE_ELEMENT", "DISPLAY_FIXTURES", "PRODUCT_DISPLAY", "MATERIAL_PALETTE", "SIDE_DECORATION", "FLOOR_TREATMENT", "LIGHTING_STYLE", "DESIGN_FOCUS", "VISUAL_STYLE"];
+    if (Object.keys(value.boothStructure).length !== fields.length ||
+        !fields.every(field => isBoundedString((value.boothStructure as Record<string, unknown>)[field], 700))) return false;
+  }
   if (value.fusionStructure !== undefined) {
     if (!isRecord(value.fusionStructure)) return false;
     const fields = ["CONCEPT_THEME", "ORGANIC_FOOD_PART", "MECHANICAL_HARDWARE_PART", "PLACEMENT_AND_ANGLE", "BACKGROUND_SURFACE", "LIGHTING_AND_MOOD", "COLOR_PALETTE"];
