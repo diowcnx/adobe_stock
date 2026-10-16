@@ -43,12 +43,17 @@ function compactQualityIssue(issues: string[]): string {
 export function buildQualityRetryDirection(attempt: number, issues: string[]): string {
   const rejectedFor = compactQualityIssue(issues);
   const variation = [
-    "Re-stage the physical objects in a clearly different arrangement and move the focal subject to a new position.",
-    "Use a different camera angle, crop, lighting direction, and background treatment from the rejected rendering.",
-    "Radically simplify and redesign the scene as an organic asymmetric studio still life on one continuous physical surface.",
+    "Re-stage the real scene around one unmistakable person-or-product action and move the focal subject to a new position.",
+    "Use a different camera angle, crop, lighting direction and authentic setting while keeping the action literal and obvious.",
+    "Replace the scene with the simplest believable real-world moment that communicates the same buyer need without symbols.",
   ][Math.min(Math.max(attempt - 1, 0), 2)];
 
-  return `QUALITY REPLACEMENT ${attempt}/${MAX_QUALITY_RETRIES}: The previous rendering was rejected because: ${rejectedFor}. Do not reproduce or merely retouch the rejected composition. ${variation} Remove every rejected defect. Keep the physical scene full-bleed to all four edges, with no frame, border, mat, card, poster, header, footer, sign-like alignment, typography, symbols, pseudo-text, watermark, or logo. Generate a genuinely new alternative while preserving only the commercial subject and buyer use.`;
+  return `QUALITY REPLACEMENT ${attempt}/${MAX_QUALITY_RETRIES}: The previous rendering was rejected because: ${rejectedFor}. Do not reproduce or merely retouch the rejected composition. ${variation} Replace symbolic or abstract storytelling with one literal real-world subject performing one familiar action in an identifiable setting. A viewer must understand who or what is shown, what is happening, and why a buyer would use the image within two seconds. Remove every rejected defect. Keep the physical scene full-bleed to all four edges, with no frame, border, mat, card, poster, header, footer, sign-like alignment, typography, symbols, pseudo-text, watermark, or logo. Generate a genuinely new alternative while preserving only the commercial subject and buyer use.`;
+}
+
+export function buildTransparentQualityRetryDirection(attempt: number, issues: string[]): string {
+  const rejectedFor = compactQualityIssue(issues);
+  return `QUALITY REPLACEMENT ${attempt}/${MAX_QUALITY_RETRIES}: The previous PNG was rejected because: ${rejectedFor}. Generate a completely new, simpler version of the named subject. Show exactly one familiar solid opaque object, recognizable within two seconds, in a straightforward product view on uniform pure white. Use broad solid shapes, very few parts, minimal internal openings, clean continuous edges and generous padding. Do not add a hand, prop, cluster, assemblage, metaphor, decoration, translucent material, fine strand, shadow or background. The subject itself must visibly explain its practical function.`;
 }
 
 function sanitizeImagePrompt(prompt: string): string {
@@ -240,7 +245,9 @@ export async function generateSingleImage(
           ? `Create the original full-bleed artwork itself, not a photograph of a print, room, frame or mockup. Follow the specified artistic medium and composition with detailed print-friendly texture. Do not reserve advertising copy space. ${sanitizedPrompt}. ${mandatoryExclusions}`
           : `Create a single full-bleed art-directed commercial scene whose photographed background reaches every edge of the final image. Authentic materials, tactile textures, natural lighting and believable geometry. Leave useful natural negative space within the physical scene when requested, but never add a layout panel or margin. No plastic AI glossiness. Follow the intended medium and visual details: ${sanitizedPrompt}. ${mandatoryExclusions}`;
       const userContent = attemptIndex > 0
-        ? `${originalUserContent} ${buildQualityRetryDirection(attemptIndex, rejectionReasons)}`
+        ? `${originalUserContent} ${isTransparent
+            ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
+            : buildQualityRetryDirection(attemptIndex, rejectionReasons)}`
         : originalUserContent;
 
       const payload: Record<string, unknown> = {
@@ -354,13 +361,46 @@ export async function generateSingleImage(
         if (isTransparent) {
           console.log(`[Item #${item.id}] Ensuring genuine alpha transparency with sharp...`);
           const transparentPngBuffer = await ensureGenuineAlphaTransparency(extractedBuffer);
+          if (process.env.IMAGE_QUALITY_GATE?.trim().toLowerCase() !== "false") {
+            const quality = await assessGeneratedImageQuality(transparentPngBuffer, key, {
+              mode: "transparent_png",
+              expectedTitle: item.seoTitle,
+              intendedUse: item.commercialIntent?.intendedUse,
+            });
+            if (!quality.passed) {
+              const reason = compactQualityIssue(quality.issues);
+              rejectionReasons.push(reason);
+              lastError = `Quality gate rejected transparent PNG (${quality.source}): ${reason}`;
+              console.warn(`[Item #${item.id}] ${lastError}`);
+              if (attemptIndex < MAX_QUALITY_RETRIES) continue;
+              return {
+                imageUrl: `data:image/png;base64,${transparentPngBuffer.toString("base64")}`,
+                qualityReview: {
+                  status: "accepted_after_retry_limit",
+                  attempts: attemptNumber,
+                  rejectionCount: rejectionReasons.length,
+                  rejectionReasons,
+                },
+              };
+            }
+          }
           const base64 = transparentPngBuffer.toString("base64");
           return {
             imageUrl: `data:image/png;base64,${base64}`,
+            qualityReview: {
+              status: rejectionReasons.length > 0 ? "passed_after_retries" : "passed",
+              attempts: attemptNumber,
+              rejectionCount: rejectionReasons.length,
+              rejectionReasons,
+            },
           };
         } else {
           if (process.env.IMAGE_QUALITY_GATE?.trim().toLowerCase() !== "false") {
-            const quality = await assessGeneratedImageQuality(extractedBuffer, key);
+            const quality = await assessGeneratedImageQuality(extractedBuffer, key, {
+              mode: "regular_scene",
+              expectedTitle: item.seoTitle,
+              intendedUse: item.commercialIntent?.intendedUse,
+            });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);
               rejectionReasons.push(reason);

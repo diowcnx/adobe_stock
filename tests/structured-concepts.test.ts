@@ -18,19 +18,19 @@ function structure(index: number): ThaiEditorialStillLifeStructure {
   const isTransparent = index <= 6;
   return {
     CAMPAIGN_THEME: `Thai material story campaign number ${index}`,
-    MAIN_CONCEPT: isTransparent ? `One literal useful household object number ${index}` : `Everyday materials becoming a distinct visual metaphor number ${index}`,
+    MAIN_CONCEPT: isTransparent ? `One literal useful household object number ${index}` : `A parent preparing a child safely for rainy weather number ${index}`,
     CAMERA_ANGLE: `Unique camera angle treatment number ${index}`,
     LENS_TYPE: `Macro lens treatment with material detail number ${index}`,
     SHOT_TYPE: `Editorial advertising still life format number ${index}`,
     LIGHTING: `Controlled studio light direction number ${index}`,
-    BACKGROUND_BASE: `Matte background material number ${index}`,
-    BACKGROUND_TEXTURE: `Tactile background texture number ${index}`,
-    BACKGROUND_DETAILS: `Restrained background detail number ${index}`,
-    CENTRAL_INSTALLATION: isTransparent ? `One matte ceramic household object number ${index}` : `Unique central installation made from accessible materials number ${index}`,
-    PRIMARY_COMPONENTS: isTransparent ? `One solid opaque ceramic subject number ${index}` : `Silk thread buttons flowers and coffee components set ${index}`,
-    SUPPORTING_ACCENT_1: isTransparent ? `None for isolated object number ${index}` : `First supporting accent detail number ${index}`,
-    SUPPORTING_ACCENT_2: isTransparent ? `No supporting accent for object number ${index}` : `Second supporting accent detail number ${index}`,
-    MATERIAL_FOCUS: isTransparent ? `Solid opaque ceramic surface detail number ${index}` : `Realistic fibers surfaces and material scale number ${index}`,
+    BACKGROUND_BASE: isTransparent ? `Matte background material number ${index}` : `Recognizable home entry setting number ${index}`,
+    BACKGROUND_TEXTURE: isTransparent ? `Tactile background texture number ${index}` : `Real painted wall and wooden floor number ${index}`,
+    BACKGROUND_DETAILS: isTransparent ? `Restrained background detail number ${index}` : `Closed umbrella and rain boots for context number ${index}`,
+    CENTRAL_INSTALLATION: isTransparent ? `One matte ceramic household object number ${index}` : `Parent fastening a child's raincoat before a walk number ${index}`,
+    PRIMARY_COMPONENTS: isTransparent ? `One solid opaque ceramic subject number ${index}` : `Raincoat and practical entryway clothing number ${index}`,
+    SUPPORTING_ACCENT_1: isTransparent ? `None for isolated object number ${index}` : `One closed umbrella number ${index}`,
+    SUPPORTING_ACCENT_2: isTransparent ? `No supporting accent for object number ${index}` : `No decorative accent number ${index}`,
+    MATERIAL_FOCUS: isTransparent ? `Solid opaque ceramic surface detail number ${index}` : `Real skin fabric and clothing detail number ${index}`,
     COMPOSITION_LOGIC: `Intentional asymmetric layout and copy space number ${index}`,
     ATMOSPHERIC_STYLE: `Refined editorial atmosphere number ${index}`,
     COLOR_PALETTE: `Distinct coordinated color palette number ${index}`,
@@ -86,6 +86,8 @@ function assertStructuredBatch(items: StockImageItem[]) {
       assert.ok(item.keywords.includes("transparent png"));
     } else {
       assert.match(item.prompt, /full-bleed photograph/);
+      assert.match(item.prompt, /viewer must identify the subject, action and purpose within two seconds/i);
+      assert.match(item.prompt, /Do not create an abstract still life/i);
       assert.match(item.prompt, /no frame, mat, white margin, canvas border, inset image, poster layout or page mockup/i);
     }
     assert.doesNotMatch(item.prompt, /Create an original Thai editorial/i);
@@ -193,7 +195,7 @@ test("all 31 buyer contexts keep valid structured fallback metadata", async () =
       const date = new Date(Date.UTC(2026, 9, day, 5)).toISOString();
       const result = await conductMarketResearchAndGeneratePrompts(date);
       assertStructuredBatch(result.items);
-      assert.equal(result.trend.theme.includes("10 buyer-context Editorial Still Life concepts"), true);
+      assert.equal(result.trend.theme.includes("10 clear buyer-context commercial stories"), true);
     }
   } finally {
     console.warn = originalWarn;

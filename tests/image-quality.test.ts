@@ -49,6 +49,11 @@ test("vision guard rejects rendered text and poster layouts", async () => {
       hasText: true,
       hasArtificialBorder: false,
       hasPosterLayout: true,
+      isImmediatelyRecognizable: false,
+      hasClearLiteralStory: false,
+      hasClearCommercialUse: false,
+      hasCutoutDamage: false,
+      hasMultipleConfusingSubjects: true,
       issues: ["title text appears in a blank header panel"],
     }) } }],
   }), { status: 200, headers: { "content-type": "application/json" } });
@@ -71,6 +76,11 @@ test("vision guard accepts a full-bleed scene with no text", async () => {
       hasText: false,
       hasArtificialBorder: false,
       hasPosterLayout: false,
+      isImmediatelyRecognizable: true,
+      hasClearLiteralStory: true,
+      hasClearCommercialUse: true,
+      hasCutoutDamage: false,
+      hasMultipleConfusingSubjects: false,
       issues: [],
     }) } }],
   }), { status: 200, headers: { "content-type": "application/json" } });
@@ -85,12 +95,12 @@ test("vision guard accepts a full-bleed scene with no text", async () => {
 
 const testItem: StockImageItem = {
   id: 1,
-  seoTitle: "Thai Silk Editorial Still Life",
-  category: "Editorial Still Life",
+  seoTitle: "Parent Fastening Child Raincoat Before Walk",
+  category: "Commercial Story",
   aspectRatio: "4:5",
   composition: "advertising",
-  prompt: "Thai silk, buttons and flowers arranged on a tactile studio surface",
-  keywords: ["silk", "buttons", "flowers"],
+  prompt: "Parent fastening a child's raincoat at a home entry before a rainy walk",
+  keywords: ["parent", "child", "raincoat"],
   modelUsed: "test-model",
   generationMode: "regular_scene",
 };
@@ -126,6 +136,11 @@ test("generator replaces a QA-rejected image and records the successful retry", 
         hasText: !passed,
         hasArtificialBorder: false,
         hasPosterLayout: !passed,
+        isImmediatelyRecognizable: passed,
+        hasClearLiteralStory: passed,
+        hasClearCommercialUse: passed,
+        hasCutoutDamage: false,
+        hasMultipleConfusingSubjects: !passed,
         issues: passed ? [] : ["title text appears in a blank header panel"],
       }) } }],
     }), { status: 200, headers: { "content-type": "application/json" } });
@@ -167,6 +182,11 @@ test("generator returns the latest image with all rejection reasons after three 
         hasText: false,
         hasArtificialBorder: true,
         hasPosterLayout: false,
+        isImmediatelyRecognizable: true,
+        hasClearLiteralStory: true,
+        hasClearCommercialUse: true,
+        hasCutoutDamage: false,
+        hasMultipleConfusingSubjects: false,
         issues: ["artificial white border around the image"],
       }) } }],
     }), { status: 200, headers: { "content-type": "application/json" } });
@@ -180,6 +200,62 @@ test("generator returns the latest image with all rejection reasons after three 
     assert.equal(result.qualityReview?.attempts, 4);
     assert.equal(result.qualityReview?.rejectionCount, 4);
     assert.equal(result.qualityReview?.rejectionReasons.length, 4);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("transparent PNG is quality-checked and regenerated when its subject is unclear", async () => {
+  const originalFetch = globalThis.fetch;
+  const source = await sharp({ create: { width: 128, height: 128, channels: 3, background: "#ffffff" } })
+    .composite([{ input: await sharp({ create: { width: 72, height: 72, channels: 3, background: "#845b34" } }).png().toBuffer(), left: 28, top: 28 }])
+    .png()
+    .toBuffer();
+  const prompts: string[] = [];
+  let qaCalls = 0;
+
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    if (body.model === "google/gemini-3.1-flash-lite-image") {
+      prompts.push(body.messages[0].content);
+      return new Response(JSON.stringify({
+        choices: [{ message: { images: [{ b64_json: source.toString("base64") }] } }],
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    qaCalls++;
+    const passed = qaCalls === 2;
+    return new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({
+        passed,
+        hasText: false,
+        hasArtificialBorder: false,
+        hasPosterLayout: false,
+        isImmediatelyRecognizable: passed,
+        hasClearLiteralStory: passed,
+        hasClearCommercialUse: passed,
+        hasCutoutDamage: !passed,
+        hasMultipleConfusingSubjects: !passed,
+        issues: passed ? [] : ["subject is an ambiguous fragmented object with missing areas"],
+      }) } }],
+    }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+
+  const transparentItem: StockImageItem = {
+    ...testItem,
+    seoTitle: "Solid Wooden Kitchen Spoon Isolated",
+    composition: "asset",
+    generationMode: "transparent_png",
+    isTransparent: true,
+    prompt: "one solid wooden kitchen spoon",
+  };
+
+  try {
+    const result = await generateSingleImage(transparentItem, "test-key");
+    assert.match(result.imageUrl, /^data:image\/png;base64,/);
+    assert.equal(prompts.length, 2);
+    assert.match(prompts[1], /previous PNG was rejected/i);
+    assert.equal(result.qualityReview?.status, "passed_after_retries");
+    assert.deepEqual(result.qualityReview?.rejectionReasons, ["subject is an ambiguous fragmented object with missing areas"]);
   } finally {
     globalThis.fetch = originalFetch;
   }

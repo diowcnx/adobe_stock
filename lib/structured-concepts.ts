@@ -105,20 +105,21 @@ export function summarizeConceptPlan(
 
 export function formatBuyerContextEditorialStillLifePrompt(fields: ThaiEditorialStillLifeStructure): string {
   return [
-    `Create an original buyer-context editorial still-life advertising photograph. Use this campaign idea only as invisible creative direction and never typeset or display it: ${fields.CAMPAIGN_THEME}.`,
-    `Express this visual metaphor: ${fields.MAIN_CONCEPT}.`,
+    `Create an original, immediately understandable commercial photograph. Use this buyer direction only for planning and never display it as text: ${fields.CAMPAIGN_THEME}.`,
+    `Show this practical real-world need literally, not as a metaphor or symbolic installation: ${fields.MAIN_CONCEPT}.`,
+    `The visible story is: ${fields.CENTRAL_INSTALLATION}. A viewer must identify the subject, action and purpose within two seconds without reading metadata.`,
     `Camera and framing: ${fields.CAMERA_ANGLE}; ${fields.LENS_TYPE}; ${fields.SHOT_TYPE}.`,
     `Lighting: ${fields.LIGHTING}.`,
-    `Build the set on ${fields.BACKGROUND_BASE}, with ${fields.BACKGROUND_TEXTURE} and these restrained background details: ${fields.BACKGROUND_DETAILS}.`,
-    `Central installation: ${fields.CENTRAL_INSTALLATION}.`,
-    `Primary components: ${fields.PRIMARY_COMPONENTS}.`,
-    `Supporting accents: ${fields.SUPPORTING_ACCENT_1}; ${fields.SUPPORTING_ACCENT_2}.`,
+    `Use a recognizable real setting based on ${fields.BACKGROUND_BASE}, with ${fields.BACKGROUND_TEXTURE} and only these relevant contextual details: ${fields.BACKGROUND_DETAILS}.`,
+    `Include only functional objects required to understand the action: ${fields.PRIMARY_COMPONENTS}.`,
+    `Optional supporting context must stay minimal and believable: ${fields.SUPPORTING_ACCENT_1}; ${fields.SUPPORTING_ACCENT_2}.`,
     `Material realism: ${fields.MATERIAL_FOCUS}.`,
     `Composition: ${fields.COMPOSITION_LOGIC}.`,
     `Atmosphere: ${fields.ATMOSPHERIC_STYLE}. Color palette: ${fields.COLOR_PALETTE}.`,
+    "Do not create an abstract still life, sculpture, emblem, conceptual material arrangement, surreal hybrid, decorative object pile or scene that requires interpretation. Every visible element must belong naturally to the same real activity and help explain why the image is commercially useful.",
     "Do not render any letters, words, numerals, captions, titles, logos or pseudo-text in the image. The TEXT_ELEMENTS field is metadata for a human designer and must not become visible image content. Leave any useful negative space only as a natural uncluttered area of the photographed physical background; never create a blank title panel, header, footer, card, border or graphic text box.",
     "Make one full-bleed photograph. The physical scene and its background must continue naturally to all four edges with no frame, mat, white margin, canvas border, inset image, poster layout or page mockup.",
-    "Choose people-free objects, materials, architecture cues, seasonality and color language that suit the intended buyer and use. Do not default to Thailand or add cultural identity unless the brief genuinely calls for it. When a location is specified, use accurate contemporary everyday details rather than token costumes, flags, sacred objects, protected patterns, political symbols or tourist stereotypes.",
+    "Use one clear person, small group, animal, product or place as the main subject according to the buyer need; people are allowed when their familiar action makes the story clearer. Do not default to Thailand or add cultural identity unless the brief genuinely calls for it. When a location is specified, use accurate contemporary everyday details rather than token costumes, flags, sacred objects, protected patterns, political symbols or tourist stereotypes.",
   ].join(" ");
 }
 
