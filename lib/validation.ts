@@ -28,6 +28,12 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (typeof value.aspectRatio !== "string" || !ASPECT_RATIOS.has(value.aspectRatio)) return false;
   if (!isBoundedString(value.prompt, 8_000)) return false;
   if (!isBoundedString(value.modelUsed, 200)) return false;
+  if (value.fusionStructure !== undefined) {
+    if (!isRecord(value.fusionStructure)) return false;
+    const fields = ["CONCEPT_THEME", "ORGANIC_FOOD_PART", "MECHANICAL_HARDWARE_PART", "PLACEMENT_AND_ANGLE", "BACKGROUND_SURFACE", "LIGHTING_AND_MOOD", "COLOR_PALETTE"];
+    if (Object.keys(value.fusionStructure).length !== fields.length ||
+        !fields.every(field => isBoundedString((value.fusionStructure as Record<string, unknown>)[field], 700))) return false;
+  }
   if (value.isTransparent !== undefined && typeof value.isTransparent !== "boolean") return false;
   if (value.composition !== undefined && !["artwork", "advertising", "asset"].includes(String(value.composition))) return false;
   if (value.negativePrompt !== undefined && !isBoundedString(value.negativePrompt, 2000)) return false;

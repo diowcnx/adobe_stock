@@ -689,8 +689,8 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="สร้างภาพ JPEG จากรายการภาพถ่ายตามหมวดประจำวัน">
-              📷 ภาพถ่ายสมจริง · JPEG เท่านั้น
+            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="สุ่ม Food × Hardware Fusion จาก Structure 7 ช่อง">
+              Food × Hardware Fusion · JPEG
             </div>
 
             {/* Run Button */}
@@ -907,16 +907,19 @@ export default function Dashboard() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
-                  📷 ภาพถ่ายเหตุการณ์และสถานที่จริง
+                  Food × Hardware Fusion · 7 Fields
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {todayCategory.name} · 10 JPEG
+                  สุ่ม 10 คู่ต่อชุด · JPEG · ไม่มีคน
                 </p>
               </div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-              <h3 className="font-semibold text-white mb-3">Monthly photography plan · 10 JPEG images per day</h3>
+              <h3 className="font-semibold text-white mb-3">Food × Hardware Fusion · Randomized batches</h3>
+              <p className="text-sm text-slate-300">สุ่มจากคู่ที่ออกแบบความหมายไว้ 16 คู่ ชุดละ 10 คู่ไม่ซ้ำภายในชุด พร้อมสุ่มมุมกล้องและพื้นหลัง ภาพละวัตถุหลักหนึ่งชิ้น ผสานอาหารกับฮาร์ดแวร์อย่างต่อเนื่อง มีพื้นที่ว่างและเงาสัมผัสอ่อน</p>
+              <details className="mt-3">
+              <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
                 {MONTHLY_CATEGORIES.map((category) => (
                   <div key={category.day} className={`rounded-xl border p-3 ${category.day === todayCategory.day ? "border-sky-500/60 bg-sky-950/40" : "border-slate-800 bg-slate-950/50"}`}>
@@ -926,7 +929,8 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-slate-500 mt-3">Category ideas use public creative and search trends as directional signals; they are not verified sales or competition rankings.</p>
+              </details>
+              <p className="text-[11px] text-slate-500 mt-3">แนวคิดอ้างอิงการใช้งานของผู้ซื้อและ Surreal Silliness ของ Adobe เป็นสมมติฐานที่ต้องทดลอง ไม่ใช่ยอดขายยืนยัน</p>
             </div>
 
             {/* Workflow Pipeline Card */}
@@ -939,12 +943,12 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center">1</div>
                   <div className="font-semibold text-white">Market Research</div>
-                  <p className="text-slate-400">Uses today&apos;s unique monthly theme and seasonal context without claiming live marketplace demand.</p>
+                  <p className="text-slate-400">Uses matched food-hardware ideas with explicit buyers and campaign uses. No live sales claims.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Uses 10 literal photography briefs with recognizable subjects and buyer uses. PNG and the material-concept planner are disabled.</p>
+                  <p className="text-slate-400">Randomly selects 10 distinct fusion pairs and fills the seven USER_INPUT fields. JPEG only, no people.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
@@ -1312,6 +1316,19 @@ export default function Dashboard() {
                             </div>
                           </div>
 
+                          {img.fusionStructure && (
+                            <details className="rounded-xl border border-violet-900/60 bg-violet-950/20 p-3">
+                              <summary className="cursor-pointer text-xs font-semibold text-violet-300">USER_INPUT · Food Hardware Fusion · 7 Fields</summary>
+                              <dl className="mt-3 space-y-2">
+                                {Object.entries(img.fusionStructure).map(([field, value]) => (
+                                  <div key={field}>
+                                    <dt className="text-xs text-violet-300">{field}</dt>
+                                    <dd className="text-xs text-slate-300">{value}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            </details>
+                          )}
                           {img.conceptStructure && (
                             <details className="rounded-xl border border-violet-900/60 bg-violet-950/20 p-3">
                               <summary className="cursor-pointer text-xs font-semibold text-violet-300 uppercase tracking-wider">

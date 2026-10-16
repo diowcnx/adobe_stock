@@ -6,7 +6,7 @@ import { getGenerationBlockReason } from "../lib/generation-policy";
 import { generateSingleImage } from "../lib/image-generator";
 import { generateMetadataCsv } from "../lib/csv";
 
-test("all 31 daily plans produce valid JPEG briefs without paid planning or concept conversion", async () => {
+test("every batch uses ten unique seven-field fusion briefs without paid planning", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
@@ -15,20 +15,22 @@ test("all 31 daily plans produce valid JPEG briefs without paid planning or conc
       assert.equal(result.items.length, 10);
       assert.equal(result.conceptPlan.transparentPngCount, 0);
       assert.equal(result.conceptPlan.enabled, false);
+      assert.equal(new Set(result.items.map(item => item.seoTitle)).size, 10);
       for (const item of result.items) {
         assert.equal(item.generationMode, "regular_scene");
         assert.equal(item.isTransparent, false);
         assert.equal(item.conceptStructure, undefined);
         assert.match(item.prompt, /No visible human faces anywhere/);
-        assert.match(item.prompt, /Set this photograph in contemporary Thailand/);
-        assert.ok(item.keywords.includes("Thailand"));
-        assert.match(item.seoTitle, /in Thailand$/);
+        assert.equal(Object.keys(item.fusionStructure || {}).length, 7);
+        assert.match(item.prompt, /seamless transition joint/);
+        assert.match(item.prompt, /soft natural studio contact shadow/);
+        assert.doesNotMatch(item.prompt, /Do not reinterpret the subject|Set this photograph in contemporary Thailand/);
         assert.match(item.negativePrompt || "", /visible human face/);
         assert.equal(isStockImageItem(item), true);
         assert.equal(getGenerationBlockReason(item), undefined);
         assert.match(item.filename || "", /\.jpeg$/);
-        const subjectTitle = item.seoTitle.replace(/ in Thailand$/, "");
-        assert.ok(item.prompt.includes(subjectTitle.charAt(0).toLowerCase() + subjectTitle.slice(1)));
+        assert.ok(item.prompt.includes(item.fusionStructure?.ORGANIC_FOOD_PART || "MISSING"));
+        assert.ok(item.prompt.includes(item.fusionStructure?.MECHANICAL_HARDWARE_PART || "MISSING"));
       }
       assert.doesNotMatch(generateMetadataCsv(result.items, result.mode), /\.png/);
     }

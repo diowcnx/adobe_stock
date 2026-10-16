@@ -64,7 +64,18 @@ export interface ImageQualityReview {
   rejectionReasons: string[];
 }
 
+export interface FoodFusionStructure {
+  CONCEPT_THEME: string;
+  ORGANIC_FOOD_PART: string;
+  MECHANICAL_HARDWARE_PART: string;
+  PLACEMENT_AND_ANGLE: string;
+  BACKGROUND_SURFACE: string;
+  LIGHTING_AND_MOOD: string;
+  COLOR_PALETTE: string;
+}
+
 export interface StockImageItem {
+  fusionStructure?: FoodFusionStructure;
   generationBriefVersion?: string;
   id: number;
   seoTitle: string;

@@ -69,9 +69,13 @@ test("vision guard rejects rendered text and poster layouts", async () => {
   }
 });
 
-test("vision guard accepts a full-bleed scene with no text", async () => {
+test("vision guard accepts intentional fusion without applying retired literal-scene rules", async () => {
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response(JSON.stringify({
+  let inspectionPrompt = "";
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    inspectionPrompt = body.messages[0].content[0].text;
+    return new Response(JSON.stringify({
     choices: [{ message: { content: JSON.stringify({
       passed: true,
       hasText: false,
@@ -86,9 +90,14 @@ test("vision guard accepts a full-bleed scene with no text", async () => {
       issues: [],
     }) } }],
   }), { status: 200, headers: { "content-type": "application/json" } });
+  };
 
   try {
-    const result = await assessGeneratedImageQuality(await solidImage("#52715a"), "test-key");
+    const result = await assessGeneratedImageQuality(await solidImage("#52715a"), "test-key", {
+      mode: "regular_scene", expectedTitle: "Pork Belly Battery", isFoodFusion: true,
+    });
+    assert.match(inspectionPrompt, /INTENTIONAL SURREAL FOOD-HARDWARE FUSION/);
+    assert.doesNotMatch(inspectionPrompt, /Reject abstract assemblages, surreal hybrids/);
     assert.deepEqual(result, { passed: true, issues: [], source: "vision_guard", faceCheckCompleted: true, hasVisibleHumanFace: false });
   } finally {
     globalThis.fetch = originalFetch;
@@ -96,13 +105,22 @@ test("vision guard accepts a full-bleed scene with no text", async () => {
 });
 
 const testItem: StockImageItem = {
-  generationBriefVersion: "thai-jpeg-no-faces-v3",
+  generationBriefVersion: "food-hardware-fusion-v1",
+  fusionStructure: {
+    CONCEPT_THEME: "Food energy recharge",
+    ORGANIC_FOOD_PART: "one layered pork belly strip",
+    MECHANICAL_HARDWARE_PART: "one copper battery terminal fused to its end",
+    PLACEMENT_AND_ANGLE: "horizontal side view",
+    BACKGROUND_SURFACE: "matte ivory",
+    LIGHTING_AND_MOOD: "diffused studio lighting",
+    COLOR_PALETTE: "pink, cream and copper",
+  },
   id: 1,
-  seoTitle: "Parent Fastening Child Raincoat Before Walk",
-  category: "Commercial Story",
+  seoTitle: "Pork Belly Battery Fusion",
+  category: "Food Hardware Fusion",
   aspectRatio: "4:5",
   composition: "advertising",
-  prompt: "Parent fastening a child's raincoat at a home entry before a rainy walk",
+  prompt: "one pork belly battery hybrid with a seamless joint on matte ivory",
   keywords: ["parent", "child", "raincoat"],
   modelUsed: "test-model",
   generationMode: "regular_scene",
@@ -205,6 +223,8 @@ test("generator replaces a QA-rejected image and records the successful retry", 
     assert.equal(prompts.length, 2);
     assert.doesNotMatch(prompts[0], /QUALITY REPLACEMENT/);
     assert.match(prompts[1], /QUALITY REPLACEMENT 1\/3/);
+    assert.match(prompts[1], /same specified food-hardware pair/);
+    assert.doesNotMatch(prompts[1], /Set this photograph in contemporary Thailand/);
   } finally {
     globalThis.fetch = originalFetch;
   }

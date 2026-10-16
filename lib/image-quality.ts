@@ -18,6 +18,7 @@ export interface ImageQualityContext {
   mode: "transparent_png" | "regular_scene";
   expectedTitle: string;
   intendedUse?: string;
+  isFoodFusion?: boolean;
 }
 
 /** Detect the common AI failure where a portrait image is placed inside white side mats. */
@@ -106,10 +107,14 @@ export async function assessGeneratedImageQuality(
               type: "text",
               text: `Inspect only the visible pixels of this generated commercial image. Expected title: ${context.expectedTitle}. Intended buyer use: ${context.intendedUse || "general commercial design"}. Mode: ${context.mode}.
 Reject it if ANY readable or pseudo-readable letters, words, numerals, captions, title, logo, signature or watermark appear anywhere. Also reject a poster/card/mockup layout, blank header/footer panel, outer frame, mat, border, canvas margin, or image placed inside another page.
-Apply a strict two-second clarity test: an ordinary viewer must immediately name the main subject and understand the literal action or practical purpose without reading metadata or guessing a symbolic metaphor. Reject abstract assemblages, surreal hybrids, unrelated object piles, ambiguous sculptures, decorative material metaphors, or scenes whose buyer use is not visually clear.
+${context.isFoodFusion
+  ? "This is an INTENTIONAL SURREAL FOOD-HARDWARE FUSION, not a literal scene. Accept the impossible hybrid when one recognizable food component joins one recognizable mechanical component into exactly ONE connected hero with a clean seamless joint, credible food and industrial textures, matte studio backdrop, generous negative space and a soft contact shadow. Set hasClearLiteralStory=true when the two ingredients and their intended metaphor are visually readable; do not require an everyday action, person, room or location. Reject separate props, unrelated piles, multiple heroes, broken joints, indistinguishable food or hardware, or a flat pasted collage. Do not reject simply because the fusion is surreal."
+  : "Apply a strict two-second clarity test: an ordinary viewer must immediately name the main subject and understand the literal action or practical purpose without reading metadata or guessing a symbolic metaphor. Reject abstract assemblages, surreal hybrids, unrelated object piles, ambiguous sculptures, decorative material metaphors, or scenes whose buyer use is not visually clear."}
 Mandatory face rule: ${NO_VISIBLE_FACE_RULE} Set hasVisibleHumanFace=true if any human face or part of a face is visible, however small, blurred or obscured. Human backs, hands and bodies with all faces outside the frame are allowed. Animal faces are allowed.
 For transparent_png, the dark gray shown around the subject represents transparency. Require exactly one intact, familiar, opaque subject with a simple readable silhouette. Its normal practical function must be obvious, but it does not need to show an action; set hasClearLiteralStory=true when the single object and its normal use are immediately clear. Reject missing chunks, accidental transparent holes through solid areas, ragged/dirty/haloed edges, fragmented pieces, multiple unrelated objects, or a result that does not visibly match the expected title.
-For regular_scene, require one coherent recognizable real-world subject and setting with an obvious commercial application. A stationary meal, interior, animal or landscape is valid without an action; set hasClearLiteralStory=true when its literal subject and purpose are clear. Natural copy space is allowed only when it remains part of the photographed setting.
+${context.isFoodFusion
+  ? "The minimalist studio surface IS the correct setting. Photorealistic material rendering is required, while impossible construction is intentional. The single hybrid should support the stated campaign concept."
+  : "For regular_scene, require one coherent recognizable real-world subject and setting with an obvious commercial application. A stationary meal, interior, animal or landscape is valid without an action; set hasClearLiteralStory=true when its literal subject and purpose are clear. Natural copy space is allowed only when it remains part of the photographed setting."}
 Return pure JSON only: {"passed":true|false,"hasVisibleHumanFace":true|false,"hasText":true|false,"hasArtificialBorder":true|false,"hasPosterLayout":true|false,"isImmediatelyRecognizable":true|false,"hasClearLiteralStory":true|false,"hasClearCommercialUse":true|false,"hasCutoutDamage":true|false,"hasMultipleConfusingSubjects":true|false,"issues":["short factual issue"]}. If uncertain, reject.`,
             },
             { type: "image_url", image_url: { url: dataUrl } },

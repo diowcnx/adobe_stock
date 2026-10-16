@@ -3,7 +3,7 @@ import { ImageQualityReview, StockImageItem } from "./types";
 import { getErrorMessage } from "./errors";
 import { fetchAllowlistedImage, validateRemoteImageUrl } from "./remote-image";
 import { assessGeneratedImageQuality } from "./image-quality";
-import { getGenerationBlockReason, NO_VISIBLE_FACE_RULE, THAI_CONTEXT_RULE } from "./generation-policy";
+import { getGenerationBlockReason, NO_VISIBLE_FACE_RULE } from "./generation-policy";
 
 const OPENROUTER_API_BASE = "https://openrouter.ai/api/v1";
 const MAX_INPUT_PIXELS = 40_000_000;
@@ -231,7 +231,7 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        THAI_CONTEXT_RULE,
+        "Use only the single food-hardware hybrid described in the brief; no people, scenery or extra cultural props.",
         NO_VISIBLE_FACE_RULE,
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
@@ -246,13 +246,17 @@ export async function generateSingleImage(
 
       const originalUserContent = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : item.fusionStructure
+          ? `Create one minimalist surrealist still-life photograph: exactly one seamless organic-food/mechanical-hardware hybrid on a matte studio surface, with generous natural copy space and a soft contact shadow. The physical background fills every edge. Preserve recognizable food and hardware textures and the specified clean fusion joint. ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.composition === "artwork"
           ? `Create the original full-bleed artwork itself, not a photograph of a print, room, frame or mockup. Follow the specified artistic medium and composition with detailed print-friendly texture. Do not reserve advertising copy space. ${sanitizedPrompt}. ${mandatoryExclusions}`
           : `Create a single full-bleed art-directed commercial scene whose photographed background reaches every edge of the final image. Authentic materials, tactile textures, natural lighting and believable geometry. Leave useful natural negative space within the physical scene when requested, but never add a layout panel or margin. No plastic AI glossiness. Follow the intended medium and visual details: ${sanitizedPrompt}. ${mandatoryExclusions}`;
       const userContent = attemptIndex > 0
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
-            : buildQualityRetryDirection(attemptIndex, rejectionReasons)}`
+            : item.fusionStructure
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild exactly the same specified food-hardware pair as ONE seamless hybrid. Correct the joint and recognizable material textures; simplify the silhouette. Preserve the minimalist matte background, soft contact shadow, no people, no text and no additional props. Do not replace it with a literal lifestyle scene.`
+              : buildQualityRetryDirection(attemptIndex, rejectionReasons)}`
         : originalUserContent;
 
       const payload: Record<string, unknown> = {
@@ -371,6 +375,7 @@ export async function generateSingleImage(
               mode: "transparent_png",
               expectedTitle: item.seoTitle,
               intendedUse: item.commercialIntent?.intendedUse,
+              isFoodFusion: Boolean(item.fusionStructure),
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);
@@ -405,6 +410,7 @@ export async function generateSingleImage(
               mode: "regular_scene",
               expectedTitle: item.seoTitle,
               intendedUse: item.commercialIntent?.intendedUse,
+              isFoodFusion: Boolean(item.fusionStructure),
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);
