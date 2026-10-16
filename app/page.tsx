@@ -917,7 +917,7 @@ export default function Dashboard() {
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
               <h3 className="font-semibold text-white mb-3">Three structures · Randomized batches</h3>
-              <p className="text-sm text-slate-300">รวม 10 ภาพ แบ่งประเภทละ 3–4 ภาพ และหมุนเวียนประเภทที่ได้ภาพเพิ่มในแต่ละวัน: Food Fusion จาก 16 คู่ บูธงานคราฟต์ไทยจาก 8 แบบ และผังรีสอร์ตเส้นร่างแต้มพาสเทลจาก 8 แบบ สุ่มไม่ซ้ำภายในประเภท บูธมองหน้าตรง ผังโครงการมองมุมสูง ทุกภาพไม่มีคนและไม่มีตัวหนังสือ</p>
+              <p className="text-sm text-slate-300">รวม 10 ภาพ แบ่ง Structure ละ 3–4 ภาพและหมุนเวียนภาพเพิ่มรายวัน: Food Fusion 16 คู่ บูธสินค้า 12 แบบ และผังโครงการ 12 แบบ ครอบคลุมงานคราฟต์ อาหาร เครื่องสำอาง เทคโนโลยี การท่องเที่ยว รีสอร์ต โรงเรียน ชุมชน ที่พักอาศัย และสำนักงาน โดยเลือกองค์ประกอบตามหมวด ไม่มีคนและไม่มีตัวหนังสือ</p>
               <details className="mt-3">
               <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -1318,7 +1318,7 @@ export default function Dashboard() {
 
                           {img.masterplanStructure && (
                             <details className="rounded-xl border border-sky-900/60 bg-sky-950/20 p-3">
-                              <summary className="cursor-pointer text-xs font-semibold text-sky-300">USER_INPUT · Resort Masterplan · 8 Fields</summary>
+                              <summary className="cursor-pointer text-xs font-semibold text-sky-300">USER_INPUT · Architectural Masterplan · 8 Fields</summary>
                               <dl className="mt-3 space-y-2">
                                 {Object.entries(img.masterplanStructure).map(([field, value]) => (
                                   <div key={field}>

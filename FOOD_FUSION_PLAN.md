@@ -5,8 +5,8 @@ CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
 Each batch now contains three structures: food pairs selected from 16 matched
-concepts, exhibition booths selected from 8 templates and resort masterplan
-sketches selected from 8 templates. Ten images are distributed 4/3/3, rotating
+concepts, exhibition booths selected from 12 templates and architectural masterplan
+sketches selected from 12 templates. Ten images are distributed 4/3/3, rotating
 the extra slot by Bangkok day, then shuffled. Each type is sampled without
 duplicates within the batch. Booths use the user's 17-field specification;
 masterplans use the user's 8-field specification.
@@ -66,6 +66,16 @@ photorealism, frontal booth views or food fusion.
 
 All three structures output JPEG without people or lettering. No live image
 generation is required to prepare the briefs.
+
+Structures are reusable across suitable buyer categories. Booths include crafts,
+coffee/food, cosmetics, technology and tourism. Masterplans include hospitality,
+education, community wellness, workplaces and senior housing. Adapt products,
+fixtures, buildings, amenities, keywords and intended buyer use together.
+WATERPARK_AND_AMENITY_ZONE supports non-water amenities, and
+ACCOMMODATION_AND_STRUCTURES supports project-appropriate buildings.
+Pools/slides/villas must never be added to an unrelated project merely because
+the original structure example was a waterpark resort. QA and retry prompts use
+the same category-adaptation rule. Food fusion remains food/hardware-specific.
 
 Old ordinary-photography briefs are blocked before paid generation. Refresh and
 prepare a new batch after deployment. Historical downloads remain available.

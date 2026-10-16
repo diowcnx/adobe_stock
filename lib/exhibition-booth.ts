@@ -12,6 +12,10 @@ export const BOOTH_RECIPES = [
   ["Thai Botanical Soap Pavilion", "rounded timber frames forming a leaf-vein canopy with a clear open front", "unbranded soap bars, plain refill containers and woven gift boxes", "a rounded product sampling counter with blank labels", "integrated shallow display shelves with concealed storage"],
   ["Thai Rattan Loop Pavilion", "three freestanding reinforced rattan-clad loop frames joined by a shallow organic canopy", "rattan lampshades, small woven homewares and natural-fiber handbags", "a large structural loop containing tiered display trays", "a smaller connected loop with suspended display shelves"],
   ["Thai Community Gift Pavilion", "two branching timber columns and one curved rear panel supporting a compact open canopy", "handmade gift baskets, plain cloth pouches, ceramics and bamboo accessories", "integrated curved gift display counter", "three levels of open merchandise shelving"],
+  ["Thai Coffee Trade Show Booth", "three rounded timber portal frames supporting an open slatted canopy", "plain coffee bags, ceramic drippers and one unbranded espresso machine", "a compact coffee demonstration counter", "tiered coffee-product display shelves"],
+  ["Thai Skincare Exhibition Booth", "two softly curved mineral-panel wings supporting a light open canopy", "unbranded skincare bottles, plain jars and refill pouches with blank labels", "a rounded product demonstration counter", "illuminated cosmetic display niches"],
+  ["Thai Smart Home Technology Booth", "three slim reinforced curved frames supporting a light overhead beam", "unbranded compact sensors, switches and smart home hubs with blank screens", "a physical smart-home demonstration wall with no lettering", "well-spaced device display plinths"],
+  ["Thai Tourism Presentation Booth", "three open timber arches with a shallow woven canopy", "unprinted travel brochures, original abstract landscape relief panels and small unbranded luggage", "a welcoming information counter with a blank sign surface", "open shelves for travel materials and a blank display screen"],
 ] as const;
 
 export function formatExhibitionBoothPrompt(fields: ExhibitionBoothStructure): string {
@@ -22,7 +26,7 @@ export function formatExhibitionBoothPrompt(fields: ExhibitionBoothStructure): s
     "Construct BOOTH_STRUCTURE with credible proportions, concealed reinforcement, connected canopy and display supports. Preserve an open accessible front and practical circulation. Do not force a tall wall, central shelf or symmetry when the chosen organic structure is asymmetric.",
     "Render LEFT_FEATURE_ELEMENT, RIGHT_FEATURE_ELEMENT and DISPLAY_FIXTURES as connected architectural elements. Arrange PRODUCT_DISPLAY neatly, leaving space between objects so merchandise does not overwhelm the booth.",
     "Use MATERIAL_PALETTE, LIGHTING_STYLE, SIDE_DECORATION and FLOOR_TREATMENT. Pure seamless white studio background and floor continue to every edge, with soft realistic contact shadows. No shopping mall, event hall, neighboring booths, pedestrians or environmental clutter.",
-    "PRIMARY_SIGNAGE is a BLANK architectural sign area for later typography. Do not render brand names, Thai or English lettering, subtitles, numbers, pseudo-text, logos or watermarks. GRAPHIC_BACKDROP may use original abstract root or fiber relief textures, with no readable marks. DECORATIVE_MARKS must remain non-branded architectural relief, never a logo.",
+    "PRIMARY_SIGNAGE is a BLANK architectural sign area for later typography. Do not render brand names, Thai or English lettering, subtitles, numbers, pseudo-text, logos or watermarks. GRAPHIC_BACKDROP may use original abstract relief textures appropriate to the product category, with no readable marks. DECORATIVE_MARKS must remain non-branded architectural relief, never a logo.",
     "This is a full-size architectural design visualization, not a miniature craft sculpture or a multi-panel presentation board. High material fidelity, refined fixtures, realistic merchandising, complete booth silhouette on white.",
     NO_VISIBLE_FACE_RULE,
     "No people, frame, border, page mockup, diagrams or text overlays.",
@@ -40,13 +44,13 @@ export function buildExhibitionBoothBatch(date: Date, count = 5): StockImageItem
   return Array.from({ length: count }, (_, index) => {
     const [title, structure, products, left, right] = pool.splice(randomInt(pool.length), 1)[0];
     const fields: ExhibitionBoothStructure = {
-      BOOTH_CONCEPT: title + " — premium community-craft exhibition architecture",
+      BOOTH_CONCEPT: title + " — premium category-specific exhibition architecture",
       VIEW_ANGLE: "Strict straight-on frontal orthographic elevation, camera centered at eye level, entire booth fully visible",
       BACKGROUND_STYLE: "Pure seamless solid white #FFFFFF studio background",
       BOOTH_STRUCTURE: structure + ", with realistic structural connections, concealed reinforcement and open accessible circulation",
       PRIMARY_SIGNAGE: "Blank warm-ivory sign surface suspended below the canopy; no lettering or brand",
-      GRAPHIC_BACKDROP: "Minimal freestanding panels with original abstract root-system relief and subtle organic fiber texture, without text",
-      DECORATIVE_MARKS: "Original subtle branching-line relief integrated into a panel, no logo or emblem",
+      GRAPHIC_BACKDROP: "Minimal freestanding panels with original abstract relief suited to the displayed product category and subtle material texture, without text",
+      DECORATIVE_MARKS: "Restrained original geometric or organic panel relief appropriate to this category, no logo or emblem",
       LEFT_FEATURE_ELEMENT: left,
       RIGHT_FEATURE_ELEMENT: right,
       DISPLAY_FIXTURES: "Three levels of supported merchandise platforms with ivory surfaces, discreet integrated LEDs and concealed low storage",
@@ -55,22 +59,22 @@ export function buildExhibitionBoothBatch(date: Date, count = 5): StockImageItem
       SIDE_DECORATION: "One restrained sculptural foliage cluster integrated with a structural base",
       FLOOR_TREATMENT: "Low accessible platform following the booth footprint, matte finish and soft studio contact shadows",
       LIGHTING_STYLE: "Soft daylight-inspired studio illumination with concealed warm-neutral shelf lights and controlled highlights",
-      DESIGN_FOCUS: "Thai community craft, organic architectural structure, practical retail display, clear access and material identity; no certification or environmental-performance claims",
+      DESIGN_FOCUS: title + ": architecture and product display appropriate to this buyer category, clear access and material identity; no certification or environmental-performance claims",
       VISUAL_STYLE: "Hyperrealistic exhibition architecture visualization, finely detailed merchandise, complete frontal orthographic presentation isolated on pure white",
     };
     return {
-      id: index + 1, seoTitle: title, category: "Thai Craft Exhibition Booth",
+      id: index + 1, seoTitle: title, category: "Exhibition Booth Design",
       aspectRatio: "3:2", composition: "advertising", generationMode: "regular_scene",
       isTransparent: false, conceptMode: "existing", planningSource: "curated_fallback",
       generationBriefVersion: GENERATION_BRIEF_VERSION, boothStructure: fields,
       prompt: formatExhibitionBoothPrompt(fields),
       negativePrompt: "visible human face, people, lettering, Thai text, logo, watermark, environmental clutter, cropped canopy, cropped platform, perspective view, miniature, collage, border",
-      keywords: [title.toLowerCase(), "exhibition booth", "pavilion design", "Thai craft", "community craft", "retail display", "organic architecture", "frontal elevation", "white background", "architectural visualization", "merchandising", "display shelves", "bamboo", "natural materials", "studio lighting", "blank signage", "event design", "craft exhibition"],
+      keywords: [title.toLowerCase(), "exhibition booth", "pavilion design", "Thai design", "product presentation", "retail display", "organic architecture", "frontal elevation", "white background", "architectural visualization", "merchandising", "display shelves", "product display", "material detail", "studio lighting", "blank signage", "event design", "trade show"],
       modelUsed: "google/gemini-3.1-flash-lite-image",
       filename: generateUniqueStockFilename(title, index + 1, date, "regular_scene"),
       commercialIntent: {
-        targetBuyer: "exhibition designers, event agencies, craft-market organizers and Thai community-product marketers",
-        intendedUse: "Booth-design proposal, trade-show pitch or community-craft exhibition presentation with buyer-added branding",
+        targetBuyer: "exhibition designers, event agencies and product marketers planning a " + title,
+        intendedUse: title + ": booth-design proposal, trade-show pitch or product exhibition presentation with buyer-added branding",
         purchaseReason: "The complete frontal view makes the structure, merchandising layout and blank sign surfaces easy to reuse in a design proposal. Sales and structural performance are unverified.",
       },
     };

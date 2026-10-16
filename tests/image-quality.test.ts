@@ -24,7 +24,7 @@ test("masterplan inspection and retry preserve sketch medium and bird's-eye pers
       return new Response(JSON.stringify({ choices: [{ message: { images: [{ b64_json: image.toString("base64") }] } }] }));
     }
     const inspection = body.messages[0].content[0].text;
-    assert.match(inspection, /ARCHITECTURAL RESORT MASTERPLAN SKETCH/);
+    assert.match(inspection, /ARCHITECTURAL PROJECT MASTERPLAN SKETCH/);
     assert.doesNotMatch(inspection, /This is a FULL-SIZE EXHIBITION-BOOTH/);
     assert.doesNotMatch(inspection, /This is an INTENTIONAL SURREAL FOOD-HARDWARE/);
     qaCalls++;
@@ -40,7 +40,7 @@ test("masterplan inspection and retry preserve sketch medium and bird's-eye pers
     const result = await generateSingleImage(item, "test-key");
     assert.equal(qaCalls, 2);
     assert.match(prompts[0], /SKETCH ILLUSTRATION/);
-    assert.match(prompts[1], /Redraw the SAME resort project/);
+    assert.match(prompts[1], /Redraw the SAME project/);
     assert.doesNotMatch(prompts[1], /Use only the single food-hardware hybrid/);
     assert.equal(result.qualityReview?.status, "passed_after_retries");
     assert.match(result.imageUrl, /^data:image\/jpeg/);

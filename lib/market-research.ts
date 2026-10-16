@@ -44,8 +44,8 @@ export async function conductMarketResearchAndGeneratePrompts(
   return {
     mode, items, conceptPlan: summarizeConceptPlan(items, mode),
     trend: {
-      theme: "Food Fusion + Thai Craft Booths + Resort Masterplan Sketches — randomized JPEG concepts",
-      targetMarket: "food advertising buyers, exhibition designers and hospitality/landscape design teams",
+      theme: "Food Fusion + Product Exhibition Booths + Architectural Masterplans — randomized JPEG concepts",
+      targetMarket: "food advertisers, product exhibition designers and hospitality, education, community, housing and workplace design teams",
       commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth and " + counts[2] + " masterplan briefs, selected without duplicate concepts within each structure and shuffled together. The extra slot rotates daily. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
       seasonalRelevance: "Bangkok production date " + productionDate + ". Thai ingredients where relevant; minimalist studio background.",
       buyerDemandRating: "Research Candidate",

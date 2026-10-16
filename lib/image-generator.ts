@@ -232,7 +232,7 @@ export async function generateSingleImage(
 
       const mandatoryExclusions = [
         item.masterplanStructure
-          ? "Render the complete resort masterplan as fine architectural sketch linework with sparse pastel tints on continuous warm-white paper. Use an elevated bird's-eye overview, readable zones and coherent terrain. No people, lettering, title, labels or extra objects."
+          ? "Render the complete project masterplan as fine architectural sketch linework with sparse pastel tints on continuous warm-white paper. Use an elevated bird's-eye overview, category-appropriate buildings and amenities, readable zones and coherent terrain. Water features are allowed only when explicitly specified. No people, lettering, title, labels or extra objects."
         : item.boothStructure
           ? "Render only the complete exhibition booth and specified merchandise. Strict frontal orthographic view on continuous pure white studio background. Preserve the canopy, platform, shelves, access and blank signage. No people, lettering or surrounding event hall."
           : "Use only the single food-hardware hybrid described in the brief; no people, scenery or extra cultural props.",
@@ -251,7 +251,7 @@ export async function generateSingleImage(
       const originalUserContent = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
         : item.masterplanStructure
-          ? `Create one architectural resort masterplan SKETCH ILLUSTRATION, not a photograph. Fine graphite/ink lines and sparse pale watercolor tints, elevated bird's-eye oblique view, complete site, clear amenity, accommodation and landscape zones. Natural unpainted paper fills every edge with no visible sheet border. Follow this eight-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
+          ? `Create one architectural project masterplan SKETCH ILLUSTRATION, not a photograph. Fine graphite/ink lines and sparse pale watercolor tints, elevated bird's-eye oblique view, complete site, clear category-appropriate amenities, buildings and landscape zones. Natural unpainted paper fills every edge with no visible sheet border. Follow this eight-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.boothStructure
           ? `Create a full-size premium exhibition-booth architectural visualization on a seamless pure white studio background, strictly frontal orthographic elevation, all architecture visible. Balanced white negative space is studio backdrop, not a frame. Follow the booth USER_INPUT structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.fusionStructure
@@ -263,7 +263,7 @@ export async function generateSingleImage(
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
             : item.masterplanStructure
-              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Redraw the SAME resort project as an elevated bird's-eye architectural sketch, retaining its site program, water amenities, villas and terrain. Correct zone relationships, perspective, path connections and roof geometry. Use fine loose lines, sparse pastel water/roof/planting accents and plentiful unpainted paper. No title, lettering, labels, people, photo rendering, booth or food hybrid.`
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Redraw the SAME project as an elevated bird's-eye architectural sketch, retaining its specified category, site program, amenities, buildings and terrain. Do not add unrequested resort pools, slides or villas to other project types. Correct zone relationships, perspective, path connections and roof geometry. Use fine loose lines, sparse pastel accents and plentiful unpainted paper. No title, lettering, labels, people, photo rendering, booth or food hybrid.`
             : item.boothStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME exhibition-booth design, retaining its architectural structure, merchandise and palette. Fix camera to strict frontal orthographic, show the full canopy and platform, use plausible connected supports and organized shelving, keep pure white studio background and soft contact shadows. No people, text, logo, surrounding hall or food-hardware hybrid. Blank signs are intentional.`
             : item.fusionStructure

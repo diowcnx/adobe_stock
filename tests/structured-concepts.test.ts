@@ -5,6 +5,27 @@ import { isStockImageItem } from "../lib/validation";
 import { getGenerationBlockReason } from "../lib/generation-policy";
 import { generateSingleImage } from "../lib/image-generator";
 import { generateMetadataCsv } from "../lib/csv";
+import { buildExhibitionBoothBatch, BOOTH_RECIPES } from "../lib/exhibition-booth";
+import { buildResortMasterplanBatch, MASTERPLAN_RECIPES } from "../lib/resort-masterplan";
+
+test("structures adapt merchandise, buildings, amenities and buyers to their categories", () => {
+  const date = new Date("2026-10-16T12:00:00Z");
+  const booths = buildExhibitionBoothBatch(date, BOOTH_RECIPES.length);
+  const technology = booths.find(item => item.seoTitle.includes("Technology"))!;
+  assert.match(technology.boothStructure?.PRODUCT_DISPLAY || "", /sensors/);
+  assert.doesNotMatch(technology.boothStructure?.PRODUCT_DISPLAY || "", /baskets|ceramics/);
+  assert.match(technology.commercialIntent?.intendedUse || "", /Technology/);
+  assert.equal(isStockImageItem(technology), true);
+
+  const plans = buildResortMasterplanBatch(date, MASTERPLAN_RECIPES.length);
+  const school = plans.find(item => item.seoTitle.includes("School Campus"))!;
+  assert.match(school.masterplanStructure?.ACCOMMODATION_AND_STRUCTURES || "", /classroom/);
+  assert.match(school.masterplanStructure?.WATERPARK_AND_AMENITY_ZONE || "", /no swimming pool or waterpark/);
+  assert.match(school.commercialIntent?.intendedUse || "", /School Campus/);
+  assert.doesNotMatch(school.keywords.join(" "), /resort|waterpark|villa/);
+  assert.equal(isStockImageItem(school), true);
+  assert.match(school.prompt, /Add pools and slides ONLY when explicitly included/);
+});
 
 test("all three structures rotate a 4/3/3 split without paid planning", async () => {
   const originalFetch = globalThis.fetch;
