@@ -232,7 +232,7 @@ export async function generateSingleImage(
 
       const mandatoryExclusions = [
         item.materialArtStructure
-          ? "Render the specified single material-built artwork as a commercial still-life photograph. Use only the named materials and minimal requested background detail; natural physical backdrop and contact shadows. No people or rendered text."
+          ? "Render the specified single Editorial Still Life arrangement: a clear hero product or material-built artwork with restrained conceptual staging. Use only named objects/materials and minimal requested background detail; photographic surfaces and natural contact shadows. No people or rendered text."
         : item.masterplanStructure
           ? "Render the complete project masterplan as fine architectural sketch linework with sparse pastel tints on continuous warm-white paper. Use an elevated bird's-eye overview, category-appropriate buildings and amenities, readable zones and coherent terrain. Water features are allowed only when explicitly specified. No people, lettering, title, labels or extra objects."
         : item.boothStructure
@@ -253,7 +253,7 @@ export async function generateSingleImage(
       const originalUserContent = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
         : item.materialArtStructure
-          ? `Create an original art-directed material-art still-life photograph. Raw materials form one clearly recognizable motif, with realistic physical textures and natural contact shadows on a continuous studio surface. Preserve the eighteen-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
+          ? `Create an original Editorial Still Life studio photograph. Use the named hero product or raw materials in one clearly readable conceptual arrangement, with realistic textures and natural contact shadows on a continuous studio surface. Adapt composition to the requested aspect ratio, keeping the hero complete and room for later buyer typography. Preserve the eighteen-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.masterplanStructure
           ? `Create one architectural project masterplan SKETCH ILLUSTRATION, not a photograph. Fine graphite/ink lines and sparse pale watercolor tints, elevated bird's-eye oblique view, complete site, clear category-appropriate amenities, buildings and landscape zones. Natural unpainted paper fills every edge with no visible sheet border. Follow this eight-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.boothStructure
@@ -267,7 +267,7 @@ export async function generateSingleImage(
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
             : item.materialArtStructure
-              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-stage the SAME material-art motif using the SAME raw materials. Simplify the outline, remove unnecessary accents, fix material scale and physical support, preserve clear negative space and credible texture. Keep one readable physical artwork on a continuous studio background, no lettering, people, hardware fusion, architecture or poster layout.`
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-stage the SAME material-art motif using the SAME raw materials and named hero products, retaining their recognizable normal shapes. Simplify the arrangement, remove unnecessary accents, fix scale and physical support, preserve clear negative space and credible texture. Adapt spacing to the actual canvas without cropping the hero. Keep one readable Editorial Still Life arrangement on a continuous studio background, no lettering, people, hardware fusion, architecture or poster layout.`
             : item.masterplanStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Redraw the SAME project as an elevated bird's-eye architectural sketch, retaining its specified category, site program, amenities, buildings and terrain. Do not add unrequested resort pools, slides or villas to other project types. Correct zone relationships, perspective, path connections and roof geometry. Use fine loose lines, sparse pastel accents and plentiful unpainted paper. No title, lettering, labels, people, photo rendering, booth or food hybrid.`
             : item.boothStructure

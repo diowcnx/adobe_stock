@@ -7,6 +7,27 @@ import { generateSingleImage } from "../lib/image-generator";
 import { generateMetadataCsv } from "../lib/csv";
 import { buildExhibitionBoothBatch, BOOTH_RECIPES } from "../lib/exhibition-booth";
 import { buildResortMasterplanBatch, MASTERPLAN_RECIPES } from "../lib/resort-masterplan";
+import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "../lib/material-art";
+
+test("editorial still life supports product campaigns and adapts composition to canvas shape", () => {
+  const date = new Date("2026-10-16T12:00:00Z");
+  for (const ratio of ["3:2", "16:9", "4:5", "1:1"] as const) {
+    const items = buildMaterialArtBatch(date, MATERIAL_ART_RECIPES.length, ratio);
+    for (const item of items) {
+      assert.equal(item.aspectRatio, ratio);
+      assert.equal(isStockImageItem(item), true);
+      assert.match(item.prompt, new RegExp("Canvas aspect ratio: " + ratio));
+      assert.match(item.prompt, /never crop essential parts/);
+      assert.equal(item.materialArtStructure?.TEXT_ELEMENTS, "No text");
+      if (ratio === "4:5") assert.match(item.materialArtStructure?.COMPOSITION_LOGIC || "", /vertical frame/);
+      if (ratio === "1:1") assert.match(item.materialArtStructure?.COMPOSITION_LOGIC || "", /within a square/);
+    }
+    const skincare = items.find(item => item.seoTitle.includes("Skincare"))!;
+    assert.match(skincare.materialArtStructure?.PRIMARY_COMPONENTS || "", /skincare bottle/);
+    assert.match(skincare.materialArtStructure?.CAMERA_ANGLE || "", /frontal three-quarter/);
+    assert.match(skincare.commercialIntent?.targetBuyer || "", /beauty/);
+  }
+});
 
 test("structures adapt merchandise, buildings, amenities and buyers to their categories", () => {
   const date = new Date("2026-10-16T12:00:00Z");

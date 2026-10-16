@@ -917,7 +917,7 @@ export default function Dashboard() {
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
               <h3 className="font-semibold text-white mb-3">Four structures · Randomized batches</h3>
-              <p className="text-sm text-slate-300">รวม 10 ภาพ แบ่ง Structure ละ 2–3 ภาพและหมุนเวียนภาพเพิ่มรายวัน: Food Fusion 16 คู่ บูธสินค้า 12 แบบ ผังโครงการ 12 แบบ และ Material Art 8 แบบ จัดวัตถุดิบเป็นงานศิลปะที่มีรูปทรงชัด ใช้องค์ประกอบตามหมวด ทุกภาพไม่มีคนและไม่มีตัวหนังสือ</p>
+              <p className="text-sm text-slate-300">รวม 10 ภาพ แบ่ง Structure ละ 2–3 ภาพและหมุนเวียนภาพเพิ่มรายวัน: Food Fusion 16 คู่ บูธสินค้า 12 แบบ ผังโครงการ 12 แบบ และ Editorial Still Life 16 แบบ สำหรับวัตถุดิบ สินค้า แฟชั่น ความงาม และไลฟ์สไตล์ โดยปรับองค์ประกอบตามอัตราส่วนภาพ ทุกภาพไม่มีคนและไม่มีตัวหนังสือ</p>
               <details className="mt-3">
               <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -1318,7 +1318,7 @@ export default function Dashboard() {
 
                           {img.materialArtStructure && (
                             <details className="rounded-xl border border-amber-900/60 bg-amber-950/20 p-3">
-                              <summary className="cursor-pointer text-xs font-semibold text-amber-300">USER_INPUT · Material Art · 18 Fields</summary>
+                              <summary className="cursor-pointer text-xs font-semibold text-amber-300">USER_INPUT · Editorial Still Life / Material Art · 18 Fields</summary>
                               <dl className="mt-3 space-y-2">
                                 {Object.entries(img.materialArtStructure).map(([field, value]) => (
                                   <div key={field}>

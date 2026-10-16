@@ -7,7 +7,7 @@ BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 Each batch now contains four structures: food pairs selected from 16 matched
 concepts, exhibition booths selected from 12 templates and architectural masterplan
 sketches selected from 12 templates, plus material-art still lifes selected from
-8 category-specific recipes. Ten images are distributed 3/3/2/2, rotating
+16 category-specific editorial still-life recipes. Ten images are distributed 3/3/2/2, rotating
 the extra slots by Bangkok day, then shuffled. Each type is sampled without
 duplicates within the batch. Booths use the user's 17-field specification;
 masterplans use the user's 8-field specification.
@@ -87,8 +87,18 @@ surface, natural copy space and photographic material realism. Categories
 include food, coffee, textiles, bamboo, ceramics, flowers, rice and seeds.
 TEXT_ELEMENTS is fixed to "No text" under the current global rule.
 Validation rejects missing fields, mixed structures or visible-text requests.
-QA and replacements preserve the material-built motif; they do not demand
+QA and replacements preserve the material-built motif or named hero product; they do not demand
 a food-hardware joint, architectural elevation or sketch masterplan.
+
+Editorial Still Life extends that same 18-field structure to brand advertising,
+fashion, beauty, home, stationery and travel accessories. It does not add a fifth
+structure or restore the legacy automatic metaphor planner. Products retain
+their recognizable normal shape; styling supplies a simple visual metaphor.
+The builder supports 3:2, 16:9, 4:5 and 1:1, selecting a ratio when none is supplied
+and deriving horizontal, vertical or square composition logic from it.
+Background material and camera treatment vary compatibly with the subject;
+upright hero products use a frontal three-quarter view. All variants retain
+No text, no people, full-bleed physical studio backgrounds and JPEG output.
 
 Old ordinary-photography briefs are blocked before paid generation. Refresh and
 prepare a new batch after deployment. Historical downloads remain available.
