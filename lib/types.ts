@@ -65,6 +65,7 @@ export interface ImageQualityReview {
 }
 
 export interface StockImageItem {
+  generationBriefVersion?: string;
   id: number;
   seoTitle: string;
   category: string;

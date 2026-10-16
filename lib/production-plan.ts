@@ -3,7 +3,7 @@ export type GenerationMode = "transparent_png" | "regular_scene";
 
 // One distinct buyer-use theme per day of the month. These are hypotheses
 // informed by public Adobe Stock portfolio ordering, not verified sales data.
-export const MONTHLY_CATEGORIES = [
+const ORIGINAL_MONTHLY_CATEGORIES = [
   { day: 1, name: "Copy-space hospitality interiors", mode: "regular_scene", kind: "advertising", buyer: "hospitality marketers and interior publishers needing usable room scenes with copy space", seeds: ["sunlit boutique hotel lobby with a clear wall for campaign copy", "quiet cafe corner with an unbranded menu board and window light", "small hotel room staged for a travel booking campaign", "restaurant booth with warm lamps and uncluttered table", "modern coworking lounge with space for editorial headline", "spa reception with natural stone and towels", "independent bookstore reading corner with room for a seasonal message", "neighborhood bakery counter before opening", "minimal salon interior with product shelf and soft daylight", "conference venue lobby prepared before guests arrive"] },
   { day: 2, name: "Restaurant-ready food still life", mode: "regular_scene", kind: "advertising", buyer: "food publishers, restaurant menus, and packaged-food marketers seeking appetizing, clearly styled dishes", seeds: ["seared salmon with crisp skin and lemon herb garnish", "sliced roast vegetables arranged for a plant-forward menu", "handmade chocolate assortment with visible cacao texture", "fresh noodle bowl with steam and carefully arranged toppings", "rustic bread loaf cut to show its crumb", "grilled seasonal vegetables on a ceramic plate", "small bowl of citrus segments and peel on linen", "stack of savory lunch sandwiches cut cleanly in half", "berry tart with glossy fruit and pastry detail", "olive oil tasting plate with bread and herbs"] },
   { day: 3, name: "Authentic family and companion-animal moments", mode: "regular_scene", kind: "advertising", buyer: "family brands, pet-care marketers, and editorial publishers seeking warm candid lifestyle scenes", seeds: ["older dog resting beside a family reading on the floor", "parent fastening a toddler's raincoat before a walk", "siblings sharing a quiet craft activity at a kitchen table", "small dog waiting patiently beside a hiking backpack", "grandparent teaching a child to water balcony plants", "family preparing a simple weekend lunch together", "cat watching a person arrange fresh flowers", "child's hands building a cardboard toy with an adult", "rescue dog learning a calm leash routine in a garden", "multigenerational family looking through printed travel photos"] },
@@ -36,6 +36,26 @@ export const MONTHLY_CATEGORIES = [
   { day: 30, name: "Useful technology and human-computer interaction", mode: "regular_scene", kind: "advertising", buyer: "software teams and technology publishers needing human-centered, unbranded product imagery", seeds: ["hand using a smartphone to scan a generic parcel label with text blurred", "designer sketching a simple app flow on sticky notes", "remote colleague joining a video meeting in a bright home office", "hands connecting a small sensor to a houseplant moisture probe", "tablet used to review a generic inventory dashboard without readable data", "person pairing wireless headphones with a phone on a train", "customer using a self-service kiosk with screen contents abstract", "technician examining a compact wearable device on a workbench", "hands setting up a small home automation hub", "team reviewing a physical prototype beside a laptop with blank screen"] },
   { day: 31, name: "Seasonal gifting and handmade celebrations", mode: "regular_scene", kind: "advertising", buyer: "retailers and event publishers needing flexible seasonal gifting imagery without branded products", seeds: ["reusable gift wrap tied with a fresh botanical clipping", "small handmade ceramic present on folded natural-fiber cloth", "unmarked parcel beside blank greeting card and simple twine", "seasonal table setting with citrus and reusable linen napkins", "maker tying paper tags with no writing to small gift boxes", "handcrafted candle and dried flowers arranged for a winter gift guide", "colorful paper rosettes and plain gift bags before a celebration", "locally made soap bars arranged beside recycled wrapping paper", "simple celebration dessert with reusable plates and flowers", "small gift basket with regional fruit and neutral packaging"] },
 ] as const;
+
+// Retire cutout/artwork and symbolic seed lists. The remaining literal lists
+// stay intact so the daily topic remains connected to the actual buyer.
+const REPLACEMENT_DAYS: Record<number, number> = {
+  4: 10, 8: 11, 14: 3, 15: 24, 17: 25, 19: 30, 22: 6,
+};
+export const MONTHLY_CATEGORIES = ORIGINAL_MONTHLY_CATEGORIES.map((entry) => {
+  const source = ORIGINAL_MONTHLY_CATEGORIES[(REPLACEMENT_DAYS[entry.day] || entry.day) - 1];
+  return {
+    ...source,
+    day: entry.day,
+    mode: "regular_scene" as const,
+    kind: "advertising" as const,
+    seeds: source.seeds.map((seed) => {
+      if (seed === "abstract paper graph and calculator arranged for a budgeting article") return "small business owner checking expenses with a calculator at a shop counter";
+      if (seed.includes("as a savings metaphor")) return "parent and teenager putting coins into a savings jar at a kitchen table";
+      return seed;
+    }),
+  };
+});
 
 export function getBangkokDate(date: Date = new Date()): string {
   if (!Number.isFinite(date.getTime())) throw new Error("Invalid production date");

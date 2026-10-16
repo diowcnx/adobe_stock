@@ -689,8 +689,8 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="Structured Editorial Still Life จำนวน 18 ช่อง">
-              🧵 Editorial Still Life · 18 Fields
+            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="สร้างภาพ JPEG จากรายการภาพถ่ายตามหมวดประจำวัน">
+              📷 ภาพถ่ายสมจริง · JPEG เท่านั้น
             </div>
 
             {/* Run Button */}
@@ -907,22 +907,22 @@ export default function Dashboard() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
-                  🧵 Buyer-Context Editorial Still Life
+                  📷 ภาพถ่ายเหตุการณ์และสถานที่จริง
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {todayCategory.name} · 6 PNG + 4 JPEG
+                  {todayCategory.name} · 10 JPEG
                 </p>
               </div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-              <h3 className="font-semibold text-white mb-3">Monthly buyer-use context · 10 structured images per day</h3>
+              <h3 className="font-semibold text-white mb-3">Monthly photography plan · 10 JPEG images per day</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
                 {MONTHLY_CATEGORIES.map((category) => (
                   <div key={category.day} className={`rounded-xl border p-3 ${category.day === todayCategory.day ? "border-sky-500/60 bg-sky-950/40" : "border-slate-800 bg-slate-950/50"}`}>
                     <div className="text-[11px] text-slate-500">Day {category.day}</div>
                     <div className="text-xs font-semibold text-slate-200 mt-1">{category.name}</div>
-                    <div className="text-[10px] text-slate-500 mt-1">Daily mix: 6 PNG + 4 JPEG</div>
+                    <div className="text-[10px] text-slate-500 mt-1">JPEG photography</div>
                   </div>
                 ))}
               </div>
@@ -944,12 +944,12 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Creates 10 distinct concepts from the 18-field buyer-context structure, matching materials and local cues to the intended market instead of defaulting to one country.</p>
+                  <p className="text-slate-400">Uses 10 literal photography briefs with recognizable subjects and buyer uses. PNG and the material-concept planner are disabled.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
                   <div className="font-semibold text-white">Image Generation</div>
-                  <p className="text-slate-400">Generates photorealistic images using Recraft V4.1 &amp; Gemini Flash via OpenRouter.</p>
+                  <p className="text-slate-400">Generates JPEG photographs using Gemini via OpenRouter and checks the resulting images.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center">4</div>

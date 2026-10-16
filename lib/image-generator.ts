@@ -3,6 +3,7 @@ import { ImageQualityReview, StockImageItem } from "./types";
 import { getErrorMessage } from "./errors";
 import { fetchAllowlistedImage, validateRemoteImageUrl } from "./remote-image";
 import { assessGeneratedImageQuality } from "./image-quality";
+import { getGenerationBlockReason } from "./generation-policy";
 
 const OPENROUTER_API_BASE = "https://openrouter.ai/api/v1";
 const MAX_INPUT_PIXELS = 40_000_000;
@@ -191,6 +192,8 @@ export async function generateSingleImage(
   item: StockImageItem,
   apiKey?: string
 ): Promise<GeneratedImageResult> {
+  const blocked = getGenerationBlockReason(item);
+  if (blocked) return { imageUrl: "", error: blocked };
   const key = apiKey || process.env.OPENROUTER_API_KEY;
 
   if (!key) {

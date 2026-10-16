@@ -94,6 +94,7 @@ test("vision guard accepts a full-bleed scene with no text", async () => {
 });
 
 const testItem: StockImageItem = {
+  generationBriefVersion: "literal-jpeg-v1",
   id: 1,
   seoTitle: "Parent Fastening Child Raincoat Before Walk",
   category: "Commercial Story",
@@ -205,7 +206,7 @@ test("generator returns the latest image with all rejection reasons after three 
   }
 });
 
-test("transparent PNG is quality-checked and regenerated when its subject is unclear", async () => {
+test("transparent PNG is blocked before any billed request", async () => {
   const originalFetch = globalThis.fetch;
   const source = await sharp({ create: { width: 128, height: 128, channels: 3, background: "#ffffff" } })
     .composite([{ input: await sharp({ create: { width: 72, height: 72, channels: 3, background: "#845b34" } }).png().toBuffer(), left: 28, top: 28 }])
@@ -251,11 +252,10 @@ test("transparent PNG is quality-checked and regenerated when its subject is unc
 
   try {
     const result = await generateSingleImage(transparentItem, "test-key");
-    assert.match(result.imageUrl, /^data:image\/png;base64,/);
-    assert.equal(prompts.length, 2);
-    assert.match(prompts[1], /previous PNG was rejected/i);
-    assert.equal(result.qualityReview?.status, "passed_after_retries");
-    assert.deepEqual(result.qualityReview?.rejectionReasons, ["subject is an ambiguous fragmented object with missing areas"]);
+    assert.equal(result.imageUrl, "");
+    assert.equal(prompts.length, 0);
+    assert.equal(qaCalls, 0);
+    assert.match(result.error || "", /PNG generation is disabled/);
   } finally {
     globalThis.fetch = originalFetch;
   }

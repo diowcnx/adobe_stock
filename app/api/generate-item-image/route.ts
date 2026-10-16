@@ -4,6 +4,7 @@ import { StockImageItem } from "@/lib/types";
 import { readJsonBody, validationErrorResponse } from "@/lib/request";
 import { isStockImageItem } from "@/lib/validation";
 import { persistGeneratedImage } from "@/lib/batch-store";
+import { getGenerationBlockReason } from "@/lib/generation-policy";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -14,6 +15,8 @@ export async function POST(request: NextRequest) {
     if (!isStockImageItem(item)) {
       return NextResponse.json({ success: false, error: "Invalid item parameter" }, { status: 400 });
     }
+    const blocked = getGenerationBlockReason(item);
+    if (blocked) return NextResponse.json({ success: false, error: blocked }, { status: 409 });
     if (process.env.VERCEL === "1" && (typeof timestamp !== "string" || !Number.isFinite(Date.parse(timestamp)))) {
       return NextResponse.json({ success: false, error: "A valid batch timestamp is required" }, { status: 400 });
     }
