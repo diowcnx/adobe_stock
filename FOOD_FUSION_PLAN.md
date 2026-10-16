@@ -4,16 +4,18 @@ Replaces ordinary monthly photography with the user's seven-field USER_INPUT str
 CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
-Each batch now selects 5 unique food pairs from 16 matched concepts and 5
-unique exhibition-booth designs from 8 compatible templates, then shuffles the
-combined 10 images. The exhibition-booth structure has 17 fields following the
-user-provided root-and-branch Thai craft pavilion specification.
+Each batch now contains three structures: food pairs selected from 16 matched
+concepts, exhibition booths selected from 8 templates and resort masterplan
+sketches selected from 8 templates. Ten images are distributed 4/3/3, rotating
+the extra slot by Bangkok day, then shuffled. Each type is sampled without
+duplicates within the batch. Booths use the user's 17-field specification;
+masterplans use the user's 8-field specification.
 Food pairs use system randomness.
 Angles and neutral matte backgrounds vary independently. Pairs can recur across
 batches; this is not a guarantee of lifetime uniqueness. Preparation makes no paid
 planning calls. Scheduled and manual runs use the same planner.
 
-Each picture contains one connected food/mechanical hybrid, photographed with
+Each food-fusion picture contains one connected food/mechanical hybrid, photographed with
 credible textures on a full-bleed studio surface, soft contact shadow and copy
 space. No people, lettering, logos, collage, detached hardware or decorative props.
 Output is JPEG. Thai identity is carried by suitable ingredients rather than
@@ -51,6 +53,19 @@ food-fusion requirement to architectural objects.
 Both structures remain JPEG with no people or visible human faces. Historic
 downloads and saved metadata remain readable. Future structures can be represented
 separately without merging incompatible USER_INPUT fields.
+
+Resort masterplans use PROJECT_THEME, PROJECT_TITLE, VIEW_AND_PERSPECTIVE,
+LINEWORK_AND_TINT_STYLE, WATERPARK_AND_AMENITY_ZONE,
+ACCOMMODATION_AND_STRUCTURES, LANDSCAPE_AND_TERRAIN and COLOR_PALETTE.
+They are elevated bird's-eye sketches on continuous warm-white paper, with
+fine graphite/ink linework and restrained pastel water, roof and planting
+tints. PROJECT_TITLE stays metadata with unmarked space reserved for later
+typography. QA and retry rules preserve the sketch medium, complete site
+boundary, coherent zoning, paths and perspective. They do not require
+photorealism, frontal booth views or food fusion.
+
+All three structures output JPEG without people or lettering. No live image
+generation is required to prepare the briefs.
 
 Old ordinary-photography briefs are blocked before paid generation. Refresh and
 prepare a new batch after deployment. Historical downloads remain available.

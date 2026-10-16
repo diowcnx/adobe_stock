@@ -3,6 +3,7 @@ import { BATCH_SIZE, getBangkokDate, type GenerationMode } from "./production-pl
 import { summarizeConceptPlan } from "./structured-concepts";
 import { buildFoodFusionBatch } from "./food-fusion";
 import { buildExhibitionBoothBatch } from "./exhibition-booth";
+import { buildResortMasterplanBatch } from "./resort-masterplan";
 import { randomInt } from "node:crypto";
 import { generateUniqueStockFilename } from "./csv";
 
@@ -21,9 +22,15 @@ export async function conductMarketResearchAndGeneratePrompts(
   if (forcedMode === "transparent_png") throw new Error("PNG generation has been disabled. Prepare a new JPEG batch.");
   const date = new Date(currentDate);
   const productionDate = getBangkokDate(date);
+  // Spread the extra slot across structures on successive Bangkok dates.
+  const counts = [0, 0, 0];
+  for (let index = 0; index < BATCH_SIZE; index++) {
+    counts[(index + Number(productionDate.slice(-2)) % 3) % 3]++;
+  }
   const items = [
-    ...buildFoodFusionBatch(date, BATCH_SIZE / 2),
-    ...buildExhibitionBoothBatch(date, BATCH_SIZE / 2),
+    ...buildFoodFusionBatch(date, counts[0]),
+    ...buildExhibitionBoothBatch(date, counts[1]),
+    ...buildResortMasterplanBatch(date, counts[2]),
   ];
   for (let index = items.length - 1; index > 0; index--) {
     const other = randomInt(index + 1);
@@ -37,9 +44,9 @@ export async function conductMarketResearchAndGeneratePrompts(
   return {
     mode, items, conceptPlan: summarizeConceptPlan(items, mode),
     trend: {
-      theme: "Food Fusion + Thai Craft Exhibition Booths — randomized JPEG concepts",
-      targetMarket: "food advertising buyers, exhibition designers and community-craft marketers",
-      commercialReasoning: "Five food-hardware concepts and five exhibition-booth designs, randomly selected without duplicate concepts within each structure and shuffled together. Each includes its own USER_INPUT structure, target buyer and intended use. No verified sales claims or paid planning calls.",
+      theme: "Food Fusion + Thai Craft Booths + Resort Masterplan Sketches — randomized JPEG concepts",
+      targetMarket: "food advertising buyers, exhibition designers and hospitality/landscape design teams",
+      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth and " + counts[2] + " masterplan briefs, selected without duplicate concepts within each structure and shuffled together. The extra slot rotates daily. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
       seasonalRelevance: "Bangkok production date " + productionDate + ". Thai ingredients where relevant; minimalist studio background.",
       buyerDemandRating: "Research Candidate",
     },

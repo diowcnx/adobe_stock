@@ -20,6 +20,7 @@ export interface ImageQualityContext {
   intendedUse?: string;
   isFoodFusion?: boolean;
   isExhibitionBooth?: boolean;
+  isResortMasterplan?: boolean;
 }
 
 /** Detect the common AI failure where a portrait image is placed inside white side mats. */
@@ -70,7 +71,7 @@ export async function assessGeneratedImageQuality(
     expectedTitle: "commercial image",
   },
 ): Promise<ImageQualityResult> {
-  if (context.mode === "regular_scene" && !context.isExhibitionBooth && await detectUnintendedLightBorder(inputBuffer)) {
+  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isResortMasterplan && await detectUnintendedLightBorder(inputBuffer)) {
     return {
       passed: false,
       issues: ["unintended white border or mat around the image"],
@@ -108,14 +109,18 @@ export async function assessGeneratedImageQuality(
               type: "text",
               text: `Inspect only the visible pixels of this generated commercial image. Expected title: ${context.expectedTitle}. Intended buyer use: ${context.intendedUse || "general commercial design"}. Mode: ${context.mode}.
 Reject it if ANY readable or pseudo-readable letters, words, numerals, captions, title, logo, signature or watermark appear anywhere. Also reject a poster/card/mockup layout, blank header/footer panel, outer frame, mat, border, canvas margin, or image placed inside another page.
-${context.isExhibitionBooth
+${context.isResortMasterplan
+  ? "This is an ARCHITECTURAL RESORT MASTERPLAN SKETCH, not a photograph. Require a coherent elevated bird's-eye oblique view showing the complete project, readable water amenities, accommodation/villas, landscape/terrain and connected circulation at consistent scale. Require fine ink/graphite linework, plentiful unpainted warm-white paper and sparse pastel tints at water, roofs and planting. White paper and quiet title-free negative space are intentional, NOT artificial borders or blank poster panels. Reject actual drawn frames or inset sheets, cropped site, frontal booth views, saturated photorealistic renders, disconnected paths, floating buildings or incomprehensible zoning. Set hasClearLiteralStory=true when the site program and planning relationships are understandable. No title, lettering, labels, scale bars, legends, people or visible faces."
+  : context.isExhibitionBooth
   ? "This is a FULL-SIZE EXHIBITION-BOOTH ARCHITECTURAL VISUALIZATION. Accept a centered complete booth on a seamless pure WHITE studio background with balanced white breathing room: white negative space is intentional and is NOT an artificial border or mat. Set hasArtificialBorder=false for a continuous white backdrop; reject only an actual drawn frame or inset page. Require strict straight-on frontal orthographic elevation, eye-level centered camera, complete canopy, platform and features visible, plausible joined structure, supported shelves, organized merchandise, open accessible front and realistic material/light detail. Blank sign surfaces and architectural display panels are intentional; they are not poster layouts. No people or lettering. Set hasClearLiteralStory=true when the exhibition architecture and retail-display use are clear. Reject cropped parts, cluttered real-world event halls, disconnected supports, dollhouse miniatures or wrong camera angle."
   : context.isFoodFusion
   ? "This is an INTENTIONAL SURREAL FOOD-HARDWARE FUSION, not a literal scene. Accept the impossible hybrid when one recognizable food component joins one recognizable mechanical component into exactly ONE connected hero with a clean seamless joint, credible food and industrial textures, matte studio backdrop, generous negative space and a soft contact shadow. Set hasClearLiteralStory=true when the two ingredients and their intended metaphor are visually readable; do not require an everyday action, person, room or location. Reject separate props, unrelated piles, multiple heroes, broken joints, indistinguishable food or hardware, or a flat pasted collage. Do not reject simply because the fusion is surreal."
   : "Apply a strict two-second clarity test: an ordinary viewer must immediately name the main subject and understand the literal action or practical purpose without reading metadata or guessing a symbolic metaphor. Reject abstract assemblages, surreal hybrids, unrelated object piles, ambiguous sculptures, decorative material metaphors, or scenes whose buyer use is not visually clear."}
 Mandatory face rule: ${NO_VISIBLE_FACE_RULE} Set hasVisibleHumanFace=true if any human face or part of a face is visible, however small, blurred or obscured. Human backs, hands and bodies with all faces outside the frame are allowed. Animal faces are allowed.
 For transparent_png, the dark gray shown around the subject represents transparency. Require exactly one intact, familiar, opaque subject with a simple readable silhouette. Its normal practical function must be obvious, but it does not need to show an action; set hasClearLiteralStory=true when the single object and its normal use are immediately clear. Reject missing chunks, accidental transparent holes through solid areas, ragged/dirty/haloed edges, fragmented pieces, multiple unrelated objects, or a result that does not visibly match the expected title.
-${context.isExhibitionBooth
+${context.isResortMasterplan
+  ? "The paper drawing itself is the final artwork, with no visible page edge or mockup. Accept linework and pale watercolor as the requested medium; do not demand food/hardware textures, architectural photorealism or a lifestyle setting."
+  : context.isExhibitionBooth
   ? "The white studio backdrop and floor ARE the requested setting; do not require a room or real event hall. This is an architectural design proposal, not a food fusion or lifestyle photograph."
   : context.isFoodFusion
   ? "The minimalist studio surface IS the correct setting. Photorealistic material rendering is required, while impossible construction is intentional. The single hybrid should support the stated campaign concept."

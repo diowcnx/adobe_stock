@@ -689,8 +689,8 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="Food Fusion 7 ช่อง และ Exhibition Booth 17 ช่อง">
-              Food Fusion + Exhibition Booth · JPEG
+            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="Food Fusion 7 ช่อง · Booth 17 ช่อง · Masterplan 8 ช่อง">
+              3 Structures · JPEG
             </div>
 
             {/* Run Button */}
@@ -907,17 +907,17 @@ export default function Dashboard() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
-                  Food Fusion + Thai Craft Booths
+                  Food Fusion · Booth · Masterplan
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Food Fusion 5 ภาพ + Booth 5 ภาพ · ไม่มีคน
+                  ประเภทละ 3–4 ภาพ รวม 10 ภาพ · ไม่มีคน
                 </p>
               </div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-              <h3 className="font-semibold text-white mb-3">Two structures · Randomized batches</h3>
-              <p className="text-sm text-slate-300">ชุดละ 10 ภาพ: Food × Hardware Fusion 5 ภาพ สุ่มจาก 16 คู่ และบูธงานคราฟต์ไทย 5 ภาพ สุ่มจาก 8 แบบ แต่ละประเภทไม่ซ้ำภายในชุด บูธใช้มุมหน้าตรง เห็นครบทั้งชิ้น พื้นขาว และพื้นที่ป้ายว่างสำหรับใส่ข้อความเอง</p>
+              <h3 className="font-semibold text-white mb-3">Three structures · Randomized batches</h3>
+              <p className="text-sm text-slate-300">รวม 10 ภาพ แบ่งประเภทละ 3–4 ภาพ และหมุนเวียนประเภทที่ได้ภาพเพิ่มในแต่ละวัน: Food Fusion จาก 16 คู่ บูธงานคราฟต์ไทยจาก 8 แบบ และผังรีสอร์ตเส้นร่างแต้มพาสเทลจาก 8 แบบ สุ่มไม่ซ้ำภายในประเภท บูธมองหน้าตรง ผังโครงการมองมุมสูง ทุกภาพไม่มีคนและไม่มีตัวหนังสือ</p>
               <details className="mt-3">
               <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -948,7 +948,7 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Builds five 7-field Food Fusion briefs and five 17-field Exhibition Booth briefs, then shuffles the batch. JPEG only, no people or rendered lettering.</p>
+                  <p className="text-slate-400">Builds 7-field Food Fusion, 17-field Booth and 8-field Masterplan briefs. Ten JPEG images total, with a rotating 4/3/3 split and no people or lettering.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
@@ -1316,6 +1316,19 @@ export default function Dashboard() {
                             </div>
                           </div>
 
+                          {img.masterplanStructure && (
+                            <details className="rounded-xl border border-sky-900/60 bg-sky-950/20 p-3">
+                              <summary className="cursor-pointer text-xs font-semibold text-sky-300">USER_INPUT · Resort Masterplan · 8 Fields</summary>
+                              <dl className="mt-3 space-y-2">
+                                {Object.entries(img.masterplanStructure).map(([field, value]) => (
+                                  <div key={field}>
+                                    <dt className="text-xs text-sky-300">{field}</dt>
+                                    <dd className="text-xs text-slate-300">{value}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            </details>
+                          )}
                           {img.boothStructure && (
                             <details className="rounded-xl border border-emerald-900/60 bg-emerald-950/20 p-3">
                               <summary className="cursor-pointer text-xs font-semibold text-emerald-300">USER_INPUT · Exhibition Booth · 17 Fields</summary>

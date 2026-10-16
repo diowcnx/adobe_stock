@@ -5,10 +5,47 @@ import { assessGeneratedImageQuality, detectUnintendedLightBorder } from "../lib
 import { buildQualityRetryDirection, ensureGenuineAlphaTransparency, generateSingleImage } from "../lib/image-generator";
 import type { StockImageItem } from "../lib/types";
 import { buildExhibitionBoothBatch } from "../lib/exhibition-booth";
+import { buildResortMasterplanBatch } from "../lib/resort-masterplan";
 
 async function solidImage(background: string): Promise<Buffer> {
   return sharp({ create: { width: 256, height: 256, channels: 3, background } }).jpeg().toBuffer();
 }
+
+test("masterplan inspection and retry preserve sketch medium and bird's-eye perspective", async () => {
+  const originalFetch = globalThis.fetch;
+  const item = buildResortMasterplanBatch(new Date("2026-10-16T12:00:00Z"), 1)[0];
+  const image = await solidImage("#eceadf");
+  let qaCalls = 0;
+  const prompts: string[] = [];
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    if (body.model === "google/gemini-3.1-flash-lite-image") {
+      prompts.push(body.messages[0].content);
+      return new Response(JSON.stringify({ choices: [{ message: { images: [{ b64_json: image.toString("base64") }] } }] }));
+    }
+    const inspection = body.messages[0].content[0].text;
+    assert.match(inspection, /ARCHITECTURAL RESORT MASTERPLAN SKETCH/);
+    assert.doesNotMatch(inspection, /This is a FULL-SIZE EXHIBITION-BOOTH/);
+    assert.doesNotMatch(inspection, /This is an INTENTIONAL SURREAL FOOD-HARDWARE/);
+    qaCalls++;
+    const passed = qaCalls === 2;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      passed, hasVisibleHumanFace: false, hasText: false, hasArtificialBorder: false,
+      hasPosterLayout: false, isImmediatelyRecognizable: true, hasClearLiteralStory: true,
+      hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: false,
+      issues: passed ? [] : ["render is photorealistic rather than linework with sparse tints"],
+    }) } }] }));
+  };
+  try {
+    const result = await generateSingleImage(item, "test-key");
+    assert.equal(qaCalls, 2);
+    assert.match(prompts[0], /SKETCH ILLUSTRATION/);
+    assert.match(prompts[1], /Redraw the SAME resort project/);
+    assert.doesNotMatch(prompts[1], /Use only the single food-hardware hybrid/);
+    assert.equal(result.qualityReview?.status, "passed_after_retries");
+    assert.match(result.imageUrl, /^data:image\/jpeg/);
+  } finally { globalThis.fetch = originalFetch; }
+});
 
 test("booth QA permits white presentation space and retries preserve booth structure", async () => {
   const originalFetch = globalThis.fetch;

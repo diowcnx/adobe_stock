@@ -75,6 +75,7 @@ export interface FoodFusionStructure {
 }
 
 export interface StockImageItem {
+  masterplanStructure?: ResortMasterplanStructure;
   boothStructure?: ExhibitionBoothStructure;
   fusionStructure?: FoodFusionStructure;
   generationBriefVersion?: string;
@@ -99,6 +100,17 @@ export interface StockImageItem {
   costEstimate?: string;
   description?: string;
   qualityReview?: ImageQualityReview;
+}
+
+export interface ResortMasterplanStructure {
+  PROJECT_THEME: string;
+  PROJECT_TITLE: string;
+  VIEW_AND_PERSPECTIVE: string;
+  LINEWORK_AND_TINT_STYLE: string;
+  WATERPARK_AND_AMENITY_ZONE: string;
+  ACCOMMODATION_AND_STRUCTURES: string;
+  LANDSCAPE_AND_TERRAIN: string;
+  COLOR_PALETTE: string;
 }
 
 export interface ExhibitionBoothStructure {

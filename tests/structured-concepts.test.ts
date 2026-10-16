@@ -6,7 +6,7 @@ import { getGenerationBlockReason } from "../lib/generation-policy";
 import { generateSingleImage } from "../lib/image-generator";
 import { generateMetadataCsv } from "../lib/csv";
 
-test("every batch uses five fusion and five booth briefs without paid planning", async () => {
+test("all three structures rotate a 4/3/3 split without paid planning", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
@@ -16,8 +16,13 @@ test("every batch uses five fusion and five booth briefs without paid planning",
       assert.equal(result.conceptPlan.transparentPngCount, 0);
       assert.equal(result.conceptPlan.enabled, false);
       assert.equal(new Set(result.items.map(item => item.seoTitle)).size, 10);
-      assert.equal(result.items.filter(item => item.fusionStructure).length, 5);
-      assert.equal(result.items.filter(item => item.boothStructure).length, 5);
+      const counts = [
+        result.items.filter(item => item.fusionStructure).length,
+        result.items.filter(item => item.boothStructure).length,
+        result.items.filter(item => item.masterplanStructure).length,
+      ];
+      assert.deepEqual([...counts].sort(), [3, 3, 4]);
+      assert.equal(counts[day % 3], 4);
       assert.deepEqual(result.items.map(item => item.id), [1,2,3,4,5,6,7,8,9,10]);
       assert.equal(new Set(result.items.map(item => item.filename)).size, 10);
       for (const item of result.items) {
@@ -31,12 +36,21 @@ test("every batch uses five fusion and five booth briefs without paid planning",
           assert.match(item.prompt, /soft natural studio contact shadow/);
           assert.ok(item.prompt.includes(item.fusionStructure.ORGANIC_FOOD_PART));
           assert.ok(item.prompt.includes(item.fusionStructure.MECHANICAL_HARDWARE_PART));
-        } else {
+        } else if (item.boothStructure) {
           assert.equal(Object.keys(item.boothStructure || {}).length, 17);
           assert.match(item.prompt, /straight-on frontal orthographic/);
           assert.match(item.prompt, /PRIMARY_SIGNAGE is a BLANK architectural sign area/);
           assert.doesNotMatch(item.prompt, /Fuse ORGANIC_FOOD_PART/);
           assert.equal(isStockImageItem({ ...item, fusionStructure: result.items.find(entry => entry.fusionStructure)?.fusionStructure }), false);
+        } else {
+          assert.equal(Object.keys(item.masterplanStructure || {}).length, 8);
+          assert.match(item.prompt, /elevated bird's-eye oblique/);
+          assert.match(item.prompt, /sparse pale watercolor tints/);
+          assert.match(item.prompt, /PROJECT_TITLE is metadata/);
+          assert.equal(item.composition, "artwork");
+          assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
+          const invalid = { ...item.masterplanStructure, PROJECT_THEME: "" };
+          assert.equal(isStockImageItem({ ...item, masterplanStructure: invalid }), false);
         }
         assert.doesNotMatch(item.prompt, /Do not reinterpret the subject|Set this photograph in contemporary Thailand/);
         assert.match(item.negativePrompt || "", /visible human face/);

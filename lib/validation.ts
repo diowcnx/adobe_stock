@@ -28,7 +28,13 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (typeof value.aspectRatio !== "string" || !ASPECT_RATIOS.has(value.aspectRatio)) return false;
   if (!isBoundedString(value.prompt, 8_000)) return false;
   if (!isBoundedString(value.modelUsed, 200)) return false;
-  if (value.fusionStructure !== undefined && value.boothStructure !== undefined) return false;
+  if ([value.fusionStructure, value.boothStructure, value.masterplanStructure].filter(field => field !== undefined).length > 1) return false;
+  if (value.masterplanStructure !== undefined) {
+    if (!isRecord(value.masterplanStructure)) return false;
+    const fields = ["PROJECT_THEME", "PROJECT_TITLE", "VIEW_AND_PERSPECTIVE", "LINEWORK_AND_TINT_STYLE", "WATERPARK_AND_AMENITY_ZONE", "ACCOMMODATION_AND_STRUCTURES", "LANDSCAPE_AND_TERRAIN", "COLOR_PALETTE"];
+    if (Object.keys(value.masterplanStructure).length !== fields.length ||
+        !fields.every(field => isBoundedString((value.masterplanStructure as Record<string, unknown>)[field], 700))) return false;
+  }
   if (value.boothStructure !== undefined) {
     if (!isRecord(value.boothStructure)) return false;
     const fields = ["BOOTH_CONCEPT", "VIEW_ANGLE", "BACKGROUND_STYLE", "BOOTH_STRUCTURE", "PRIMARY_SIGNAGE", "GRAPHIC_BACKDROP", "DECORATIVE_MARKS", "LEFT_FEATURE_ELEMENT", "RIGHT_FEATURE_ELEMENT", "DISPLAY_FIXTURES", "PRODUCT_DISPLAY", "MATERIAL_PALETTE", "SIDE_DECORATION", "FLOOR_TREATMENT", "LIGHTING_STYLE", "DESIGN_FOCUS", "VISUAL_STYLE"];
