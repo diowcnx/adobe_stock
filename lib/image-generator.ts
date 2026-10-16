@@ -3,7 +3,7 @@ import { ImageQualityReview, StockImageItem } from "./types";
 import { getErrorMessage } from "./errors";
 import { fetchAllowlistedImage, validateRemoteImageUrl } from "./remote-image";
 import { assessGeneratedImageQuality } from "./image-quality";
-import { getGenerationBlockReason, NO_VISIBLE_FACE_RULE } from "./generation-policy";
+import { getGenerationBlockReason, NO_VISIBLE_FACE_RULE, THAI_CONTEXT_RULE } from "./generation-policy";
 
 const OPENROUTER_API_BASE = "https://openrouter.ai/api/v1";
 const MAX_INPUT_PIXELS = 40_000_000;
@@ -231,6 +231,7 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
+        THAI_CONTEXT_RULE,
         NO_VISIBLE_FACE_RULE,
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",

@@ -20,11 +20,15 @@ test("all 31 daily plans produce valid JPEG briefs without paid planning or conc
         assert.equal(item.isTransparent, false);
         assert.equal(item.conceptStructure, undefined);
         assert.match(item.prompt, /No visible human faces anywhere/);
+        assert.match(item.prompt, /Set this photograph in contemporary Thailand/);
+        assert.ok(item.keywords.includes("Thailand"));
+        assert.match(item.seoTitle, /in Thailand$/);
         assert.match(item.negativePrompt || "", /visible human face/);
         assert.equal(isStockImageItem(item), true);
         assert.equal(getGenerationBlockReason(item), undefined);
         assert.match(item.filename || "", /\.jpeg$/);
-        assert.ok(item.prompt.includes(item.seoTitle.charAt(0).toLowerCase() + item.seoTitle.slice(1)));
+        const subjectTitle = item.seoTitle.replace(/ in Thailand$/, "");
+        assert.ok(item.prompt.includes(subjectTitle.charAt(0).toLowerCase() + subjectTitle.slice(1)));
       }
       assert.doesNotMatch(generateMetadataCsv(result.items, result.mode), /\.png/);
     }

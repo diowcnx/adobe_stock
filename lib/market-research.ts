@@ -2,7 +2,7 @@ import type { ConceptPlanSummary, MarketTrend, StockImageItem } from "./types";
 import { BATCH_SIZE, getBangkokDate, getDailyCategory, type GenerationMode } from "./production-plan";
 import { generateUniqueStockFilename } from "./csv";
 import { summarizeConceptPlan } from "./structured-concepts";
-import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
+import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE, THAI_CONTEXT_RULE } from "./generation-policy";
 
 export { getDailyScheduledMode } from "./production-plan";
 
@@ -28,9 +28,10 @@ export async function conductMarketResearchAndGeneratePrompts(
   const productionDate = getBangkokDate(date);
   const mode = "regular_scene" as const;
   const items: StockImageItem[] = category.seeds.slice(0, BATCH_SIZE).map((subject, index) => {
-    const title = subject.charAt(0).toUpperCase() + subject.slice(1);
+    const title = subject.charAt(0).toUpperCase() + subject.slice(1) + " in Thailand";
     const keywords = [...new Set([
       subject,
+      "Thailand", "Thai lifestyle", "Southeast Asia",
       ...subject.toLowerCase().split(/[^a-z]+/).filter(word => word.length > 3),
       category.name.toLowerCase(), "photography", "realistic", "everyday life",
       "natural light", "commercial photography", "authentic setting", "detail",
@@ -46,6 +47,7 @@ export async function conductMarketResearchAndGeneratePrompts(
       prompt: [
         "Create one realistic full-bleed commercial photograph.",
         "Photograph this exact visible subject at normal real-world scale: " + subject + ".",
+        THAI_CONTEXT_RULE,
         "Preserve the named objects, people, action and location. A stationary room, meal, animal or landscape can be the complete subject; do not invent an action.",
         "Use believable geometry, anatomy, materials and natural lighting. Show enough of the real setting to make the subject understandable at a glance.",
         "Do not reinterpret the subject as a miniature, sculpture, diorama, craft project, symbolic installation, abstract metaphor or collage.",
@@ -64,7 +66,7 @@ export async function conductMarketResearchAndGeneratePrompts(
       filename: generateUniqueStockFilename(title, index + 1, date, mode),
       commercialIntent: {
         targetBuyer: category.buyer,
-        intendedUse: "Website, article or advertisement for " + category.buyer + ".",
+        intendedUse: "Thailand-focused website, article or advertisement for " + category.buyer + ".",
         purchaseReason: "The literal subject is visible without explanation and the full setting gives the buyer usable context and crop options. Sales are unverified.",
       },
     };
@@ -72,7 +74,7 @@ export async function conductMarketResearchAndGeneratePrompts(
   return {
     mode, items, conceptPlan: summarizeConceptPlan(items, mode),
     trend: {
-      theme: "Day " + category.day + " · " + category.name + " — JPEG photography",
+      theme: "Day " + category.day + " · " + category.name + " — Thai-context JPEG photography",
       targetMarket: category.buyer,
       commercialReasoning: "Reviewed shot list informed by Adobe's evergreen-content guidance and curated collections. No live sales ranking, paid planning call or abstract concept conversion.",
       seasonalRelevance: "Bangkok production date " + productionDate + ". Review the actual image before submission.",

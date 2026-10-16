@@ -96,7 +96,7 @@ test("vision guard accepts a full-bleed scene with no text", async () => {
 });
 
 const testItem: StockImageItem = {
-  generationBriefVersion: "literal-jpeg-no-faces-v2",
+  generationBriefVersion: "thai-jpeg-no-faces-v3",
   id: 1,
   seoTitle: "Parent Fastening Child Raincoat Before Walk",
   category: "Commercial Story",
