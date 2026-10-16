@@ -41,6 +41,8 @@ export const STILL_LIFE_ASPECT_RATIOS: StockImageItem["aspectRatio"][] = [
   "4:5", "3:2", "1:1", "16:9", "4:5", "3:2", "1:1", "16:9", "4:5", "3:2",
 ];
 
+export const STRUCTURED_TRANSPARENT_COUNT = 6;
+
 function hashSeed(value: string): number {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -122,3 +124,17 @@ export function formatBuyerContextEditorialStillLifePrompt(fields: ThaiEditorial
 
 /** Backward-compatible export for callers and saved schema names created before the buyer-context update. */
 export const formatThaiEditorialStillLifePrompt = formatBuyerContextEditorialStillLifePrompt;
+
+export function formatBuyerContextTransparentAssetPrompt(fields: ThaiEditorialStillLifeStructure): string {
+  return [
+    `Create one original reusable transparent-background commercial design asset from this invisible campaign direction: ${fields.CAMPAIGN_THEME}.`,
+    `Translate this idea into one coherent isolated object or tightly connected object cluster: ${fields.MAIN_CONCEPT}.`,
+    `Core asset: ${fields.CENTRAL_INSTALLATION}. Primary components: ${fields.PRIMARY_COMPONENTS}.`,
+    `Supporting details must remain physically connected or closely grouped: ${fields.SUPPORTING_ACCENT_1}; ${fields.SUPPORTING_ACCENT_2}.`,
+    `Show credible material scale and surface detail: ${fields.MATERIAL_FOCUS}.`,
+    `View and optics: ${fields.CAMERA_ANGLE}; ${fields.LENS_TYPE}; ${fields.SHOT_TYPE}. Lighting: ${fields.LIGHTING}.`,
+    `Composition: ${fields.COMPOSITION_LOGIC}. Atmosphere: ${fields.ATMOSPHERIC_STYLE}. Color palette: ${fields.COLOR_PALETTE}.`,
+    "Center the complete asset with safe padding so no part is cropped. Use a clean silhouette suitable for compositing. No floor, wall, horizon, room, environmental scene, frame, border, mat, card, poster, mockup, cast shadow, contact shadow or detached floating debris.",
+    "Do not render letters, words, numerals, notation, logos, trademarks, signatures, watermarks or pseudo-text. Do not default to Thailand or add cultural identity unless the buyer brief genuinely requires it.",
+  ].join(" ");
+}

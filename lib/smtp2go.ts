@@ -216,11 +216,11 @@ function generateNotificationEmailHtml(
       <!-- Mode & Upscale Recommendation -->
       <div style="background-color: #ffffff; border: 1.5px solid ${isStructured ? "#8b5cf6" : isTransparent ? "#38bdf8" : "#10b981"}; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
         <div style="color: ${isStructured ? "#7c3aed" : isTransparent ? "#0284c7" : "#059669"}; font-size: 14px; font-weight: 800; margin-bottom: 4px;">
-          ${isStructured ? `🧵 Structured Editorial Still Life ${conceptPlan.structuredCount} ภาพ` : isTransparent ? "🔲 โหมดวันนี้: ชุดภาพ PNG พื้นหลังโปร่งใส (100% Alpha Cutout)" : "🏞️ โหมดวันนี้: ชุดภาพทั่วไปหรืองานศิลป์ตามหมวดประจำวัน"}
+          ${isStructured ? `🧵 Structured Buyer Assets ${conceptPlan.transparentPngCount} PNG + ${conceptPlan.regularSceneCount} JPEG` : isTransparent ? "🔲 โหมดวันนี้: ชุดภาพ PNG พื้นหลังโปร่งใส (100% Alpha Cutout)" : "🏞️ โหมดวันนี้: ชุดภาพทั่วไปหรืองานศิลป์ตามหมวดประจำวัน"}
         </div>
         <div style="color: #475569; font-size: 13px; line-height: 1.4;">
           ${isStructured
-            ? `ทั้งชุดเป็นภาพโฆษณา Editorial Still Life แบบ <strong>JPEG</strong> วางแผนจาก Structure 18 ช่อง และไม่แสดงข้อความจริงในภาพ`
+            ? `ชุดนี้เน้น <strong>Transparent PNG ${conceptPlan.transparentPngCount} ภาพ</strong> สำหรับนำไปจัดวางต่อ และ JPEG เต็มขอบ ${conceptPlan.regularSceneCount} ภาพ ทุกภาพวางแผนจาก Structure 18 ช่องและไม่แสดงข้อความจริงในภาพ`
             : isTransparent
             ? "ชุดนี้เป็นภาพ Isolated Cutout ทั้งหมด กรุณาเลือกบันทึกผลลัพธ์เป็น <strong>.PNG</strong> เพื่อรักษาความโปร่งใส"
             : "ชุดนี้ใช้ชื่อไฟล์ <strong>.jpeg</strong> โดยองค์ประกอบภาพยึดตามโจทย์ของหมวดประจำวัน"}
@@ -295,7 +295,7 @@ function generateNotificationEmailPlainText(
   const replacedImages = images.filter((image) => image.qualityReview?.status === "passed_after_retries");
   const warnedImages = images.filter((image) => image.qualityReview?.status === "accepted_after_retry_limit");
   const modeLabel = conceptPlan.enabled
-    ? `🧵 Structured Editorial Still Life ${conceptPlan.structuredCount} ภาพ (${conceptPlan.regularSceneCount} JPEG)`
+    ? `🧵 Structured Buyer Assets ${conceptPlan.structuredCount} ภาพ (${conceptPlan.transparentPngCount} Transparent PNG + ${conceptPlan.regularSceneCount} JPEG)`
     : mode === "transparent_png"
       ? "🔲 ชุดภาพ PNG พื้นหลังโปร่งใส (แนะนำ Save เป็น .PNG)"
       : "🏞️ ชุดภาพทั่วไปหรืองานศิลป์ตามหมวดประจำวัน (ชื่อไฟล์ .jpeg)";

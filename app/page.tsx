@@ -80,7 +80,7 @@ function mergeSavedBatches(serverEntries: unknown, localEntries: unknown): Saved
 
 function getSavedBatchModeLabel(batch: SavedBatch): string {
   const summary = batch.data.conceptPlan || summarizeConceptPlan(batch.data.images, batch.mode);
-  if (summary.enabled) return `🧵 Structured ${summary.structuredCount} JPEG`;
+  if (summary.enabled) return `🧵 ${summary.transparentPngCount} PNG + ${summary.regularSceneCount} JPEG`;
   return batch.mode === "transparent_png" ? "🔲 PNG" : "🏞️ ฉาก";
 }
 
@@ -910,7 +910,7 @@ export default function Dashboard() {
                   🧵 Buyer-Context Editorial Still Life
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {todayCategory.name} · Filename: .jpeg
+                  {todayCategory.name} · 6 PNG + 4 JPEG
                 </p>
               </div>
             </div>
@@ -922,7 +922,7 @@ export default function Dashboard() {
                   <div key={category.day} className={`rounded-xl border p-3 ${category.day === todayCategory.day ? "border-sky-500/60 bg-sky-950/40" : "border-slate-800 bg-slate-950/50"}`}>
                     <div className="text-[11px] text-slate-500">Day {category.day}</div>
                     <div className="text-xs font-semibold text-slate-200 mt-1">{category.name}</div>
-                    <div className="text-[10px] text-slate-500 mt-1">Editorial Still Life JPEG</div>
+                    <div className="text-[10px] text-slate-500 mt-1">Daily mix: 6 PNG + 4 JPEG</div>
                   </div>
                 ))}
               </div>
@@ -1098,14 +1098,14 @@ export default function Dashboard() {
                     <div>
                       <strong className="block text-white text-sm font-bold">
                         {currentConceptPlan?.enabled
-                          ? `${currentConceptPlan.structuredCount} Structured Editorial Still Life (${currentConceptPlan.regularSceneCount} JPEG)`
+                          ? `${currentConceptPlan.structuredCount} Structured Assets (${currentConceptPlan.transparentPngCount} PNG + ${currentConceptPlan.regularSceneCount} JPEG)`
                           : latestResult.generationMode === "transparent_png"
                           ? `100% Transparent PNG Set (พื้นหลังโปร่งใสทั้งชุด ${latestResult.images.length} ภาพ)`
                           : `100% Regular Commercial Stock Set (ภาพทั่วไปมีฉากหลังทั้งชุด ${latestResult.images.length} ภาพ)`}
                       </strong>
                       <span className="text-slate-300">
                         {currentConceptPlan?.enabled
-                          ? "ทุกภาพวางแผนด้วย Structure 18 ช่อง เน้นองค์ประกอบโฆษณา พื้นผิวสมจริง และเว้นพื้นที่สำหรับใส่ข้อความภายหลังโดยไม่สร้างตัวอักษรลงในภาพ"
+                          ? "ภาพ PNG ออกแบบเป็นสินทรัพย์ตัดพื้นหลังที่นำไปจัดวางต่อได้ ส่วน JPEG เป็นฉากเต็มขอบ ทุกภาพใช้ Structure 18 ช่องและห้ามสร้างตัวอักษรลงในภาพ"
                           : latestResult.generationMode === "transparent_png"
                           ? "💡 คำแนะนำการ Upscale: บันทึกไฟล์เป็น .PNG เท่านั้น เพื่อรักษาความโปร่งใส (Alpha Transparency) สำหรับส่งขายหมวด Isolated PNG"
                           : "💡 รูปภาพทั่วไปและงานศิลป์ใช้ชื่อไฟล์ .jpeg โดยองค์ประกอบภาพจะยึดตามหมวดประจำวัน"}

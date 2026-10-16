@@ -233,8 +233,12 @@ export async function generateSingleImage(
       const mandatoryExclusions = [
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
-        "The scene or physical background must extend fully to all four image edges. No outer border, mat, frame, canvas margin, poster, card, blank header, blank footer, title panel, inset image, mockup, or page-within-the-image.",
-        "Any copy space must remain a natural uninterrupted part of the photographed physical background inside the full-bleed scene; never turn copy space into a white rectangle or graphic panel.",
+        isTransparent
+          ? "Render only one complete isolated object or tightly connected cluster on uniform pure white for alpha extraction. No environment, floor, wall, horizon, frame, border, poster, card, mockup, cast shadow, contact shadow, detached fragments or cropped edges."
+          : "The scene or physical background must extend fully to all four image edges. No outer border, mat, frame, canvas margin, poster, card, blank header, blank footer, title panel, inset image, mockup, or page-within-the-image.",
+        isTransparent
+          ? "Do not create advertising copy space or a layout; preserve clear padding around the isolated asset."
+          : "Any copy space must remain a natural uninterrupted part of the photographed physical background inside the full-bleed scene; never turn copy space into a white rectangle or graphic panel.",
         item.negativePrompt ? `Also exclude: ${item.negativePrompt}.` : "",
       ].filter(Boolean).join(" ");
 

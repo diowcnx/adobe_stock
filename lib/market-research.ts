@@ -12,11 +12,13 @@ import { generateUniqueStockFilename } from "./csv";
 import { BATCH_SIZE, getBangkokDate, getDailyCategory, getDailyScheduledMode, type GenerationMode } from "./production-plan";
 import {
   formatBuyerContextEditorialStillLifePrompt,
+  formatBuyerContextTransparentAssetPrompt,
   shuffleForProductionDate,
   STILL_LIFE_ASPECT_RATIOS,
   summarizeConceptPlan,
   THAI_EDITORIAL_STILL_LIFE_FIELDS,
   THAI_EDITORIAL_STILL_LIFE_TYPE,
+  STRUCTURED_TRANSPARENT_COUNT,
 } from "./structured-concepts";
 
 export { getDailyScheduledMode } from "./production-plan";
@@ -371,7 +373,7 @@ function createStructuredFallbacks(category: ReturnType<typeof getDailyCategory>
       keywords: fallbackKeywords(seed, category.name, "regular_scene"),
       structure: {
         CAMPAIGN_THEME: `${category.name}: a buyer-relevant material story designed for ${category.buyer}`,
-        MAIN_CONCEPT: `the practical and emotional value of ${seed}, expressed through physical materials rather than literal signage`,
+        MAIN_CONCEPT: `the practical and emotional value of ${seed}, reduced to a cohesive emblem-like cluster of recognizable unbranded objects rather than a literal room or landscape`,
         CAMERA_ANGLE: story.CAMERA_ANGLE,
         LENS_TYPE: story.LENS_TYPE,
         SHOT_TYPE: story.SHOT_TYPE,
@@ -379,7 +381,7 @@ function createStructuredFallbacks(category: ReturnType<typeof getDailyCategory>
         BACKGROUND_BASE: materials[0],
         BACKGROUND_TEXTURE: materials[2],
         BACKGROUND_DETAILS: "restrained tonal variation that remains part of one continuous full-bleed physical surface",
-        CENTRAL_INSTALLATION: `an original three-dimensional studio interpretation of ${seed}`,
+        CENTRAL_INSTALLATION: `a compact connected cluster of objects symbolizing ${seed}, without recreating an environment`,
         PRIMARY_COMPONENTS: materials[1],
         SUPPORTING_ACCENT_1: "one small locally appropriate everyday material chosen only when it supports the buyer context",
         SUPPORTING_ACCENT_2: "a restrained unbranded geometric accent for scale and visual rhythm",
@@ -404,22 +406,33 @@ function createLegacyFallbacks(category: ReturnType<typeof getDailyCategory>, mo
 }
 
 function buildStructuredDrafts(concepts: StructuredConcept[], planningSource: PlanningSource): StockImageDraft[] {
-  return concepts.map((concept, index) => ({
-    seoTitle: concept.title,
-    category: "Buyer-Context Editorial Still Life",
-    aspectRatio: STILL_LIFE_ASPECT_RATIOS[index] || "4:5",
-    composition: "advertising",
-    prompt: `${formatBuyerContextEditorialStillLifePrompt(concept.structure)} Distinctive direction: ${concept.differentiation}. Target buyer (context only): ${concept.commercialIntent.targetBuyer}. Intended use (do not render text): ${concept.commercialIntent.intendedUse}. Licensing value to express visually: ${concept.commercialIntent.purchaseReason}.`,
-    negativePrompt: "text, lettering, typography, numerals, logos, signatures, watermarks, preview overlays, branded objects, flags, political symbols, sacred objects, protected cultural patterns, token cultural costumes, stereotypical tourist props, impossible material joints, plastic AI glossiness, duplicated objects",
-    keywords: concept.keywords,
-    modelUsed: "google/gemini-3.1-flash-lite-image",
-    generationMode: "regular_scene",
-    isTransparent: false,
-    conceptMode: "structured_concept",
-    conceptStructure: { type: THAI_EDITORIAL_STILL_LIFE_TYPE, fields: concept.structure },
-    commercialIntent: concept.commercialIntent,
-    planningSource,
-  }));
+  return concepts.map((concept, index) => {
+    const isTransparent = index < STRUCTURED_TRANSPARENT_COUNT;
+    const formattedPrompt = isTransparent
+      ? formatBuyerContextTransparentAssetPrompt(concept.structure)
+      : formatBuyerContextEditorialStillLifePrompt(concept.structure);
+    return {
+      seoTitle: concept.title,
+      category: isTransparent ? "Buyer-Context Transparent Design Asset" : "Buyer-Context Editorial Still Life",
+      aspectRatio: isTransparent ? "1:1" : STILL_LIFE_ASPECT_RATIOS[index] || "4:5",
+      composition: isTransparent ? "asset" : "advertising",
+      prompt: `${formattedPrompt} Distinctive direction: ${concept.differentiation}. Target buyer (context only): ${concept.commercialIntent.targetBuyer}. Intended use (do not render text): ${concept.commercialIntent.intendedUse}. Licensing value to express visually: ${concept.commercialIntent.purchaseReason}.`,
+      negativePrompt: isTransparent
+        ? "text, lettering, typography, numerals, musical notation, logos, signatures, watermarks, preview overlays, branded objects, background scene, floor, wall, horizon, border, frame, cast shadow, contact shadow, detached fragments, cropped edges, checkerboard pattern, plastic AI glossiness, duplicated objects"
+        : "text, lettering, typography, numerals, logos, signatures, watermarks, preview overlays, branded objects, flags, political symbols, sacred objects, protected cultural patterns, token cultural costumes, stereotypical tourist props, impossible material joints, plastic AI glossiness, duplicated objects",
+      keywords: [...new Set([
+        ...(isTransparent ? ["transparent png", "isolated design asset", "clean cutout"] : []),
+        ...concept.keywords,
+      ])].slice(0, 25),
+      modelUsed: "google/gemini-3.1-flash-lite-image",
+      generationMode: isTransparent ? "transparent_png" : "regular_scene",
+      isTransparent,
+      conceptMode: "structured_concept",
+      conceptStructure: { type: THAI_EDITORIAL_STILL_LIFE_TYPE, fields: concept.structure },
+      commercialIntent: concept.commercialIntent,
+      planningSource,
+    };
+  });
 }
 
 function buildLegacyDrafts(
@@ -452,7 +465,7 @@ async function planStructuredConcepts(
 ): Promise<StructuredConcept[]> {
   const response = await callOpenRouterJSON<unknown>(
     `You are a commercial art director creating original buyer-context Editorial Still Life advertising images for an international image marketplace. Start with the target buyer, intended placement and likely end-user environment, then select accessible materials, color, seasonality and spatial cues that make the image useful in that market.
-Return exactly ${BATCH_SIZE} concepts. Every concept must tell a different commercially useful story and use a different central installation, material combination, camera treatment and composition. Do not create recolors, crops or alternate angles of one arrangement.
+Return exactly ${BATCH_SIZE} concepts in the requested order. Concepts 1-${STRUCTURED_TRANSPARENT_COUNT} must be designed specifically as reusable isolated transparent-PNG assets: one coherent object or tightly connected cluster, recognizable silhouette, no environment, no floor and no detached tiny parts. Concepts ${STRUCTURED_TRANSPARENT_COUNT + 1}-${BATCH_SIZE} must be full-bleed JPEG editorial still-life scenes with useful natural copy space. Every concept must tell a different commercially useful story and use a different central installation, material combination, camera treatment and composition. Do not create recolors, crops or alternate angles of one arrangement.
 Each concept must contain title, targetBuyer, intendedUse, purchaseReason, differentiation, 15-25 accurate English keyword phrases in descending relevance, and a structure object with exactly these 18 non-empty string fields: ${THAI_EDITORIAL_STILL_LIFE_FIELDS.join(", ")}.
 targetBuyer must name a realistic customer segment. intendedUse must name concrete placements and purposes such as a campaign hero, packaging-support visual, article opener or social advertisement. purchaseReason must explain why a designer would license this specific image instead of a generic alternative, grounded only in visible utility such as useful copy space, flexible crops, distinctive material storytelling and credible tactile detail.
 CAMPAIGN_THEME is invisible art direction, not a title treatment. It must not repeat the SEO title or ask for visible lettering, a poster, card, header, footer, frame, border or blank graphic panel.
@@ -524,7 +537,7 @@ export async function conductMarketResearchAndGeneratePrompts(
         ? `Day ${category.day} · ${category.name} — 10 buyer-context Editorial Still Life concepts`
         : `Day ${category.day} · ${category.name} — ${BATCH_SIZE} legacy concepts`,
       targetMarket: category.buyer,
-      commercialReasoning: `${planningSource === "curated_fallback" ? "Curated fallback briefs; AI planning unavailable." : "AI-developed briefs based on the active structured-concept schema."} ${structuredEnabled ? "All ten images use the 18-field buyer-context Editorial Still Life structure, without defaulting to one country." : "Structured concepts are disabled by rollback switch."} No live sales, competition or keyword-volume validation; review before submission.`,
+      commercialReasoning: `${planningSource === "curated_fallback" ? "Curated fallback briefs; AI planning unavailable." : "AI-developed briefs based on the active structured-concept schema."} ${structuredEnabled ? `${conceptPlan.transparentPngCount} concepts are reusable transparent PNG assets and ${conceptPlan.regularSceneCount} are full-bleed JPEG scenes, all using the 18-field buyer-context structure without defaulting to one country.` : "Structured concepts are disabled by rollback switch."} No live sales, competition or keyword-volume validation; review before submission.`,
       seasonalRelevance: `Production date ${productionDate}; monthly buyer context day ${category.day}/31. Validate any regional, cultural and seasonal details manually.`,
       buyerDemandRating: "Research Candidate",
     },

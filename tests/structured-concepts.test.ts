@@ -58,11 +58,14 @@ function assertStructuredBatch(items: StockImageItem[]) {
   assert.ok(items.every((item) => item.conceptMode === "structured_concept"));
   assert.equal(new Set(items.map((item) => item.seoTitle)).size, 10);
 
+  assert.equal(items.filter((item) => item.generationMode === "transparent_png").length, 6);
+  assert.equal(items.filter((item) => item.generationMode === "regular_scene").length, 4);
+
   for (const item of items) {
-    assert.equal(item.generationMode, "regular_scene");
-    assert.equal(item.isTransparent, false);
-    assert.equal(item.composition, "advertising");
-    assert.match(item.filename || "", /\.jpeg$/);
+    const isTransparent = item.generationMode === "transparent_png";
+    assert.equal(item.isTransparent, isTransparent);
+    assert.equal(item.composition, isTransparent ? "asset" : "advertising");
+    assert.match(item.filename || "", isTransparent ? /\.png$/ : /\.jpeg$/);
     assert.ok(item.keywords.length >= 15 && item.keywords.length <= 25);
     assert.equal(item.conceptStructure?.type, THAI_EDITORIAL_STILL_LIFE_TYPE);
     assert.ok(item.commercialIntent?.targetBuyer);
@@ -72,9 +75,15 @@ function assertStructuredBatch(items: StockImageItem[]) {
     assert.equal(Object.keys(item.conceptStructure?.fields || {}).length, 18);
     for (const field of THAI_EDITORIAL_STILL_LIFE_FIELDS) assert.ok(item.conceptStructure?.fields[field]);
     assert.match(item.conceptStructure?.fields.TEXT_ELEMENTS || "", /(no|without|reserve|copy space)/i);
-    assert.match(item.prompt, /Do not render any letters, words, numerals,.*logos or pseudo-text/);
-    assert.match(item.prompt, /full-bleed photograph/);
-    assert.match(item.prompt, /no frame, mat, white margin, canvas border, inset image, poster layout or page mockup/i);
+    assert.match(item.prompt, /Do not render (?:any )?letters, words, numerals,.*logos.*pseudo-text/);
+    if (isTransparent) {
+      assert.match(item.prompt, /transparent-background commercial design asset/i);
+      assert.match(item.prompt, /No floor, wall, horizon/i);
+      assert.ok(item.keywords.includes("transparent png"));
+    } else {
+      assert.match(item.prompt, /full-bleed photograph/);
+      assert.match(item.prompt, /no frame, mat, white margin, canvas border, inset image, poster layout or page mockup/i);
+    }
     assert.doesNotMatch(item.prompt, /Create an original Thai editorial/i);
     assert.match(item.prompt, /Do not default to Thailand/i);
     assert.doesNotMatch(item.prompt, /reserve clean copy space number/i);
@@ -99,8 +108,8 @@ test("mocked planner produces ten validated 18-field Editorial Still Life concep
       enabled: true,
       structuredCount: 10,
       legacyCount: 0,
-      transparentPngCount: 0,
-      regularSceneCount: 10,
+      transparentPngCount: 6,
+      regularSceneCount: 4,
       structureType: THAI_EDITORIAL_STILL_LIFE_TYPE,
     });
 

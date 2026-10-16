@@ -50,10 +50,11 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   }
   if (value.conceptMode === "structured_concept" && value.conceptStructure === undefined) return false;
   if (value.conceptMode === "structured_concept" && value.commercialIntent === undefined) return false;
-  if (value.conceptMode === "structured_concept" && (
-    value.generationMode !== "regular_scene" || value.isTransparent === true ||
-    value.composition !== "advertising"
-  )) return false;
+  if (value.conceptMode === "structured_concept") {
+    const isStructuredPng = value.generationMode === "transparent_png" && value.isTransparent === true && value.composition === "asset";
+    const isStructuredJpeg = value.generationMode === "regular_scene" && value.isTransparent !== true && value.composition === "advertising";
+    if (!isStructuredPng && !isStructuredJpeg) return false;
+  }
   if (value.filename !== undefined && !isBoundedString(value.filename, 240)) return false;
   if (value.imageUrl !== undefined && !isBoundedString(value.imageUrl, 35_000_000)) return false;
   if (value.imageBase64 !== undefined && !isBoundedString(value.imageBase64, 35_000_000)) return false;
