@@ -231,7 +231,9 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        item.masterplanStructure
+        item.materialArtStructure
+          ? "Render the specified single material-built artwork as a commercial still-life photograph. Use only the named materials and minimal requested background detail; natural physical backdrop and contact shadows. No people or rendered text."
+        : item.masterplanStructure
           ? "Render the complete project masterplan as fine architectural sketch linework with sparse pastel tints on continuous warm-white paper. Use an elevated bird's-eye overview, category-appropriate buildings and amenities, readable zones and coherent terrain. Water features are allowed only when explicitly specified. No people, lettering, title, labels or extra objects."
         : item.boothStructure
           ? "Render only the complete exhibition booth and specified merchandise. Strict frontal orthographic view on continuous pure white studio background. Preserve the canopy, platform, shelves, access and blank signage. No people, lettering or surrounding event hall."
@@ -250,6 +252,8 @@ export async function generateSingleImage(
 
       const originalUserContent = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : item.materialArtStructure
+          ? `Create an original art-directed material-art still-life photograph. Raw materials form one clearly recognizable motif, with realistic physical textures and natural contact shadows on a continuous studio surface. Preserve the eighteen-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.masterplanStructure
           ? `Create one architectural project masterplan SKETCH ILLUSTRATION, not a photograph. Fine graphite/ink lines and sparse pale watercolor tints, elevated bird's-eye oblique view, complete site, clear category-appropriate amenities, buildings and landscape zones. Natural unpainted paper fills every edge with no visible sheet border. Follow this eight-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.boothStructure
@@ -262,6 +266,8 @@ export async function generateSingleImage(
       const userContent = attemptIndex > 0
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
+            : item.materialArtStructure
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-stage the SAME material-art motif using the SAME raw materials. Simplify the outline, remove unnecessary accents, fix material scale and physical support, preserve clear negative space and credible texture. Keep one readable physical artwork on a continuous studio background, no lettering, people, hardware fusion, architecture or poster layout.`
             : item.masterplanStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Redraw the SAME project as an elevated bird's-eye architectural sketch, retaining its specified category, site program, amenities, buildings and terrain. Do not add unrequested resort pools, slides or villas to other project types. Correct zone relationships, perspective, path connections and roof geometry. Use fine loose lines, sparse pastel accents and plentiful unpainted paper. No title, lettering, labels, people, photo rendering, booth or food hybrid.`
             : item.boothStructure
@@ -425,6 +431,7 @@ export async function generateSingleImage(
               isFoodFusion: Boolean(item.fusionStructure),
               isExhibitionBooth: Boolean(item.boothStructure),
               isResortMasterplan: Boolean(item.masterplanStructure),
+              isMaterialArt: Boolean(item.materialArtStructure),
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

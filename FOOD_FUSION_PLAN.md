@@ -4,10 +4,11 @@ Replaces ordinary monthly photography with the user's seven-field USER_INPUT str
 CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
-Each batch now contains three structures: food pairs selected from 16 matched
+Each batch now contains four structures: food pairs selected from 16 matched
 concepts, exhibition booths selected from 12 templates and architectural masterplan
-sketches selected from 12 templates. Ten images are distributed 4/3/3, rotating
-the extra slot by Bangkok day, then shuffled. Each type is sampled without
+sketches selected from 12 templates, plus material-art still lifes selected from
+8 category-specific recipes. Ten images are distributed 3/3/2/2, rotating
+the extra slots by Bangkok day, then shuffled. Each type is sampled without
 duplicates within the batch. Booths use the user's 17-field specification;
 masterplans use the user's 8-field specification.
 Food pairs use system randomness.
@@ -64,7 +65,7 @@ typography. QA and retry rules preserve the sketch medium, complete site
 boundary, coherent zoning, paths and perspective. They do not require
 photorealism, frontal booth views or food fusion.
 
-All three structures output JPEG without people or lettering. No live image
+All four structures output JPEG without people or lettering. No live image
 generation is required to prepare the briefs.
 
 Structures are reusable across suitable buyer categories. Booths include crafts,
@@ -76,6 +77,18 @@ ACCOMMODATION_AND_STRUCTURES supports project-appropriate buildings.
 Pools/slides/villas must never be added to an unrelated project merely because
 the original structure example was a waterpark resort. QA and retry prompts use
 the same category-adaptation rule. Food fusion remains food/hardware-specific.
+
+The fourth structure is the user's new 18-field Material Art brief. It uses
+CAMPAIGN_THEME through TEXT_ELEMENTS, saved separately as materialArtStructure.
+This does not restore the retired automatic metaphor-conversion planner.
+Material Art explicitly specifies one readable physical artwork, named raw
+materials, restrained accents, camera/lens/light, a continuous textured studio
+surface, natural copy space and photographic material realism. Categories
+include food, coffee, textiles, bamboo, ceramics, flowers, rice and seeds.
+TEXT_ELEMENTS is fixed to "No text" under the current global rule.
+Validation rejects missing fields, mixed structures or visible-text requests.
+QA and replacements preserve the material-built motif; they do not demand
+a food-hardware joint, architectural elevation or sketch masterplan.
 
 Old ordinary-photography briefs are blocked before paid generation. Refresh and
 prepare a new batch after deployment. Historical downloads remain available.

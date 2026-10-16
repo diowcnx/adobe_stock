@@ -27,7 +27,7 @@ test("structures adapt merchandise, buildings, amenities and buyers to their cat
   assert.match(school.prompt, /Add pools and slides ONLY when explicitly included/);
 });
 
-test("all three structures rotate a 4/3/3 split without paid planning", async () => {
+test("all four structures rotate a 3/3/2/2 split without paid planning", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
@@ -41,9 +41,11 @@ test("all three structures rotate a 4/3/3 split without paid planning", async ()
         result.items.filter(item => item.fusionStructure).length,
         result.items.filter(item => item.boothStructure).length,
         result.items.filter(item => item.masterplanStructure).length,
+        result.items.filter(item => item.materialArtStructure).length,
       ];
-      assert.deepEqual([...counts].sort(), [3, 3, 4]);
-      assert.equal(counts[day % 3], 4);
+      assert.deepEqual([...counts].sort(), [2, 2, 3, 3]);
+      assert.equal(counts[day % 4], 3);
+      assert.equal(counts[(day + 1) % 4], 3);
       assert.deepEqual(result.items.map(item => item.id), [1,2,3,4,5,6,7,8,9,10]);
       assert.equal(new Set(result.items.map(item => item.filename)).size, 10);
       for (const item of result.items) {
@@ -63,7 +65,7 @@ test("all three structures rotate a 4/3/3 split without paid planning", async ()
           assert.match(item.prompt, /PRIMARY_SIGNAGE is a BLANK architectural sign area/);
           assert.doesNotMatch(item.prompt, /Fuse ORGANIC_FOOD_PART/);
           assert.equal(isStockImageItem({ ...item, fusionStructure: result.items.find(entry => entry.fusionStructure)?.fusionStructure }), false);
-        } else {
+        } else if (item.masterplanStructure) {
           assert.equal(Object.keys(item.masterplanStructure || {}).length, 8);
           assert.match(item.prompt, /elevated bird's-eye oblique/);
           assert.match(item.prompt, /sparse pale watercolor tints/);
@@ -72,6 +74,12 @@ test("all three structures rotate a 4/3/3 split without paid planning", async ()
           assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
           const invalid = { ...item.masterplanStructure, PROJECT_THEME: "" };
           assert.equal(isStockImageItem({ ...item, masterplanStructure: invalid }), false);
+        } else {
+          assert.equal(Object.keys(item.materialArtStructure || {}).length, 18);
+          assert.equal(item.materialArtStructure?.TEXT_ELEMENTS, "No text");
+          assert.match(item.prompt, /single clearly readable CENTRAL_INSTALLATION/);
+          assert.equal(isStockImageItem({ ...item, materialArtStructure: { ...item.materialArtStructure, TEXT_ELEMENTS: "Render a title" } }), false);
+          assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
         }
         assert.doesNotMatch(item.prompt, /Do not reinterpret the subject|Set this photograph in contemporary Thailand/);
         assert.match(item.negativePrompt || "", /visible human face/);

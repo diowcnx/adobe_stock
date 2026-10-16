@@ -28,7 +28,13 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (typeof value.aspectRatio !== "string" || !ASPECT_RATIOS.has(value.aspectRatio)) return false;
   if (!isBoundedString(value.prompt, 8_000)) return false;
   if (!isBoundedString(value.modelUsed, 200)) return false;
-  if ([value.fusionStructure, value.boothStructure, value.masterplanStructure].filter(field => field !== undefined).length > 1) return false;
+  if ([value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure].filter(field => field !== undefined).length > 1) return false;
+  if (value.materialArtStructure !== undefined) {
+    if (!isRecord(value.materialArtStructure) ||
+        Object.keys(value.materialArtStructure).length !== THAI_EDITORIAL_STILL_LIFE_FIELDS.length ||
+        !THAI_EDITORIAL_STILL_LIFE_FIELDS.every(field => isBoundedString((value.materialArtStructure as Record<string, unknown>)[field], 700)) ||
+        value.materialArtStructure.TEXT_ELEMENTS !== "No text") return false;
+  }
   if (value.masterplanStructure !== undefined) {
     if (!isRecord(value.masterplanStructure)) return false;
     const fields = ["PROJECT_THEME", "PROJECT_TITLE", "VIEW_AND_PERSPECTIVE", "LINEWORK_AND_TINT_STYLE", "WATERPARK_AND_AMENITY_ZONE", "ACCOMMODATION_AND_STRUCTURES", "LANDSCAPE_AND_TERRAIN", "COLOR_PALETTE"];

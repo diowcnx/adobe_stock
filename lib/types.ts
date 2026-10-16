@@ -75,6 +75,7 @@ export interface FoodFusionStructure {
 }
 
 export interface StockImageItem {
+  materialArtStructure?: ThaiEditorialStillLifeStructure;
   masterplanStructure?: ResortMasterplanStructure;
   boothStructure?: ExhibitionBoothStructure;
   fusionStructure?: FoodFusionStructure;
