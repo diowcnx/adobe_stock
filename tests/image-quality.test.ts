@@ -2,12 +2,29 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import sharp from "sharp";
 import { assessGeneratedImageQuality, detectUnintendedLightBorder } from "../lib/image-quality";
-import { buildQualityRetryDirection, generateSingleImage } from "../lib/image-generator";
+import { buildQualityRetryDirection, ensureGenuineAlphaTransparency, generateSingleImage } from "../lib/image-generator";
 import type { StockImageItem } from "../lib/types";
 
 async function solidImage(background: string): Promise<Buffer> {
   return sharp({ create: { width: 256, height: 256, channels: 3, background } }).jpeg().toBuffer();
 }
+
+test("alpha extraction preserves light details enclosed inside the subject", async () => {
+  const image = await sharp({ create: { width: 64, height: 64, channels: 3, background: "#ffffff" } })
+    .composite([
+      { input: await sharp({ create: { width: 40, height: 40, channels: 3, background: "#303030" } }).png().toBuffer(), left: 12, top: 12 },
+      { input: await sharp({ create: { width: 20, height: 20, channels: 3, background: "#f4f4f4" } }).png().toBuffer(), left: 22, top: 22 },
+    ])
+    .png()
+    .removeAlpha()
+    .toBuffer();
+
+  const { data, info } = await sharp(await ensureGenuineAlphaTransparency(image)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const alphaAt = (x: number, y: number) => data[(y * info.width + x) * 4 + 3];
+
+  assert.equal(alphaAt(0, 0), 0, "edge-connected white background should become transparent");
+  assert.equal(alphaAt(32, 32), 255, "enclosed light-colored product detail must stay opaque");
+});
 
 test("pixel guard rejects obvious white side mats", async () => {
   const image = await sharp({ create: { width: 256, height: 256, channels: 3, background: "#6f3f68" } })

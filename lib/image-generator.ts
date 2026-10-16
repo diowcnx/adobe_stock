@@ -77,7 +77,7 @@ function getAspectRatioForModel(ratio: string): string {
 
 /**
  * ฟังก์ชันรับประกันความโปร่งใสจริง (Guaranteed True Alpha PNG Transparency)
- * ตรวจสอบพิกเซลจริง และลบลายตารางหมากรุก (Checkerboard) หรือพื้นหลังสีขาว/เทาอ่อนออกทั้งหมด 100%
+ * ตรวจสอบพิกเซลจริง และลบเฉพาะพื้นหลังสีขาว/เทาอ่อนที่เชื่อมต่อกับขอบภาพ
  * ให้กลายเป็นช่อง Alpha = 0 สำหรับ Adobe Stock Cutout PNG
  */
 export async function ensureGenuineAlphaTransparency(inputBuffer: Buffer): Promise<Buffer> {
@@ -99,8 +99,8 @@ export async function ensureGenuineAlphaTransparency(inputBuffer: Buffer): Promi
       }
     }
 
-    // 2. หากไม่มี Alpha หรือเป็นภาพที่ติดลายตารางหมากรุก/พื้นขาว
-    // ดำเนินการลบลายตารางหมากรุกและพื้นหลังด้วย BFS Flood-Fill ร่วมกับ Internal Cavity Cleaning
+    // 2. หากไม่มี Alpha หรือยังเป็นภาพพื้นขาว ให้ flood-fill จากขอบภาพเท่านั้น
+    // ห้ามลบพิกเซลสีอ่อนที่ถูกล้อมอยู่ภายในวัตถุ เพราะอาจเป็นส่วนจริงของสินค้า
     const { data, info } = await sharp(inputBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
       .ensureAlpha()
       .raw()
@@ -170,14 +170,6 @@ export async function ensureGenuineAlphaTransparency(inputBuffer: Buffer): Promi
       }
     }
 
-    // ลบช่องว่างหรือโพรงภายในโครงสร้าง (Internal Gaps) ที่เป็นลายตารางหมากรุก/สีขาว
-    for (let i = 0; i < totalPixels; i++) {
-      const idx = i * 4;
-      if (isBackgroundPixel(idx)) {
-        data[idx + 3] = 0;
-      }
-    }
-
     return await sharp(data, { raw: { width, height, channels: 4 } })
       .png({ compressionLevel: 9, adaptiveFiltering: true })
       .toBuffer();
@@ -234,7 +226,7 @@ export async function generateSingleImage(
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
         isTransparent
-          ? "Render only one complete isolated object or tightly connected cluster on uniform pure white for alpha extraction. No environment, floor, wall, horizon, frame, border, poster, card, mockup, cast shadow, contact shadow, detached fragments or cropped edges."
+          ? "Render exactly one immediately recognizable, solid opaque subject on uniform pure white for alpha extraction. It must have a broad simple silhouette and no collage, assemblage, bundle, visual metaphor, extra prop, hand holding it, transparent or translucent area, glass, liquid, smoke, mesh, lace, loose fiber, thin wire, detached fragment, environment, floor, wall, horizon, frame, border, poster, card, mockup, cast shadow, contact shadow or cropped edge."
           : "The scene or physical background must extend fully to all four image edges. No outer border, mat, frame, canvas margin, poster, card, blank header, blank footer, title panel, inset image, mockup, or page-within-the-image.",
         isTransparent
           ? "Do not create advertising copy space or a layout; preserve clear padding around the isolated asset."
@@ -243,7 +235,7 @@ export async function generateSingleImage(
       ].filter(Boolean).join(" ");
 
       const originalUserContent = isTransparent
-        ? `Create an isolated commercial design element on a pure solid white studio background. Centered floating subject, razor-sharp clean silhouette cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic tactile physical materials, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. ${mandatoryExclusions}`
+        ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
         : item.composition === "artwork"
           ? `Create the original full-bleed artwork itself, not a photograph of a print, room, frame or mockup. Follow the specified artistic medium and composition with detailed print-friendly texture. Do not reserve advertising copy space. ${sanitizedPrompt}. ${mandatoryExclusions}`
           : `Create a single full-bleed art-directed commercial scene whose photographed background reaches every edge of the final image. Authentic materials, tactile textures, natural lighting and believable geometry. Leave useful natural negative space within the physical scene when requested, but never add a layout panel or margin. No plastic AI glossiness. Follow the intended medium and visual details: ${sanitizedPrompt}. ${mandatoryExclusions}`;

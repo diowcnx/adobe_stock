@@ -293,7 +293,7 @@ function assertUniqueConcepts(entries: Array<[string, string]>): void {
 
 function validateStructuredConcepts(value: unknown): StructuredConcept[] {
   if (!Array.isArray(value) || value.length !== BATCH_SIZE) throw new Error(`Expected ${BATCH_SIZE} structured concepts`);
-  const concepts = value.map((candidate) => {
+  const concepts = value.map((candidate, index) => {
     if (!isRecord(candidate) || !isRecord(candidate.structure)) throw new Error("Invalid structured concept");
     const structure = {} as ThaiEditorialStillLifeStructure;
     for (const field of THAI_EDITORIAL_STILL_LIFE_FIELDS) structure[field] = validateText(candidate.structure[field], field, 700);
@@ -313,6 +313,15 @@ function validateStructuredConcepts(value: unknown): StructuredConcept[] {
     if (/adobe\s*stock|watermarked|best.?selling|royal insignia|national emblem/i.test(searchable)) throw new Error("Unsuitable structured concept");
     if (/guaranteed|will sell|low competition|high demand|best.?seller/i.test(concept.commercialIntent.purchaseReason)) {
       throw new Error("purchaseReason must describe visible utility, not unsupported market claims");
+    }
+    if (index < STRUCTURED_TRANSPARENT_COUNT) {
+      const pngSubject = `${structure.CENTRAL_INSTALLATION} ${structure.PRIMARY_COMPONENTS} ${structure.MATERIAL_FOCUS}`;
+      if (/cluster|bundle|collage|assemblage|mosaic|metaphor|transparent|translucent|glass|liquid|smoke|mesh|lace|loose (?:fiber|thread)|thin wire|perforat/i.test(pngSubject)) {
+        throw new Error("Transparent PNG concepts must use one simple opaque subject");
+      }
+      if (!/\b(?:none|no supporting|no accent|without accent)\b/i.test(`${structure.SUPPORTING_ACCENT_1} ${structure.SUPPORTING_ACCENT_2}`)) {
+        throw new Error("Transparent PNG concepts must not add supporting accents");
+      }
     }
     return concept;
   });
@@ -356,24 +365,41 @@ function createStructuredFallbacks(category: ReturnType<typeof getDailyCategory>
     ["dark walnut surface", "clear acrylic, fine cord and matte stone", "straight polished grain", "walnut, clear, moss and chalk"],
     ["light maple board", "plain cotton, paper shapes and copper wire", "quiet close wood grain", "maple, sky blue, copper and white"],
   ] as const;
+  const simplePngAssets = [
+    { title: "Matte Ceramic Storage Jar Isolated", subject: "one unbranded matte ceramic storage jar with a fitted lid" },
+    { title: "Closed Canvas Tote Bag Isolated", subject: "one closed canvas tote bag with broad handles resting against its body" },
+    { title: "Solid Wooden Kitchen Spoon Isolated", subject: "one solid wooden kitchen spoon with a smooth continuous outline" },
+    { title: "Matte Metal Watering Can Isolated", subject: "one matte metal watering can with a short stout spout" },
+    { title: "Broad Leaf Plant in Ceramic Pot Isolated", subject: "one plain ceramic plant pot containing one compact broad-leaf plant" },
+    { title: "Closed Cloth Bound Notebook Isolated", subject: "one closed cloth-bound notebook with no writing or markings" },
+  ] as const;
 
   return FALLBACK_STORIES.map((story, index) => {
     const seed = category.seeds[index] || story.title;
     const materials = materialSets[index];
-    const title = seed.charAt(0).toUpperCase() + seed.slice(1);
-    const differentiation = `Translate ${seed} into a tactile studio-built metaphor with a distinct material system and camera treatment, avoiding generic category symbols or location stereotypes.`;
+    const isTransparent = index < STRUCTURED_TRANSPARENT_COUNT;
+    const pngAsset = simplePngAssets[index] || simplePngAssets[0];
+    const pngSubject = pngAsset.subject;
+    const title = isTransparent ? pngAsset.title : seed.charAt(0).toUpperCase() + seed.slice(1);
+    const differentiation = isTransparent
+      ? `Offer a clear, practical cutout of ${pngSubject}, differentiated by credible material detail and clean compositing edges rather than a complicated metaphor.`
+      : `Translate ${seed} into a tactile studio-built metaphor with a distinct material system and camera treatment, avoiding generic category symbols or location stereotypes.`;
     return {
       title,
       commercialIntent: {
         targetBuyer: category.buyer,
         intendedUse: `A campaign hero, editorial opener, social advertisement or packaging-support image for the ${category.name.toLowerCase()} brief, with flexible copy placement and crop options.`,
-        purchaseReason: `${differentiation} The deliberate copy space, adaptable crop and tactile material detail give a designer a distinctive, immediately usable campaign asset.`,
+        purchaseReason: isTransparent
+          ? `${differentiation} The simple silhouette and generous isolation margin make it easy to place into many layouts.`
+          : `${differentiation} The deliberate copy space, adaptable crop and tactile material detail give a designer a distinctive, immediately usable campaign asset.`,
       },
       differentiation,
-      keywords: fallbackKeywords(seed, category.name, "regular_scene"),
+      keywords: fallbackKeywords(isTransparent ? pngAsset.title : seed, category.name, isTransparent ? "transparent_png" : "regular_scene"),
       structure: {
         CAMPAIGN_THEME: `${category.name}: a buyer-relevant material story designed for ${category.buyer}`,
-        MAIN_CONCEPT: `the practical and emotional value of ${seed}, reduced to a cohesive emblem-like cluster of recognizable unbranded objects rather than a literal room or landscape`,
+        MAIN_CONCEPT: isTransparent
+          ? `the practical utility of ${seed}, communicated by one literal recognizable object rather than symbolism or metaphor`
+          : `the practical and emotional value of ${seed}, reduced to a cohesive emblem-like cluster of recognizable unbranded objects rather than a literal room or landscape`,
         CAMERA_ANGLE: story.CAMERA_ANGLE,
         LENS_TYPE: story.LENS_TYPE,
         SHOT_TYPE: story.SHOT_TYPE,
@@ -381,12 +407,12 @@ function createStructuredFallbacks(category: ReturnType<typeof getDailyCategory>
         BACKGROUND_BASE: materials[0],
         BACKGROUND_TEXTURE: materials[2],
         BACKGROUND_DETAILS: "restrained tonal variation that remains part of one continuous full-bleed physical surface",
-        CENTRAL_INSTALLATION: `a compact connected cluster of objects symbolizing ${seed}, without recreating an environment`,
-        PRIMARY_COMPONENTS: materials[1],
-        SUPPORTING_ACCENT_1: "one small locally appropriate everyday material chosen only when it supports the buyer context",
-        SUPPORTING_ACCENT_2: "a restrained unbranded geometric accent for scale and visual rhythm",
-        MATERIAL_FOCUS: `credible scale, joins, fibers, reflections and surface wear across ${materials[1]}`,
-        COMPOSITION_LOGIC: story.COMPOSITION_LOGIC,
+        CENTRAL_INSTALLATION: isTransparent ? pngSubject : `a compact connected cluster of objects symbolizing ${seed}, without recreating an environment`,
+        PRIMARY_COMPONENTS: isTransparent ? "one solid opaque subject only; no secondary components" : materials[1],
+        SUPPORTING_ACCENT_1: isTransparent ? "none; keep the isolated object simple" : "one small locally appropriate everyday material chosen only when it supports the buyer context",
+        SUPPORTING_ACCENT_2: isTransparent ? "none; do not add decorative pieces" : "a restrained unbranded geometric accent for scale and visual rhythm",
+        MATERIAL_FOCUS: isTransparent ? "solid opaque material, clean outer contour and realistic restrained surface detail" : `credible scale, joins, fibers, reflections and surface wear across ${materials[1]}`,
+        COMPOSITION_LOGIC: isTransparent ? "one centered object with generous even padding and a broad continuous silhouette" : story.COMPOSITION_LOGIC,
         ATMOSPHERIC_STYLE: story.ATMOSPHERIC_STYLE,
         COLOR_PALETTE: materials[3],
         TEXT_ELEMENTS: "No rendered text; reserve the specified clean copy space for typography added later by a designer",
@@ -416,9 +442,11 @@ function buildStructuredDrafts(concepts: StructuredConcept[], planningSource: Pl
       category: isTransparent ? "Buyer-Context Transparent Design Asset" : "Buyer-Context Editorial Still Life",
       aspectRatio: isTransparent ? "1:1" : STILL_LIFE_ASPECT_RATIOS[index] || "4:5",
       composition: isTransparent ? "asset" : "advertising",
-      prompt: `${formattedPrompt} Distinctive direction: ${concept.differentiation}. Target buyer (context only): ${concept.commercialIntent.targetBuyer}. Intended use (do not render text): ${concept.commercialIntent.intendedUse}. Licensing value to express visually: ${concept.commercialIntent.purchaseReason}.`,
+      prompt: isTransparent
+        ? `${formattedPrompt} Target buyer and intended use are context only: ${concept.commercialIntent.targetBuyer}; ${concept.commercialIntent.intendedUse}. Do not add props or symbolism to explain that context.`
+        : `${formattedPrompt} Distinctive direction: ${concept.differentiation}. Target buyer (context only): ${concept.commercialIntent.targetBuyer}. Intended use (do not render text): ${concept.commercialIntent.intendedUse}. Licensing value to express visually: ${concept.commercialIntent.purchaseReason}.`,
       negativePrompt: isTransparent
-        ? "text, lettering, typography, numerals, musical notation, logos, signatures, watermarks, preview overlays, branded objects, background scene, floor, wall, horizon, border, frame, cast shadow, contact shadow, detached fragments, cropped edges, checkerboard pattern, plastic AI glossiness, duplicated objects"
+        ? "text, lettering, typography, numerals, musical notation, logos, signatures, watermarks, preview overlays, branded objects, background scene, floor, wall, horizon, border, frame, cast shadow, contact shadow, detached fragments, cropped edges, checkerboard pattern, plastic AI glossiness, duplicated objects, collage, assemblage, bundle, object cluster, abstract metaphor, hands, transparent materials, translucent materials, glass, liquid, smoke, mesh, lace, loose fibers, thin wires, complex internal holes"
         : "text, lettering, typography, numerals, logos, signatures, watermarks, preview overlays, branded objects, flags, political symbols, sacred objects, protected cultural patterns, token cultural costumes, stereotypical tourist props, impossible material joints, plastic AI glossiness, duplicated objects",
       keywords: [...new Set([
         ...(isTransparent ? ["transparent png", "isolated design asset", "clean cutout"] : []),
@@ -465,7 +493,7 @@ async function planStructuredConcepts(
 ): Promise<StructuredConcept[]> {
   const response = await callOpenRouterJSON<unknown>(
     `You are a commercial art director creating original buyer-context Editorial Still Life advertising images for an international image marketplace. Start with the target buyer, intended placement and likely end-user environment, then select accessible materials, color, seasonality and spatial cues that make the image useful in that market.
-Return exactly ${BATCH_SIZE} concepts in the requested order. Concepts 1-${STRUCTURED_TRANSPARENT_COUNT} must be designed specifically as reusable isolated transparent-PNG assets: one coherent object or tightly connected cluster, recognizable silhouette, no environment, no floor and no detached tiny parts. Concepts ${STRUCTURED_TRANSPARENT_COUNT + 1}-${BATCH_SIZE} must be full-bleed JPEG editorial still-life scenes with useful natural copy space. Every concept must tell a different commercially useful story and use a different central installation, material combination, camera treatment and composition. Do not create recolors, crops or alternate angles of one arrangement.
+Return exactly ${BATCH_SIZE} concepts in the requested order. Concepts 1-${STRUCTURED_TRANSPARENT_COUNT} must be simple reusable isolated transparent-PNG assets. Each PNG concept must show exactly one literal, familiar, immediately recognizable object with a broad continuous silhouette, minimal internal gaps, one or at most two solid opaque materials, no hand holding it, no extra props, no cluster, bundle, collage, assemblage, emblem, visual metaphor or abstract installation. For these PNG concepts, set both SUPPORTING_ACCENT fields to a clear form of "none", and avoid glass, transparency, translucency, liquids, smoke, mesh, lace, loose fibers, thin wires, perforations and delicate detached details. The title must literally name the visible object. Buyer usefulness must come from clean compositing and practical reuse, not conceptual complexity. Concepts ${STRUCTURED_TRANSPARENT_COUNT + 1}-${BATCH_SIZE} must be full-bleed JPEG editorial still-life scenes with useful natural copy space. Every concept must be commercially distinct. Do not create recolors, crops or alternate angles of one arrangement.
 Each concept must contain title, targetBuyer, intendedUse, purchaseReason, differentiation, 15-25 accurate English keyword phrases in descending relevance, and a structure object with exactly these 18 non-empty string fields: ${THAI_EDITORIAL_STILL_LIFE_FIELDS.join(", ")}.
 targetBuyer must name a realistic customer segment. intendedUse must name concrete placements and purposes such as a campaign hero, packaging-support visual, article opener or social advertisement. purchaseReason must explain why a designer would license this specific image instead of a generic alternative, grounded only in visible utility such as useful copy space, flexible crops, distinctive material storytelling and credible tactile detail.
 CAMPAIGN_THEME is invisible art direction, not a title treatment. It must not repeat the SEO title or ask for visible lettering, a poster, card, header, footer, frame, border or blank graphic panel.

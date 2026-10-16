@@ -15,9 +15,10 @@ function keywords(prefix: string): string[] {
 }
 
 function structure(index: number): ThaiEditorialStillLifeStructure {
+  const isTransparent = index <= 6;
   return {
     CAMPAIGN_THEME: `Thai material story campaign number ${index}`,
-    MAIN_CONCEPT: `Everyday materials becoming a distinct visual metaphor number ${index}`,
+    MAIN_CONCEPT: isTransparent ? `One literal useful household object number ${index}` : `Everyday materials becoming a distinct visual metaphor number ${index}`,
     CAMERA_ANGLE: `Unique camera angle treatment number ${index}`,
     LENS_TYPE: `Macro lens treatment with material detail number ${index}`,
     SHOT_TYPE: `Editorial advertising still life format number ${index}`,
@@ -25,11 +26,11 @@ function structure(index: number): ThaiEditorialStillLifeStructure {
     BACKGROUND_BASE: `Matte background material number ${index}`,
     BACKGROUND_TEXTURE: `Tactile background texture number ${index}`,
     BACKGROUND_DETAILS: `Restrained background detail number ${index}`,
-    CENTRAL_INSTALLATION: `Unique central installation made from accessible materials number ${index}`,
-    PRIMARY_COMPONENTS: `Silk thread buttons flowers and coffee components set ${index}`,
-    SUPPORTING_ACCENT_1: `First supporting accent detail number ${index}`,
-    SUPPORTING_ACCENT_2: `Second supporting accent detail number ${index}`,
-    MATERIAL_FOCUS: `Realistic fibers surfaces and material scale number ${index}`,
+    CENTRAL_INSTALLATION: isTransparent ? `One matte ceramic household object number ${index}` : `Unique central installation made from accessible materials number ${index}`,
+    PRIMARY_COMPONENTS: isTransparent ? `One solid opaque ceramic subject number ${index}` : `Silk thread buttons flowers and coffee components set ${index}`,
+    SUPPORTING_ACCENT_1: isTransparent ? `None for isolated object number ${index}` : `First supporting accent detail number ${index}`,
+    SUPPORTING_ACCENT_2: isTransparent ? `No supporting accent for object number ${index}` : `Second supporting accent detail number ${index}`,
+    MATERIAL_FOCUS: isTransparent ? `Solid opaque ceramic surface detail number ${index}` : `Realistic fibers surfaces and material scale number ${index}`,
     COMPOSITION_LOGIC: `Intentional asymmetric layout and copy space number ${index}`,
     ATMOSPHERIC_STYLE: `Refined editorial atmosphere number ${index}`,
     COLOR_PALETTE: `Distinct coordinated color palette number ${index}`,
@@ -78,6 +79,9 @@ function assertStructuredBatch(items: StockImageItem[]) {
     assert.match(item.prompt, /Do not render (?:any )?letters, words, numerals,.*logos.*pseudo-text/);
     if (isTransparent) {
       assert.match(item.prompt, /transparent-background commercial design asset/i);
+      assert.match(item.prompt, /exactly one familiar, concrete, immediately recognizable object/i);
+      assert.match(item.prompt, /solid opaque materials/i);
+      assert.doesNotMatch(item.prompt, /Primary components:|Supporting details:/i);
       assert.match(item.prompt, /No floor, wall, horizon/i);
       assert.ok(item.keywords.includes("transparent png"));
     } else {

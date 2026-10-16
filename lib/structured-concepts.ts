@@ -127,14 +127,12 @@ export const formatThaiEditorialStillLifePrompt = formatBuyerContextEditorialSti
 
 export function formatBuyerContextTransparentAssetPrompt(fields: ThaiEditorialStillLifeStructure): string {
   return [
-    `Create one original reusable transparent-background commercial design asset from this invisible campaign direction: ${fields.CAMPAIGN_THEME}.`,
-    `Translate this idea into one coherent isolated object or tightly connected object cluster: ${fields.MAIN_CONCEPT}.`,
-    `Core asset: ${fields.CENTRAL_INSTALLATION}. Primary components: ${fields.PRIMARY_COMPONENTS}.`,
-    `Supporting details must remain physically connected or closely grouped: ${fields.SUPPORTING_ACCENT_1}; ${fields.SUPPORTING_ACCENT_2}.`,
-    `Show credible material scale and surface detail: ${fields.MATERIAL_FOCUS}.`,
-    `View and optics: ${fields.CAMERA_ANGLE}; ${fields.LENS_TYPE}; ${fields.SHOT_TYPE}. Lighting: ${fields.LIGHTING}.`,
-    `Composition: ${fields.COMPOSITION_LOGIC}. Atmosphere: ${fields.ATMOSPHERIC_STYLE}. Color palette: ${fields.COLOR_PALETTE}.`,
-    "Center the complete asset with safe padding so no part is cropped. Use a clean silhouette suitable for compositing. No floor, wall, horizon, room, environmental scene, frame, border, mat, card, poster, mockup, cast shadow, contact shadow or detached floating debris.",
+    `Create one original reusable transparent-background commercial design asset for this invisible buyer direction: ${fields.CAMPAIGN_THEME}.`,
+    `Use ${fields.CENTRAL_INSTALLATION} only as a subject source, then simplify it to exactly one familiar, concrete, immediately recognizable object. Do not visualize an abstract metaphor or combine several objects.`,
+    `The subject must use one or at most two solid opaque materials with credible surface detail. Ignore all requested supporting accents, decorative components and background treatments. Do not use transparent, translucent, frosted, glass, liquid, smoke, mesh, lace, wispy fiber, loose thread, thin wire or perforated materials.`,
+    `Use a straightforward product view derived from ${fields.CAMERA_ANGLE}, with neutral high-key lighting and a broad continuous silhouette. Keep detail readable at thumbnail size.`,
+    `Use the palette only on the single object: ${fields.COLOR_PALETTE}.`,
+    "Center the complete asset with generous safe padding so no part is cropped. No cluster, bundle, collage, assemblage, emblem, radial arrangement, extra prop, hand holding the object or detached part. No floor, wall, horizon, room, environmental scene, frame, border, mat, card, poster, mockup, cast shadow or contact shadow.",
     "Do not render letters, words, numerals, notation, logos, trademarks, signatures, watermarks or pseudo-text. Do not default to Thailand or add cultural identity unless the buyer brief genuinely requires it.",
   ].join(" ");
 }
