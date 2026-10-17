@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import type { FoodFusionStructure, StockImageItem } from "./types";
 import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
-import { generateUniqueStockFilename } from "./csv";
+import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
 // Matched pairs preserve a readable advertising idea. Randomness chooses
 // among pairs; it never joins arbitrary ingredients and hardware.
@@ -53,13 +53,13 @@ export function buildFoodFusionBatch(date: Date, count = 10, choose = randomInt)
       LIGHTING_AND_MOOD: "Clean diffused commercial food photography lighting, restrained specular highlights, realistic food texture and a soft natural contact shadow",
       COLOR_PALETTE: palette + ", soft ivory",
     };
-    const keywords = [...new Set([
+    const keywords = normalizeStockKeywords([
       title.toLowerCase(), theme.toLowerCase(), meaning, "food hardware fusion", "surreal food",
       "conceptual photography", "hybrid object", "visual metaphor", "minimalist still life",
       "food texture", "mechanical component", "seamless fusion", "commercial advertising",
       "copy space", "studio lighting", "single object", "creative campaign", "innovation",
       "food concept", "photorealistic", "minimalism",
-    ])];
+    ]);
     return {
       id: index + 1, seoTitle: title + " Food Hardware Fusion", category: "Food Hardware Fusion",
       aspectRatio: "3:2", composition: "advertising", generationMode: "regular_scene",

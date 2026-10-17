@@ -11,6 +11,7 @@ export interface ImageQualityResult {
   issues: string[];
   source: "pixel_guard" | "vision_guard";
   hasVisibleHumanFace?: boolean;
+  hasText?: boolean;
   faceCheckCompleted?: boolean;
 }
 
@@ -182,6 +183,7 @@ Return pure JSON only: {"passed":true|false,"hasVisibleHumanFace":true|false,"ha
       source: "vision_guard",
       faceCheckCompleted: true,
       hasVisibleHumanFace: report.hasVisibleHumanFace,
+      hasText: report.hasText,
     };
   } catch (error: unknown) {
     return {

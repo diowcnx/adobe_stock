@@ -2,6 +2,38 @@ import { StockImageItem } from "./types";
 
 type GenerationMode = "transparent_png" | "regular_scene";
 
+const KEYWORD_STOP_WORDS = new Set([
+  "a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "no",
+  "of", "on", "or", "the", "to", "with", "without",
+]);
+
+/**
+ * Adobe accepts phrases, but this project deliberately exports single-word
+ * keywords only. Preserve source priority, remove filler/duplicates and cap the
+ * result so the first ten remain the strongest terms.
+ */
+export function normalizeStockKeywords(keywords: readonly string[], maxKeywords = 25): string[] {
+  if (!Number.isInteger(maxKeywords) || maxKeywords < 1 || maxKeywords > 49) {
+    throw new Error("Invalid keyword limit");
+  }
+  const normalized: string[] = [];
+  const seen = new Set<string>();
+  for (const value of keywords) {
+    const tokens = value
+      .normalize("NFKC")
+      .toLocaleLowerCase("en-US")
+      .replace(/[’']/gu, "")
+      .match(/[\p{L}\p{N}]+/gu) || [];
+    for (const token of tokens) {
+      if (KEYWORD_STOP_WORDS.has(token) || seen.has(token)) continue;
+      seen.add(token);
+      normalized.push(token);
+      if (normalized.length === maxKeywords) return normalized;
+    }
+  }
+  return normalized;
+}
+
 /**
  * แปลงข้อความเป็น URL/File-friendly slug
  */
@@ -105,7 +137,9 @@ export function generateMetadataCsv(images: StockImageItem[], batchMode?: Genera
   const rows = images.map((img) => {
     const filename = getStockImageFilename(img, batchMode);
     const title = img.seoTitle || "";
-    const keywords = (img.keywords || []).join(", ");
+    // Normalize again at the export boundary so historical/saved batches can
+    // never leak a multi-word phrase into a newly downloaded CSV.
+    const keywords = normalizeStockKeywords(img.keywords || []).join(", ");
 
     return `${escapeCsvField(filename)},${escapeCsvField(title)},${escapeCsvField(keywords)},,`;
   });

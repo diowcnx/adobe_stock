@@ -316,7 +316,7 @@ test("vision guard accepts intentional fusion without applying retired literal-s
     });
     assert.match(inspectionPrompt, /INTENTIONAL SURREAL FOOD-HARDWARE FUSION/);
     assert.doesNotMatch(inspectionPrompt, /Reject abstract assemblages, surreal hybrids/);
-    assert.deepEqual(result, { passed: true, issues: [], source: "vision_guard", faceCheckCompleted: true, hasVisibleHumanFace: false });
+    assert.deepEqual(result, { passed: true, issues: [], source: "vision_guard", faceCheckCompleted: true, hasVisibleHumanFace: false, hasText: false });
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -387,6 +387,31 @@ test("visible faces are withheld after the retry limit even when QA is configure
   }
 });
 
+test("rendered or pseudo-text is withheld after the retry limit", async () => {
+  const originalFetch = globalThis.fetch;
+  const image = await solidImage("#52715a");
+  let imageCalls = 0;
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    if (body.model === "google/gemini-3.1-flash-lite-image") {
+      imageCalls++;
+      return new Response(JSON.stringify({ choices: [{ message: { images: [{ b64_json: image.toString("base64") }] } }] }));
+    }
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      passed: false, hasVisibleHumanFace: false, hasText: true, hasArtificialBorder: false,
+      hasPosterLayout: false, isImmediatelyRecognizable: true, hasClearLiteralStory: true,
+      hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: false,
+      issues: ["pseudo-text appears on the product surface"],
+    }) } }] }));
+  };
+  try {
+    const result = await generateSingleImage(testItem, "test-key");
+    assert.equal(imageCalls, 4);
+    assert.equal(result.imageUrl, "");
+    assert.match(result.error || "", /rendered text or pseudo-text remains/);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("retry direction explicitly changes the rejected composition", () => {
   const direction = buildQualityRetryDirection(2, ["title text appears in a blank header panel"]);
   assert.match(direction, /genuinely new alternative/i);
@@ -439,6 +464,7 @@ test("generator replaces a QA-rejected image and records the successful retry", 
       rejectionReasons: ["title text appears in a blank header panel"],
     });
     assert.equal(prompts.length, 2);
+    assert.match(prompts[0], /^ABSOLUTE NO-TEXT OUTPUT RULE/);
     assert.doesNotMatch(prompts[0], /QUALITY REPLACEMENT/);
     assert.match(prompts[1], /QUALITY REPLACEMENT 1\/3/);
     assert.match(prompts[1], /same specified food-hardware pair/);

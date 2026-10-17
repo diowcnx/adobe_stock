@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import type { DualMaterialStructure, StockImageItem } from "./types";
 import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
-import { generateUniqueStockFilename } from "./csv";
+import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
 export const DUAL_MATERIAL_RECIPES = [
   ["Cork Copper Elephant", "one clearly recognizable standing elephant sculpture with a broad trunk and four stable legs", "warm natural cork forming the main body with visible pores", "brushed copper forming one restrained ear-and-back accent", "craft and interior design publishers", "material innovation or craft collection campaign", "familiar strength expressed through contrasting textures"],
@@ -48,7 +48,7 @@ export function buildDualMaterialBatch(date: Date, count = 2): StockImageItem[] 
       generationBriefVersion: GENERATION_BRIEF_VERSION, dualMaterialStructure: fields,
       prompt: formatDualMaterialPrompt(fields),
       negativePrompt: "visible human face, people, portrait bust, third material, extra objects, detached fragments, collage, broken silhouette, text, lettering, logo, watermark, frame, border",
-      keywords: [title.toLowerCase(), "dual material sculpture", "material contrast", "sculptural object", "conceptual art", "studio photography", "tactile detail", "mixed materials", "single object", "recognizable silhouette", "creative campaign", "product design", "material experiment", "natural shadow", "copy space", "minimalist background", "unbranded", "photorealistic textures"],
+      keywords: normalizeStockKeywords([title.toLowerCase(), "dual material sculpture", "material contrast", "sculptural object", "conceptual art", "studio photography", "tactile detail", "mixed materials", "single object", "recognizable silhouette", "creative campaign", "product design", "material experiment", "natural shadow", "copy space", "minimalist background", "unbranded", "photorealistic textures"]),
       modelUsed: "google/gemini-3.1-flash-lite-image",
       filename: generateUniqueStockFilename(title, index + 1, date, "regular_scene"),
       commercialIntent: {

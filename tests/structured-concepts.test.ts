@@ -4,7 +4,7 @@ import { conductMarketResearchAndGeneratePrompts } from "../lib/market-research"
 import { isStockImageItem } from "../lib/validation";
 import { getGenerationBlockReason } from "../lib/generation-policy";
 import { generateSingleImage } from "../lib/image-generator";
-import { generateMetadataCsv } from "../lib/csv";
+import { generateMetadataCsv, normalizeStockKeywords } from "../lib/csv";
 import { buildExhibitionBoothBatch, BOOTH_RECIPES } from "../lib/exhibition-booth";
 import { buildResortMasterplanBatch, MASTERPLAN_RECIPES } from "../lib/resort-masterplan";
 import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "../lib/material-art";
@@ -67,12 +67,25 @@ test("beverage and culinary structures keep products, ingredients and blank buye
   assert.equal(new Set(culinary.map(item => item.seoTitle)).size, CULINARY_EDITORIAL_RECIPES.length);
   for (const item of culinary) {
     assert.equal(Object.keys(item.culinaryEditorialStructure || {}).length, 11);
-    assert.match(item.prompt, /copy-space reservations only/);
+    assert.match(item.prompt, /Leave unobstructed natural background areas/);
     assert.match(item.prompt, /Do not render any text/);
+    assert.doesNotMatch(item.prompt, /BRAND_TITLE_UPPER_LEFT|EDITORIAL_HEADLINE_LOWER_LEFT|FOOTER_NOTICE_LOWER_RIGHT/);
     assert.match(item.prompt, /no hand, arm, chef, person or face/i);
     assert.match(item.culinaryEditorialStructure?.BRAND_TITLE_UPPER_LEFT || "", /render absolutely no letters/);
     assert.equal(isStockImageItem(item), true);
   }
+});
+
+test("CSV exports only prioritized single-word keywords", () => {
+  assert.deepEqual(
+    normalizeStockKeywords(["Commercial Still Life", "still life", "Food & Beverage", "the studio", "Thai-food"]),
+    ["commercial", "still", "life", "food", "beverage", "studio", "thai"],
+  );
+  const item = buildBeverageCampaignBatch(new Date("2026-10-17T12:00:00Z"), 1)[0];
+  item.keywords = ["Commercial Still Life", "Food & Beverage", "copy space"];
+  const csv = generateMetadataCsv([item], "regular_scene");
+  assert.match(csv, /"commercial, still, life, food, beverage, copy, space"/);
+  assert.doesNotMatch(csv, /commercial still life|food & beverage|copy space/i);
 });
 
 test("all seven structures contribute valid rotating briefs without paid planning", async () => {
@@ -103,6 +116,8 @@ test("all seven structures contribute valid rotating briefs without paid plannin
         assert.equal(item.generationMode, "regular_scene");
         assert.equal(item.isTransparent, false);
         assert.equal(item.conceptStructure, undefined);
+        assert.ok(item.keywords.length >= 15 && item.keywords.length <= 25);
+        assert.ok(item.keywords.every(keyword => !/[\s,]/u.test(keyword)), item.keywords.join(" | "));
         assert.match(item.prompt, /No visible human faces anywhere/);
         if (item.fusionStructure) {
           assert.equal(Object.keys(item.fusionStructure).length, 7);
@@ -113,14 +128,16 @@ test("all seven structures contribute valid rotating briefs without paid plannin
         } else if (item.boothStructure) {
           assert.equal(Object.keys(item.boothStructure || {}).length, 17);
           assert.match(item.prompt, /straight-on frontal orthographic/);
-          assert.match(item.prompt, /PRIMARY_SIGNAGE is a BLANK architectural sign area/);
+          assert.match(item.prompt, /plain unmarked warm-ivory architectural panel/);
+          assert.doesNotMatch(item.prompt, /PRIMARY_SIGNAGE/);
           assert.doesNotMatch(item.prompt, /Fuse ORGANIC_FOOD_PART/);
           assert.equal(isStockImageItem({ ...item, fusionStructure: result.items.find(entry => entry.fusionStructure)?.fusionStructure }), false);
         } else if (item.masterplanStructure) {
           assert.equal(Object.keys(item.masterplanStructure || {}).length, 8);
           assert.match(item.prompt, /elevated bird's-eye oblique/);
           assert.match(item.prompt, /sparse pale watercolor tints/);
-          assert.match(item.prompt, /PROJECT_TITLE is metadata/);
+          assert.match(item.prompt, /quiet unmarked portion of the same paper/);
+          assert.doesNotMatch(item.prompt, /PROJECT_TITLE/);
           assert.equal(item.composition, "artwork");
           assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
           const invalid = { ...item.masterplanStructure, PROJECT_THEME: "" };
@@ -129,6 +146,7 @@ test("all seven structures contribute valid rotating briefs without paid plannin
           assert.equal(Object.keys(item.materialArtStructure || {}).length, 18);
           assert.equal(item.materialArtStructure?.TEXT_ELEMENTS, "No text");
           assert.match(item.prompt, /single clearly readable CENTRAL_INSTALLATION/);
+          assert.doesNotMatch(item.prompt, /TEXT_ELEMENTS/);
           assert.equal(isStockImageItem({ ...item, materialArtStructure: { ...item.materialArtStructure, TEXT_ELEMENTS: "Render a title" } }), false);
           assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
         } else if (item.dualMaterialStructure) {
@@ -146,7 +164,8 @@ test("all seven structures contribute valid rotating briefs without paid plannin
         } else {
           assert.equal(Object.keys(item.culinaryEditorialStructure || {}).length, 11);
           assert.match(item.prompt, /one clear appetizing bite/);
-          assert.match(item.prompt, /buyer will add copy after licensing/i);
+          assert.match(item.prompt, /unobstructed natural background areas/i);
+          assert.doesNotMatch(item.prompt, /BRAND_TITLE|HEADLINE|TAGLINE|FOOTER_NOTICE/);
           assert.equal(isStockImageItem({ ...item, culinaryEditorialStructure: { ...item.culinaryEditorialStructure!, FOREGROUND_HERO_CULINARY_ITEM: "" } }), false);
           assert.equal(isStockImageItem({ ...item, beverageCampaignStructure: buildBeverageCampaignBatch(new Date(), 1)[0].beverageCampaignStructure }), false);
         }

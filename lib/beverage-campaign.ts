@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import type { BeverageCampaignStructure, StockImageItem } from "./types";
 import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
-import { generateUniqueStockFilename } from "./csv";
+import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
 export const BEVERAGE_CAMPAIGN_RECIPES = [
   ["Thai Tropical Refreshment Trio", "Contemporary Thai tropical refreshment campaign for a premium cafe menu", "tall clear glass of amber Thai tea with milk, large ice cubes and fine condensation, no label", "short clear glass of pale coconut-pandan milk with ice and one pandan-leaf garnish", "slender clear glass of sparkling calamansi-honey soda with citrus wheel and ice", "pale travertine center cylinder with two lower woven-rattan and light teak blocks", "one opened calamansi, two pandan leaves, a small coconut wedge and a restrained scatter of tea leaves", "warm cream limewash wall and sand-toned tabletop with a soft palm-leaf shadow falling from upper left", "late-afternoon diffused sunlight with crisp glass highlights, believable liquid translucency and fresh condensation", "amber tea, coconut cream, fresh green, pale citrus yellow and warm sand", "cafes, beverage brands and hospitality designers", "seasonal menu, social campaign or cafe poster background", "three distinct Thai-inspired refreshments form a ready-made premium menu family"],
@@ -61,7 +61,7 @@ export function buildBeverageCampaignBatch(date: Date, count = 2): StockImageIte
       beverageCampaignStructure: fields,
       prompt: formatBeverageCampaignPrompt(fields),
       negativePrompt: "people, hands, visible human face, fourth drink, duplicate glass, merged vessels, floating glass, unsupported vessel, broken rim, deformed handle, irrelevant ingredients, clutter, packaging, bottle label, text, lettering, logo, watermark, frame, border, poster, menu layout",
-      keywords: [title.toLowerCase(), "beverage campaign", "drink trio", "commercial still life", "premium cafe", "menu background", "refreshment", "three drinks", "product staging", "ingredient story", "glass condensation", "studio photography", "hospitality marketing", "drink collection", "copy space", "unbranded", "photorealistic drinks", "advertising background"],
+      keywords: normalizeStockKeywords([title.toLowerCase(), "beverage campaign", "drink trio", "commercial still life", "premium cafe", "menu background", "refreshment", "three drinks", "product staging", "ingredient story", "glass condensation", "studio photography", "hospitality marketing", "drink collection", "copy space", "unbranded", "photorealistic drinks", "advertising background"]),
       modelUsed: "google/gemini-3.1-flash-lite-image",
       filename: generateUniqueStockFilename(title, index + 1, date, "regular_scene"),
       commercialIntent: {

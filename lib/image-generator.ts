@@ -256,16 +256,18 @@ export async function generateSingleImage(
         item.negativePrompt ? `Also exclude: ${item.negativePrompt}.` : "",
       ].filter(Boolean).join(" ");
 
-      const originalUserContent = isTransparent
+      const absoluteTextBan = "ABSOLUTE NO-TEXT OUTPUT RULE — THE FINAL IMAGE MUST CONTAIN ZERO TEXT. Do not draw, print, engrave, emboss, stitch, label, sign, caption or imply any letter, word, numeral, glyph, pseudo-letter, logo, watermark or typographic mark on any object, surface or background. Use plain unmarked surfaces only. This rule overrides every field name, metadata value, product detail and stylistic instruction below.";
+
+      const visualDirection = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
         : item.culinaryEditorialStructure
-          ? `Create one premium editorial culinary advertising photograph. Keep the complete named hero dish dominant in the foreground, one clear appetizing bite held by the specified utensil above it, and only the exact raw accompaniments grouped at lower right. Use physical dimensional set pieces and natural blank copy space; render no typography. Honor the eleven-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
+          ? `Create one premium editorial culinary advertising photograph. Keep the complete named hero dish dominant in the foreground, one clear appetizing bite held by the specified utensil above it, and only the exact raw accompaniments grouped at lower right. Use physical dimensional set pieces and unobstructed natural background areas. Follow the visual input: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.beverageCampaignStructure
           ? `Create one premium commercial beverage-advertising still life with exactly three complete drinks. The center drink is elevated as the hero while the left and right drinks sit lower as a stable triangular set. Use only the specified recipe ingredients, vessels and plinths, with photorealistic liquid, ice, foam, bubbles, glass reflections and condensation. Honor the nine-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.dualMaterialStructure
           ? `Create one sculptural art object from two contrasting materials. The named subject silhouette must be familiar and intact, with realistic primary-material volume and a restrained secondary-material accent. Honor the six-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.materialArtStructure
-          ? `Create an original Editorial Still Life studio photograph. Use the named hero product or raw materials in one clearly readable conceptual arrangement, with realistic textures and natural contact shadows on a continuous studio surface. Adapt composition to the requested aspect ratio, keeping the hero complete and room for later buyer typography. Preserve the eighteen-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
+          ? `Create an original Editorial Still Life studio photograph. Use the named hero product or raw materials in one clearly readable conceptual arrangement, with realistic textures and natural contact shadows on a continuous studio surface. Adapt composition to the requested aspect ratio, keeping the hero complete with an unobstructed natural background area. Follow the visual input: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.masterplanStructure
           ? `Create one architectural project masterplan SKETCH ILLUSTRATION, not a photograph. Fine graphite/ink lines and sparse pale watercolor tints, elevated bird's-eye oblique view, complete site, clear category-appropriate amenities, buildings and landscape zones. Natural unpainted paper fills every edge with no visible sheet border. Follow this eight-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.boothStructure
@@ -275,6 +277,7 @@ export async function generateSingleImage(
         : item.composition === "artwork"
           ? `Create the original full-bleed artwork itself, not a photograph of a print, room, frame or mockup. Follow the specified artistic medium and composition with detailed print-friendly texture. Do not reserve advertising copy space. ${sanitizedPrompt}. ${mandatoryExclusions}`
           : `Create a single full-bleed art-directed commercial scene whose photographed background reaches every edge of the final image. Authentic materials, tactile textures, natural lighting and believable geometry. Leave useful natural negative space within the physical scene when requested, but never add a layout panel or margin. No plastic AI glossiness. Follow the intended medium and visual details: ${sanitizedPrompt}. ${mandatoryExclusions}`;
+      const originalUserContent = `${absoluteTextBan}\n${visualDirection}`;
       const userContent = attemptIndex > 0
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
@@ -461,11 +464,13 @@ export async function generateSingleImage(
               console.warn(`[Item #${item.id}] ${lastError}`);
               if (attemptIndex < MAX_QUALITY_RETRIES) continue;
 
-              if (quality.hasVisibleHumanFace || !quality.faceCheckCompleted) {
+              if (quality.hasVisibleHumanFace || quality.hasText || !quality.faceCheckCompleted) {
                 return {
                   imageUrl: "",
                   error: quality.hasVisibleHumanFace
                     ? "Image withheld: visible human face remains after the replacement limit."
+                    : quality.hasText
+                      ? "Image withheld: rendered text or pseudo-text remains after the replacement limit."
                     : "Image withheld: the required no-visible-face inspection could not be completed.",
                 };
               }

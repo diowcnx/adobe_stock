@@ -897,8 +897,8 @@ export default function Dashboard() {
                   <span className="text-xs font-medium text-slate-400">SEO Keywords</span>
                   <TrendingUp className="w-4 h-4 text-amber-400" />
                 </div>
-                <div className="text-xl font-bold text-white">15 - 25 Tags</div>
-                <p className="text-xs text-slate-500 mt-1">Relevant phrases &amp; Top 10 prioritized</p>
+                <div className="text-xl font-bold text-white">15 - 25 Words</div>
+                <p className="text-xs text-slate-500 mt-1">Single-word keywords &amp; Top 10 prioritized</p>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -948,7 +948,7 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Builds Food Fusion, Booth, Masterplan, Editorial Still Life and 6-field Dual Material briefs. Two per structure, ten JPEG images total, no people or lettering.</p>
+                  <p className="text-slate-400">Builds all 7 structures every day, then randomly assigns 3 extra slots. Ten JPEG images total; prompt-level hard ban on people, hands and all text.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>

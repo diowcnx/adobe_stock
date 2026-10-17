@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import type { ResortMasterplanStructure, StockImageItem } from "./types";
 import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
-import { generateUniqueStockFilename } from "./csv";
+import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
 export const MASTERPLAN_RECIPES = [
   ["Thai Hillside Family Waterpark Resort", "gentle Thai foothill terrain with one clearly organized family resort", "a central shallow family lagoon, compact slide tower and separate lap pool", "small low-rise villas following contour terraces"],
@@ -19,13 +19,14 @@ export const MASTERPLAN_RECIPES = [
 ] as const;
 
 export function formatResortMasterplanPrompt(fields: ResortMasterplanStructure): string {
+  const visualFields = Object.entries(fields).filter(([key]) => key !== "PROJECT_TITLE");
   return [
-    "[USER_INPUT]", ...Object.entries(fields).map(([key, value]) => key + ": " + value),
+    "[VISUAL_USER_INPUT]", ...visualFields.map(([key, value]) => key + ": " + value),
     "[ROLE & TASK] Create one professional architectural project masterplan sketch illustration based strictly on USER_INPUT.",
     "Follow VIEW_AND_PERSPECTIVE: a single coherent elevated bird's-eye oblique masterplan, not a frontal building elevation. Keep the complete project boundary and all major zones visible with consistent scale and spatial relationships.",
     "Use LINEWORK_AND_TINT_STYLE throughout: fine hand-drawn graphite and ink contours with sparse pale watercolor tints only at water, roofs and planting. Preserve plentiful unpainted warm-white paper. This is an architectural sketch, not a photorealistic aerial photograph or a saturated 3D render.",
     "Compose WATERPARK_AND_AMENITY_ZONE, ACCOMMODATION_AND_STRUCTURES and LANDSCAPE_AND_TERRAIN into one legible site. Adapt these fields to the project category: the amenity field may describe gardens, sports or learning facilities without water; the structures field may describe classrooms, offices or homes instead of villas. Add pools and slides ONLY when explicitly included in USER_INPUT. Separate buildings, amenities, circulation and planting with plausible access and terrain.",
-    "PROJECT_TITLE is metadata for a designer only. Preserve its requested position as quiet unmarked paper, not a boxed title area. Render no title, words, letters, numbers, legend, scale bar, labels, arrows, logos, watermark or pseudo-text.",
+    "Leave a quiet unmarked portion of the same paper near the upper left, not a boxed title area. Render no title, words, letters, numbers, legend, scale bar, labels, arrows, logos, watermark or pseudo-text.",
     "The paper texture continues naturally to all four edges; no visible sheet edge, frame, mat, inset image, collage, multi-panel presentation, photographs, drafting tools or mockup.",
     "Invent an original design rather than depicting a specific real venue. No people, vehicles as scale figures, faces or decorative cultural symbols. Thai context comes from plausible tropical landscape, roof materials and project-appropriate low-rise architecture.",
     NO_VISIBLE_FACE_RULE,
@@ -59,7 +60,7 @@ export function buildResortMasterplanBatch(date: Date, count = 3): StockImageIte
       generationBriefVersion: GENERATION_BRIEF_VERSION, masterplanStructure: fields,
       prompt: formatResortMasterplanPrompt(fields),
       negativePrompt: "visible human face, people, readable title, lettering, labels, legend, scale bar, logo, watermark, cropped site, frontal elevation, photorealistic aerial photo, saturated 3D rendering, collage, border, frame",
-      keywords: [title.toLowerCase(), "project masterplan", "architectural sketch", "site planning", "amenity zones", "bird eye view", "pastel watercolor", "ink linework", "landscape design", "Thai architecture", "project design", "circulation layout", "building clusters", "terrain contours", "tropical landscape", "concept illustration", "unlabeled plan", "presentation background"],
+      keywords: normalizeStockKeywords([title.toLowerCase(), "project masterplan", "architectural sketch", "site planning", "amenity zones", "bird eye view", "pastel watercolor", "ink linework", "landscape design", "Thai architecture", "project design", "circulation layout", "building clusters", "terrain contours", "tropical landscape", "concept illustration", "unlabeled plan", "presentation background"]),
       modelUsed: "google/gemini-3.1-flash-lite-image",
       filename: generateUniqueStockFilename(title, index + 1, date, "regular_scene"),
       commercialIntent: {

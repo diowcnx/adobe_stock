@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import type { CulinaryEditorialStructure, StockImageItem } from "./types";
 import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
-import { generateUniqueStockFilename } from "./csv";
+import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
 export const CULINARY_EDITORIAL_RECIPES = [
   ["Holy Basil Wok Heat", "High-heat Thai beef holy-basil stir-fry campaign for a contemporary sauce or restaurant menu", "heavy seasoned black carbon-steel wok filled with dry-fried minced beef, blistered dried chilies, crisp holy-basil leaves and roasted garlic, with restrained hot-oil glints", "black wok spatula entering cleanly from the upper right, lifting one readable bite of beef, chili and basil above the wok; handle support remains outside frame and no hand is visible", "fresh holy-basil sprigs, two dried red chilies and one garlic clove grouped neatly at lower right", "a freestanding layered arch set made from sky-cyan and chili-red matte panels behind the food, with open center and no outer border", "chili red, wok-char black, basil green, sky cyan and warm white", "Thai restaurants, seasoning brands and food publishers", "restaurant campaign, sauce launch or recipe feature", "the lifted bite and exact raw ingredients make wok heat and flavor immediately legible"],
@@ -22,13 +22,18 @@ const blankCopyArea = (placement: string, purpose: string) =>
   `Keep a clean natural negative-space zone at ${placement} for the buyer to add ${purpose} later; render absolutely no letters, placeholder marks, symbols, badges or lines.`;
 
 export function formatCulinaryEditorialPrompt(fields: CulinaryEditorialStructure): string {
+  const visualFieldNames = new Set([
+    "PROJECT_CONTEXT", "FOREGROUND_HERO_CULINARY_ITEM", "SUSPENDED_HERO_ACTION_AND_UTENSIL",
+    "DISH_SPECIFIC_RAW_ACCOMPANIMENTS", "GRAPHIC_BACKDROP_AND_FRAME", "COLOR_PALETTE",
+  ]);
+  const visualFields = Object.entries(fields).filter(([key]) => visualFieldNames.has(key));
   return [
-    "[USER_INPUT]", ...Object.entries(fields).map(([key, value]) => key + ": " + value),
-    "[ROLE & TASK] Create a premium full-bleed editorial culinary advertising photograph based strictly on all eleven USER_INPUT fields.",
+    "[VISUAL_USER_INPUT]", ...visualFields.map(([key, value]) => key + ": " + value),
+    "[ROLE & TASK] Create a premium full-bleed editorial culinary advertising photograph based strictly on the visual input fields.",
     "Build a dramatic but physically credible food hierarchy: FOREGROUND_HERO_CULINARY_ITEM dominates the lower foreground, while SUSPENDED_HERO_ACTION_AND_UTENSIL presents one clear appetizing bite above it. The utensil may enter from an image edge with its support beyond the crop, but no hand, arm, chef, person or face may appear. Keep the whole dish readable and never distort or overscale it into impossible geometry.",
     "Use only DISH_SPECIFIC_RAW_ACCOMPANIMENTS as a restrained lower-right ingredient group. Every raw accompaniment must genuinely belong to the named recipe. Keep ingredients fresh, correctly scaled and secondary; add no unrelated garnish, retail package, branded prop or decorative clutter.",
     "GRAPHIC_BACKDROP_AND_FRAME means freestanding physical dimensional set pieces behind the food. It never means an outer picture frame, poster border, page, card, inset image or flat graphic overlay. The photographed background and surface continue naturally to all four edges.",
-    "BRAND_TITLE_UPPER_LEFT, BRAND_SUBLINE_UPPER_LEFT, EDITORIAL_HEADLINE_LOWER_LEFT, EDITORIAL_TAGLINE_LOWER_LEFT and FOOTER_NOTICE_LOWER_RIGHT are layout metadata describing blank natural copy-space reservations only. Do not render any text, pseudo-text, blank text bars, seals, badges, logos, letters, numerals or typography. The buyer will add copy after licensing.",
+    "Leave unobstructed natural background areas at upper left, lower left and extreme lower right. These must remain ordinary parts of the same physical background, never text boxes, bars, seals, badges or panels. Do not render any text, pseudo-text, logos, letters, numerals or typography.",
     "Render appetizing but realistic food texture, ingredient anatomy, steam or oil only when named, clean utensil geometry, plausible gravity and controlled commercial lighting. Follow COLOR_PALETTE without artificial neon saturation.",
     "No people, hands, human faces, packaged products, labels, logos, text, watermarks, poster layout, page border or marketplace preview.",
     NO_VISIBLE_FACE_RULE,
@@ -67,7 +72,7 @@ export function buildCulinaryEditorialBatch(date: Date, count = 1): StockImageIt
       culinaryEditorialStructure: fields,
       prompt: formatCulinaryEditorialPrompt(fields),
       negativePrompt: "people, chef, visible human face, hands, arms, retail package, label, text, Thai lettering, Latin lettering, pseudo-text, seal, logo, watermark, outer frame, poster border, menu page, distorted dish, floating unsupported bowl, deformed utensil, irrelevant garnish, ingredient clutter",
-      keywords: [title.toLowerCase(), "Thai food campaign", "editorial food", "culinary advertising", "hero dish", "suspended bite", "food photography", "dimensional backdrop", "menu background", "restaurant marketing", "recipe ingredients", "appetizing texture", "copy space", "unbranded", "no people", "commercial food", "Thai cuisine", "studio set"],
+      keywords: normalizeStockKeywords([title.toLowerCase(), "Thai food campaign", "editorial food", "culinary advertising", "hero dish", "suspended bite", "food photography", "dimensional backdrop", "menu background", "restaurant marketing", "recipe ingredients", "appetizing texture", "copy space", "unbranded", "no people", "commercial food", "Thai cuisine", "studio set"]),
       modelUsed: "google/gemini-3.1-flash-lite-image",
       filename: generateUniqueStockFilename(title, index + 1, date, "regular_scene"),
       commercialIntent: {

@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import type { ExhibitionBoothStructure, StockImageItem } from "./types";
 import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
-import { generateUniqueStockFilename } from "./csv";
+import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
 export const BOOTH_RECIPES = [
   ["Thai Community Craft Root Pavilion", "three monumental branching columns inspired by tree roots, connected overhead into an irregular open canopy", "woven baskets, bamboo containers, artisan ceramics and natural-dyed cloth", "curved merchandise trays growing from the left root column", "branch-supported floating shelves and suspended craft-display capsules"],
@@ -19,14 +19,15 @@ export const BOOTH_RECIPES = [
 ] as const;
 
 export function formatExhibitionBoothPrompt(fields: ExhibitionBoothStructure): string {
+  const visualFields = Object.entries(fields).filter(([key]) => key !== "PRIMARY_SIGNAGE");
   return [
-    "[USER_INPUT]", ...Object.entries(fields).map(([key, value]) => key + ": " + value),
+    "[VISUAL_USER_INPUT]", ...visualFields.map(([key, value]) => key + ": " + value),
     "[ROLE & TASK] Create a premium exhibition-booth design visualization based on USER_INPUT.",
     "Follow VIEW_ANGLE strictly: straight-on frontal orthographic elevation, eye-level centered camera. Adapt the composition to the canvas; keep the complete booth, canopy and platform fully visible with balanced breathing room. No cropping or dramatic perspective.",
     "Construct BOOTH_STRUCTURE with credible proportions, concealed reinforcement, connected canopy and display supports. Preserve an open accessible front and practical circulation. Do not force a tall wall, central shelf or symmetry when the chosen organic structure is asymmetric.",
     "Render LEFT_FEATURE_ELEMENT, RIGHT_FEATURE_ELEMENT and DISPLAY_FIXTURES as connected architectural elements. Arrange PRODUCT_DISPLAY neatly, leaving space between objects so merchandise does not overwhelm the booth.",
     "Use MATERIAL_PALETTE, LIGHTING_STYLE, SIDE_DECORATION and FLOOR_TREATMENT. Pure seamless white studio background and floor continue to every edge, with soft realistic contact shadows. No shopping mall, event hall, neighboring booths, pedestrians or environmental clutter.",
-    "PRIMARY_SIGNAGE is a BLANK architectural sign area for later typography. Do not render brand names, Thai or English lettering, subtitles, numbers, pseudo-text, logos or watermarks. GRAPHIC_BACKDROP may use original abstract relief textures appropriate to the product category, with no readable marks. DECORATIVE_MARKS must remain non-branded architectural relief, never a logo.",
+    "Include one plain unmarked warm-ivory architectural panel below the canopy as a physical material element. It must contain no marks and must not resemble a text box. Do not render brand names, Thai or English lettering, subtitles, numbers, pseudo-text, logos or watermarks. GRAPHIC_BACKDROP may use original abstract relief textures appropriate to the product category, with no readable marks. DECORATIVE_MARKS must remain non-branded architectural relief, never a logo.",
     "This is a full-size architectural design visualization, not a miniature craft sculpture or a multi-panel presentation board. High material fidelity, refined fixtures, realistic merchandising, complete booth silhouette on white.",
     NO_VISIBLE_FACE_RULE,
     "No people, frame, border, page mockup, diagrams or text overlays.",
@@ -69,7 +70,7 @@ export function buildExhibitionBoothBatch(date: Date, count = 5): StockImageItem
       generationBriefVersion: GENERATION_BRIEF_VERSION, boothStructure: fields,
       prompt: formatExhibitionBoothPrompt(fields),
       negativePrompt: "visible human face, people, lettering, Thai text, logo, watermark, environmental clutter, cropped canopy, cropped platform, perspective view, miniature, collage, border",
-      keywords: [title.toLowerCase(), "exhibition booth", "pavilion design", "Thai design", "product presentation", "retail display", "organic architecture", "frontal elevation", "white background", "architectural visualization", "merchandising", "display shelves", "product display", "material detail", "studio lighting", "blank signage", "event design", "trade show"],
+      keywords: normalizeStockKeywords([title.toLowerCase(), "exhibition booth", "pavilion design", "Thai design", "product presentation", "retail display", "organic architecture", "frontal elevation", "white background", "architectural visualization", "merchandising", "display shelves", "product display", "material detail", "studio lighting", "blank signage", "event design", "trade show"]),
       modelUsed: "google/gemini-3.1-flash-lite-image",
       filename: generateUniqueStockFilename(title, index + 1, date, "regular_scene"),
       commercialIntent: {

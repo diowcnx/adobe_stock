@@ -71,6 +71,17 @@ photorealism, frontal booth views or food fusion.
 All seven structures output JPEG without people or lettering. No live image
 generation is required to prepare the briefs.
 
+Rendered text is a hard rejection for every structure. QA checks both readable
+lettering and pseudo-text. After three replacement attempts, an image that still
+contains either is withheld instead of being included with a warning. The same
+hard-stop behavior applies when mandatory vision inspection cannot complete.
+
+Metadata CSV files contain single-word keywords only. New briefs normalize and
+deduplicate their prioritized keyword lists before display, while CSV export repeats
+the normalization as a compatibility guard for historical saved batches. Phrases are
+split into meaningful Unicode words, filler words are removed, source priority is
+preserved, duplicates are removed and output is capped at 25 keywords.
+
 Structures are reusable across suitable buyer categories. Booths include crafts,
 coffee/food, cosmetics, technology and tourism. Masterplans include hospitality,
 education, community wellness, workplaces and senior housing. Adapt products,

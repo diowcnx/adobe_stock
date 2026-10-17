@@ -9,7 +9,7 @@ import { buildDualMaterialBatch } from "./dual-material";
 import { buildBeverageCampaignBatch } from "./beverage-campaign";
 import { buildCulinaryEditorialBatch } from "./culinary-editorial";
 import { randomInt } from "node:crypto";
-import { generateUniqueStockFilename } from "./csv";
+import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
 export { getDailyScheduledMode } from "./production-plan";
 
@@ -49,6 +49,7 @@ export async function conductMarketResearchAndGeneratePrompts(
   }
   items.forEach((item, index) => {
     item.id = index + 1;
+    item.keywords = normalizeStockKeywords(item.keywords);
     item.filename = generateUniqueStockFilename(item.seoTitle, item.id, date, "regular_scene");
   });
   const mode = "regular_scene" as const;

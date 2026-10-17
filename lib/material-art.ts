@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import type { StockImageItem, ThaiEditorialStillLifeStructure } from "./types";
 import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
-import { generateUniqueStockFilename } from "./csv";
+import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
 export const MATERIAL_ART_RECIPES = [
   ["Citrus Slice Sunrise", "Fresh morning flavor", "a simple half-sun silhouette made from overlapping citrus slices", "fresh lime and orange slices with visible pulp", "one small plain ceramic dish at the far edge", "beverage brands and breakfast publishers", "refreshing morning drink campaign", "citrus orange, lime green and warm ivory"],
@@ -23,15 +23,16 @@ export const MATERIAL_ART_RECIPES = [
 ] as const;
 
 export function formatMaterialArtPrompt(fields: ThaiEditorialStillLifeStructure, aspectRatio: StockImageItem["aspectRatio"] = "3:2"): string {
+  const visualFields = Object.entries(fields).filter(([key]) => key !== "TEXT_ELEMENTS");
   return [
-    "[USER_INPUT]", ...Object.entries(fields).map(([key, value]) => key + ": " + value),
-    "[ROLE & TASK] Create one original Editorial Still Life commercial studio photograph following all eighteen USER_INPUT fields.",
+    "[VISUAL_USER_INPUT]", ...visualFields.map(([key, value]) => key + ": " + value),
+    "[ROLE & TASK] Create one original Editorial Still Life commercial studio photograph following the visual input fields.",
     "Arrange PRIMARY_COMPONENTS into the single clearly readable CENTRAL_INSTALLATION described by MAIN_CONCEPT. This may be a raw-material artwork or a recognizable hero product with restrained metaphorical staging for advertising, fashion or lifestyle. Preserve the normal shape and realistic scale of products and source materials; do not fuse hardware into products or replace them with unrelated sculptures.",
     "Canvas aspect ratio: " + aspectRatio + ". Adapt object spacing, scale and negative-space placement to this actual canvas. Keep the complete hero visible with breathing room; never crop essential parts, stretch the subject, add letterboxing or inset a smaller photograph.",
     "Keep one simple recognizable shape or flowing arrangement with a strong thumbnail silhouette. No unrelated material piles, intricate symbolic puzzles or extra motifs. Every component must contribute to the named artwork.",
     "Use CAMERA_ANGLE, LENS_TYPE, SHOT_TYPE and LIGHTING as specified. Render MATERIAL_FOCUS with photographic texture, believable joins, natural contact shadows and coherent physical support.",
     "Build BACKGROUND_BASE and BACKGROUND_TEXTURE as one continuous photographed surface reaching every edge. BACKGROUND_DETAILS and both SUPPORTING_ACCENT fields are restrained; include only the explicitly requested accents. COMPOSITION_LOGIC must leave useful natural negative space, not a blank graphic panel.",
-    "Follow ATMOSPHERIC_STYLE and COLOR_PALETTE. TEXT_ELEMENTS is No text: do not render words, letters, numbers, lettering-shaped arrangements, labels, logos, signatures or watermarks.",
+    "Follow ATMOSPHERIC_STYLE and COLOR_PALETTE. Do not render words, letters, numbers, lettering-shaped arrangements, labels, logos, signatures or watermarks.",
     "No people, frame, border, inset photograph, poster layout, collage or page mockup. Thai identity may come from the specified ingredient or craft material; do not add unrelated cultural props.",
     NO_VISIBLE_FACE_RULE,
   ].join("\n");
@@ -85,7 +86,7 @@ export function buildMaterialArtBatch(date: Date, count = 2, selectedAspectRatio
       generationBriefVersion: GENERATION_BRIEF_VERSION, materialArtStructure: fields,
       prompt: formatMaterialArtPrompt(fields, aspectRatio),
       negativePrompt: "visible human face, people, lettering, text, logo, watermark, unrelated props, intricate object pile, multiple motifs, hardware fusion, border, frame, poster layout",
-      keywords: [title.toLowerCase(), theme.toLowerCase(), "editorial still life", "creative still life", "commercial photography", "physical arrangement", "tactile texture", "material detail", "studio lighting", "copy space", "single composition", "minimal arrangement", "surface detail", "natural shadows", "creative campaign", "unbranded", "advertising visual", "original arrangement"],
+      keywords: normalizeStockKeywords([title.toLowerCase(), theme.toLowerCase(), "editorial still life", "creative still life", "commercial photography", "physical arrangement", "tactile texture", "material detail", "studio lighting", "copy space", "single composition", "minimal arrangement", "surface detail", "natural shadows", "creative campaign", "unbranded", "advertising visual", "original arrangement"]),
       modelUsed: "google/gemini-3.1-flash-lite-image",
       filename: generateUniqueStockFilename(title, index + 1, date, "regular_scene"),
       commercialIntent: {
