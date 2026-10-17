@@ -8,10 +8,80 @@ import { buildExhibitionBoothBatch } from "../lib/exhibition-booth";
 import { buildResortMasterplanBatch } from "../lib/resort-masterplan";
 import { buildMaterialArtBatch } from "../lib/material-art";
 import { buildDualMaterialBatch } from "../lib/dual-material";
+import { buildBeverageCampaignBatch } from "../lib/beverage-campaign";
+import { buildCulinaryEditorialBatch } from "../lib/culinary-editorial";
 
 async function solidImage(background: string): Promise<Buffer> {
   return sharp({ create: { width: 256, height: 256, channels: 3, background } }).jpeg().toBuffer();
 }
+
+test("beverage campaign QA and retry preserve exactly three named drinks and their hierarchy", async () => {
+  const originalFetch = globalThis.fetch;
+  const item = buildBeverageCampaignBatch(new Date("2026-10-17T12:00:00Z"), 1)[0];
+  const image = await solidImage("#c9bca4");
+  const prompts: string[] = [];
+  let qaCalls = 0;
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    if (body.model === "google/gemini-3.1-flash-lite-image") {
+      prompts.push(body.messages[0].content);
+      return new Response(JSON.stringify({ choices: [{ message: { images: [{ b64_json: image.toString("base64") }] } }] }));
+    }
+    const inspection = body.messages[0].content[0].text;
+    assert.match(inspection, /INTENTIONAL THREE-DRINK BEVERAGE CAMPAIGN/);
+    assert.doesNotMatch(inspection, /INTENTIONAL DUAL-MATERIAL/);
+    qaCalls++;
+    const passed = qaCalls === 2;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      passed, hasVisibleHumanFace: false, hasText: false, hasArtificialBorder: false,
+      hasPosterLayout: false, isImmediatelyRecognizable: true, hasClearLiteralStory: passed,
+      hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: !passed,
+      issues: passed ? [] : ["fourth drink and unclear center hierarchy"],
+    }) } }] }));
+  };
+  try {
+    const result = await generateSingleImage(item, "test-key");
+    assert.equal(qaCalls, 2);
+    assert.match(prompts[0], /exactly three complete drinks/);
+    assert.match(prompts[1], /SAME three named drinks with the SAME recipes/);
+    assert.doesNotMatch(prompts[1], /single food-hardware hybrid/);
+    assert.equal(result.qualityReview?.status, "passed_after_retries");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("culinary editorial QA and retry preserve dish, lifted bite and text-free copy space", async () => {
+  const originalFetch = globalThis.fetch;
+  const item = buildCulinaryEditorialBatch(new Date("2026-10-17T12:00:00Z"), 1)[0];
+  const image = await solidImage("#c9bca4");
+  const prompts: string[] = [];
+  let qaCalls = 0;
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    if (body.model === "google/gemini-3.1-flash-lite-image") {
+      prompts.push(body.messages[0].content);
+      return new Response(JSON.stringify({ choices: [{ message: { images: [{ b64_json: image.toString("base64") }] } }] }));
+    }
+    const inspection = body.messages[0].content[0].text;
+    assert.match(inspection, /INTENTIONAL EDITORIAL CULINARY ADVERTISING/);
+    assert.doesNotMatch(inspection, /INTENTIONAL THREE-DRINK/);
+    qaCalls++;
+    const passed = qaCalls === 2;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      passed, hasVisibleHumanFace: false, hasText: false, hasArtificialBorder: false,
+      hasPosterLayout: false, isImmediatelyRecognizable: passed, hasClearLiteralStory: passed,
+      hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: false,
+      issues: passed ? [] : ["dish is unclear and utensil geometry is broken"],
+    }) } }] }));
+  };
+  try {
+    const result = await generateSingleImage(item, "test-key");
+    assert.equal(qaCalls, 2);
+    assert.match(prompts[0], /named hero dish dominant in the foreground/);
+    assert.match(prompts[1], /SAME named dish, SAME utensil-held bite/);
+    assert.match(prompts[1], /No chef, people, hands, package, label, lettering/);
+    assert.equal(result.qualityReview?.status, "passed_after_retries");
+  } finally { globalThis.fetch = originalFetch; }
+});
 
 test("dual-material inspection and retry preserve a single recognizable two-material subject", async () => {
   const originalFetch = globalThis.fetch;

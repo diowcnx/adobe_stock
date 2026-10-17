@@ -75,6 +75,8 @@ export interface FoodFusionStructure {
 }
 
 export interface StockImageItem {
+  culinaryEditorialStructure?: CulinaryEditorialStructure;
+  beverageCampaignStructure?: BeverageCampaignStructure;
   dualMaterialStructure?: DualMaterialStructure;
   materialArtStructure?: ThaiEditorialStillLifeStructure;
   masterplanStructure?: ResortMasterplanStructure;
@@ -102,6 +104,32 @@ export interface StockImageItem {
   costEstimate?: string;
   description?: string;
   qualityReview?: ImageQualityReview;
+}
+
+export interface CulinaryEditorialStructure {
+  PROJECT_CONTEXT: string;
+  BRAND_TITLE_UPPER_LEFT: string;
+  BRAND_SUBLINE_UPPER_LEFT: string;
+  EDITORIAL_HEADLINE_LOWER_LEFT: string;
+  EDITORIAL_TAGLINE_LOWER_LEFT: string;
+  FOOTER_NOTICE_LOWER_RIGHT: string;
+  FOREGROUND_HERO_CULINARY_ITEM: string;
+  SUSPENDED_HERO_ACTION_AND_UTENSIL: string;
+  DISH_SPECIFIC_RAW_ACCOMPANIMENTS: string;
+  GRAPHIC_BACKDROP_AND_FRAME: string;
+  COLOR_PALETTE: string;
+}
+
+export interface BeverageCampaignStructure {
+  CAMPAIGN_THEME: string;
+  HERO_DRINK_CENTER_ELEVATED: string;
+  SUPPORTING_DRINK_LEFT: string;
+  SUPPORTING_DRINK_RIGHT: string;
+  STAGING_PLINTHS: string;
+  RELEVANT_INGREDIENT_PROPS: string;
+  BACKGROUND_ENVIRONMENT: string;
+  LIGHTING_MOOD: string;
+  COLOR_PALETTE: string;
 }
 
 export interface DualMaterialStructure {

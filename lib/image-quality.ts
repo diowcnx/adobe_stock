@@ -23,6 +23,8 @@ export interface ImageQualityContext {
   isResortMasterplan?: boolean;
   isMaterialArt?: boolean;
   isDualMaterial?: boolean;
+  isBeverageCampaign?: boolean;
+  isCulinaryEditorial?: boolean;
 }
 
 /** Detect the common AI failure where a portrait image is placed inside white side mats. */
@@ -73,7 +75,7 @@ export async function assessGeneratedImageQuality(
     expectedTitle: "commercial image",
   },
 ): Promise<ImageQualityResult> {
-  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isResortMasterplan && !context.isMaterialArt && !context.isDualMaterial && await detectUnintendedLightBorder(inputBuffer)) {
+  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isResortMasterplan && !context.isMaterialArt && !context.isDualMaterial && !context.isBeverageCampaign && !context.isCulinaryEditorial && await detectUnintendedLightBorder(inputBuffer)) {
     return {
       passed: false,
       issues: ["unintended white border or mat around the image"],
@@ -111,7 +113,11 @@ export async function assessGeneratedImageQuality(
               type: "text",
               text: `Inspect only the visible pixels of this generated commercial image. Expected title: ${context.expectedTitle}. Intended buyer use: ${context.intendedUse || "general commercial design"}. Mode: ${context.mode}.
 Reject it if ANY readable or pseudo-readable letters, words, numerals, captions, title, logo, signature or watermark appear anywhere. Also reject a poster/card/mockup layout, blank header/footer panel, outer frame, mat, border, canvas margin, or image placed inside another page.
-${context.isDualMaterial
+${context.isCulinaryEditorial
+  ? "This is an INTENTIONAL EDITORIAL CULINARY ADVERTISING PHOTOGRAPH. Require one complete, immediately recognizable hero dish dominating the foreground, exactly one readable bite lifted above it by the named utensil, and a restrained lower-right group containing only recipe-specific raw accompaniments. The utensil may enter from an image edge with support outside frame, but no hand, arm, chef, person or face may appear. Require appetizing realistic food anatomy and texture, coherent scale and gravity, an intact utensil, a physically supported dish, and freestanding dimensional backdrop pieces. Natural blank copy zones are intentional. Reject distorted or ambiguous food, an unsupported or cropped dish, broken utensil, multiple lifted bites, unrelated garnish, ingredient clutter, packaging, labels, people, hands, text, badges, outer frame, poster page or fake typography panels. Set hasClearLiteralStory=true when the dish, lifted bite and authentic ingredients communicate a specific culinary campaign at a glance."
+  : context.isBeverageCampaign
+  ? "This is an INTENTIONAL THREE-DRINK BEVERAGE CAMPAIGN PHOTOGRAPH. Require exactly three separate, complete and recognizable beverage vessels in a clear triangular hierarchy: the center hero drink is visibly highest, the left supporting drink is lower on the left, and the right supporting drink is lower on the right. Require plausible plinth support, recipe-matched fresh ingredient props that remain secondary, accurate liquid color and viscosity, intact glass geometry, realistic ice, bubbles or foam when specified, clean rims, refraction, reflections and natural condensation. The continuous physical set and natural copy space are intentional. Reject a missing, duplicate, merged or fourth drink; swapped or unclear hierarchy; floating or unsupported vessels; deformed rims or handles; impossible liquid; unrelated ingredients; clutter; packages; labels; text; people or hands. Set hasClearLiteralStory=true when the three-drink collection and flavor family are immediately understandable and commercially usable."
+  : context.isDualMaterial
   ? "This is an INTENTIONAL DUAL-MATERIAL SCULPTURE. Require exactly one intact, immediately recognizable subject made from two distinct construction materials. The primary material should define the main volume and the secondary material a connected accent. Accept unexpected material combinations and deliberate sculptural anatomy while requiring convincing textures, coherent joins and support, a readable silhouette and natural studio shadows. Animal faces and recognizable stylized organ shapes are allowed; human faces are not. Reject extra objects, multiple disconnected subjects, random patchwork, unnecessary third materials, illegible shapes, melted textures, lettering, people or portrait busts. A neutral studio background and breathing room are intentional, not artificial borders. Set hasClearLiteralStory=true when the subject and material contrast are clear."
   : context.isMaterialArt
   ? "This is an INTENTIONAL MATERIAL-ART STILL-LIFE PHOTOGRAPH or Editorial Still Life brand image. Accept a dominant raw-material artwork OR a recognizable hero product in restrained conceptual staging for fashion, beauty, advertising or lifestyle. A normal product need not transform into a sculpture. Accept visual metaphor when named products/materials, arrangement and buyer use are clear. Require photographic texture, realistic scale, intact product geometry, coherent physical support, natural contact shadows and continuous studio background. Supporting objects must contribute to the same concept and stay secondary. Require framing and breathing room suited to the canvas, with no cropped hero or letterboxing. Reject clutter, unrelated piles, illegible elaborate symbolism, multiple competing motifs, hardware fusion, architecture, flat sketch rendering, text or people. Natural background and copy space are intentional, not artificial mats. Set hasClearLiteralStory=true when the campaign concept is readable."
@@ -124,7 +130,11 @@ ${context.isDualMaterial
   : "Apply a strict two-second clarity test: an ordinary viewer must immediately name the main subject and understand the literal action or practical purpose without reading metadata or guessing a symbolic metaphor. Reject abstract assemblages, surreal hybrids, unrelated object piles, ambiguous sculptures, decorative material metaphors, or scenes whose buyer use is not visually clear."}
 Mandatory face rule: ${NO_VISIBLE_FACE_RULE} Set hasVisibleHumanFace=true if any human face or part of a face is visible, however small, blurred or obscured. Human backs, hands and bodies with all faces outside the frame are allowed. Animal faces are allowed.
 For transparent_png, the dark gray shown around the subject represents transparency. Require exactly one intact, familiar, opaque subject with a simple readable silhouette. Its normal practical function must be obvious, but it does not need to show an action; set hasClearLiteralStory=true when the single object and its normal use are immediately clear. Reject missing chunks, accidental transparent holes through solid areas, ragged/dirty/haloed edges, fragmented pieces, multiple unrelated objects, or a result that does not visibly match the expected title.
-${context.isDualMaterial
+${context.isCulinaryEditorial
+  ? "The hero dish, edge-entering utensil-held bite, recipe ingredients and freestanding dimensional backdrop ARE the correct final advertising scene. Do not demand a visible chef, hand, retail package or rendered headline. Copy placement fields represent natural empty background only; reject any actual or pseudo-text."
+  : context.isBeverageCampaign
+  ? "The three finished drinks, tiered plinths and matching fresh ingredients ARE the correct final advertising scene. Do not demand a single hybrid object, material sculpture, building or everyday human action. A premium studio product arrangement is a clear literal commercial use when all three recipes and their hierarchy are readable."
+  : context.isDualMaterial
   ? "The single two-material sculpture on the requested background IS the final artwork. Do not demand a food-hardware pairing, an advertising product with props, a building or an everyday action. Preserve its non-human-face subject and material contrast."
   : context.isMaterialArt
   ? "The photographed material artwork on its physical surface IS the correct setting. Do not require a real-world lifestyle action, a food-hardware joint, booth structure or project plan. Reject genuine frames or inset page layouts, while accepting natural negative space on the same surface."

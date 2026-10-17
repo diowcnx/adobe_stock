@@ -28,7 +28,19 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (typeof value.aspectRatio !== "string" || !ASPECT_RATIOS.has(value.aspectRatio)) return false;
   if (!isBoundedString(value.prompt, 8_000)) return false;
   if (!isBoundedString(value.modelUsed, 200)) return false;
-  if ([value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure].filter(field => field !== undefined).length > 1) return false;
+  if ([value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure].filter(field => field !== undefined).length > 1) return false;
+  if (value.culinaryEditorialStructure !== undefined) {
+    if (!isRecord(value.culinaryEditorialStructure)) return false;
+    const fields = ["PROJECT_CONTEXT", "BRAND_TITLE_UPPER_LEFT", "BRAND_SUBLINE_UPPER_LEFT", "EDITORIAL_HEADLINE_LOWER_LEFT", "EDITORIAL_TAGLINE_LOWER_LEFT", "FOOTER_NOTICE_LOWER_RIGHT", "FOREGROUND_HERO_CULINARY_ITEM", "SUSPENDED_HERO_ACTION_AND_UTENSIL", "DISH_SPECIFIC_RAW_ACCOMPANIMENTS", "GRAPHIC_BACKDROP_AND_FRAME", "COLOR_PALETTE"];
+    if (Object.keys(value.culinaryEditorialStructure).length !== fields.length ||
+        !fields.every(field => isBoundedString((value.culinaryEditorialStructure as Record<string, unknown>)[field], 700))) return false;
+  }
+  if (value.beverageCampaignStructure !== undefined) {
+    if (!isRecord(value.beverageCampaignStructure)) return false;
+    const fields = ["CAMPAIGN_THEME", "HERO_DRINK_CENTER_ELEVATED", "SUPPORTING_DRINK_LEFT", "SUPPORTING_DRINK_RIGHT", "STAGING_PLINTHS", "RELEVANT_INGREDIENT_PROPS", "BACKGROUND_ENVIRONMENT", "LIGHTING_MOOD", "COLOR_PALETTE"];
+    if (Object.keys(value.beverageCampaignStructure).length !== fields.length ||
+        !fields.every(field => isBoundedString((value.beverageCampaignStructure as Record<string, unknown>)[field], 700))) return false;
+  }
   if (value.dualMaterialStructure !== undefined) {
     if (!isRecord(value.dualMaterialStructure)) return false;
     const fields = ["SUBJECT", "PRIMARY_MATERIAL", "SECONDARY_MATERIAL", "BACKGROUND", "SHADOW_STYLE", "VISUAL_STYLE"];

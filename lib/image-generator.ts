@@ -231,7 +231,11 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        item.dualMaterialStructure
+        item.culinaryEditorialStructure
+          ? "Render the specified complete hero dish in the foreground with exactly one utensil-held bite above it and only the named raw accompaniments at lower right. Preserve the physical dimensional backdrop and blank natural copy zones. No chef, people, hands, packages, labels or rendered text; continuous full-bleed physical set."
+        : item.beverageCampaignStructure
+          ? "Render exactly three separate finished drinks in the specified triangular hierarchy: center hero highest, left and right drinks lower. Preserve the named vessels, recipes, plinths and matching ingredient props. No fourth drink, people, hands, labels or lettering; continuous full-bleed physical background."
+        : item.dualMaterialStructure
           ? "Render exactly the specified recognizable sculpture made from the named primary and secondary materials, joined as one intact subject. No extra construction materials, props, people or lettering; continuous studio background and specified shadows."
         : item.materialArtStructure
           ? "Render the specified single Editorial Still Life arrangement: a clear hero product or material-built artwork with restrained conceptual staging. Use only named objects/materials and minimal requested background detail; photographic surfaces and natural contact shadows. No people or rendered text."
@@ -254,6 +258,10 @@ export async function generateSingleImage(
 
       const originalUserContent = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : item.culinaryEditorialStructure
+          ? `Create one premium editorial culinary advertising photograph. Keep the complete named hero dish dominant in the foreground, one clear appetizing bite held by the specified utensil above it, and only the exact raw accompaniments grouped at lower right. Use physical dimensional set pieces and natural blank copy space; render no typography. Honor the eleven-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
+        : item.beverageCampaignStructure
+          ? `Create one premium commercial beverage-advertising still life with exactly three complete drinks. The center drink is elevated as the hero while the left and right drinks sit lower as a stable triangular set. Use only the specified recipe ingredients, vessels and plinths, with photorealistic liquid, ice, foam, bubbles, glass reflections and condensation. Honor the nine-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.dualMaterialStructure
           ? `Create one sculptural art object from two contrasting materials. The named subject silhouette must be familiar and intact, with realistic primary-material volume and a restrained secondary-material accent. Honor the six-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.materialArtStructure
@@ -270,6 +278,10 @@ export async function generateSingleImage(
       const userContent = attemptIndex > 0
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
+            : item.culinaryEditorialStructure
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME named dish, SAME utensil-held bite, SAME recipe ingredients, dimensional set and palette. Keep the full dish physically supported and immediately recognizable, with one realistic utensil entering from an edge and no visible hand. Correct food anatomy, utensil geometry, gravity, scale and texture. Preserve natural blank copy zones without panels. No chef, people, hands, package, label, lettering, badge, outer frame, unrelated garnish or clutter.`
+            : item.beverageCampaignStructure
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-stage the SAME three named drinks with the SAME recipes, vessels, plinth materials and ingredient props. Keep exactly three separate complete glasses: center hero highest, left drink lower on the left, right drink lower on the right. Correct liquid, ice, foam, condensation, reflections, vessel geometry and physical support. Remove unrelated props and clutter. No fourth drink, duplicate vessel, people, hands, lettering, labels, menu layout or poster panel.`
             : item.dualMaterialStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME subject using the SAME two named materials. Simplify the silhouette until instantly recognizable, keep the primary material dominant, and attach the secondary accent coherently. Fix texture, support and specified shadow. No third material, props, lettering, people, hardware substitution, architecture or diagram.`
             : item.materialArtStructure
@@ -439,6 +451,8 @@ export async function generateSingleImage(
               isResortMasterplan: Boolean(item.masterplanStructure),
               isMaterialArt: Boolean(item.materialArtStructure),
               isDualMaterial: Boolean(item.dualMaterialStructure),
+              isBeverageCampaign: Boolean(item.beverageCampaignStructure),
+              isCulinaryEditorial: Boolean(item.culinaryEditorialStructure),
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

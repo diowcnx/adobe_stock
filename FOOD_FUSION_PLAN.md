@@ -4,11 +4,14 @@ Replaces ordinary monthly photography with the user's seven-field USER_INPUT str
 CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
-Each batch now contains five structures: food pairs selected from 16 matched
+Each batch now contains seven structures: food pairs selected from 16 matched
 concepts, exhibition booths selected from 12 templates and architectural masterplan
 sketches selected from 12 templates, plus material-art still lifes selected from
-16 category-specific editorial still-life recipes, and 8 dual-material sculptures.
-Ten images are distributed two per structure, then shuffled. Each type is sampled without
+16 category-specific editorial still-life recipes, 8 dual-material sculptures and
+12 three-drink beverage campaigns and 12 culinary-editorial dishes. Every structure
+appears at least once in each batch. The remaining three of ten slots rotate across
+the seven structures by Bangkok production date, balancing totals over seven days,
+then all items are shuffled. Each type is sampled without
 duplicates within the batch. Booths use the user's 17-field specification;
 masterplans use the user's 8-field specification.
 Food pairs use system randomness.
@@ -65,7 +68,7 @@ typography. QA and retry rules preserve the sketch medium, complete site
 boundary, coherent zoning, paths and perspective. They do not require
 photorealism, frontal booth views or food fusion.
 
-All five structures output JPEG without people or lettering. No live image
+All seven structures output JPEG without people or lettering. No live image
 generation is required to prepare the briefs.
 
 Structures are reusable across suitable buyer categories. Booths include crafts,
@@ -110,6 +113,27 @@ Animal features and non-portrait sculptural organ forms are allowed under the
 human-face rule. No medical accuracy claims are made for organ-shaped artworks.
 Dedicated QA and retries preserve the subject and both materials without
 applying the food-hardware fusion, booth, masterplan or editorial staging rules.
+
+The sixth structure is Beverage Campaign, with CAMPAIGN_THEME,
+HERO_DRINK_CENTER_ELEVATED, SUPPORTING_DRINK_LEFT, SUPPORTING_DRINK_RIGHT,
+STAGING_PLINTHS, RELEVANT_INGREDIENT_PROPS, BACKGROUND_ENVIRONMENT,
+LIGHTING_MOOD and COLOR_PALETTE. Each recipe creates exactly three separate drinks:
+one elevated center hero and two lower supporting drinks forming a readable triangle.
+The 12 curated recipe families pair each drink with only its actual ingredients and
+define a buyer/use hypothesis. QA checks count, hierarchy, vessel geometry, support,
+liquid/ice/foam/condensation realism and ingredient relevance. Replacements preserve
+the same three recipes and set. No people, hands, labels, lettering or fourth drink.
+
+The seventh structure is Culinary Editorial. Its 11 fields cover project context,
+five buyer-copy placement zones, a foreground hero dish, a single utensil-held bite,
+recipe-specific raw accompaniments, a freestanding dimensional backdrop and palette.
+The copy fields reserve natural negative space only: no brand title, tagline, footer,
+badge or pseudo-text is rendered. This adapts the supplied example to the existing
+no-text and no-visible-face rules, so its chef, hands and lettered retail pouch are
+intentionally omitted. Twelve matched Thai dishes define accurate utensils,
+accompaniments, buyers and uses. Dedicated QA rejects distorted food, unrelated
+garnish, broken utensils, people/hands, packages, typography and poster frames;
+retries preserve the same dish, lifted bite, ingredients and dimensional set.
 
 Old ordinary-photography briefs are blocked before paid generation. Refresh and
 prepare a new batch after deployment. Historical downloads remain available.

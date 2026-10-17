@@ -689,8 +689,8 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="Food Fusion · Booth · Masterplan · Editorial Still Life · Dual Material 6 ช่อง">
-              5 Structures · JPEG
+            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="Food Fusion · Booth · Masterplan · Editorial Still Life · Dual Material · Beverage Campaign · Culinary Editorial">
+              7 Structures · JPEG
             </div>
 
             {/* Run Button */}
@@ -907,17 +907,17 @@ export default function Dashboard() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
-                  Fusion · Booth · Plan · Still Life · Dual Material
+                  Fusion · Booth · Plan · Still Life · Dual · Drinks · Food Editorial
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Structure ละ 2 ภาพ รวม 10 ภาพ · ไม่มีคน
+                  ทุก Structure อย่างน้อย 1 ภาพ · รวม 10 ภาพ · ไม่มีคน
                 </p>
               </div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-              <h3 className="font-semibold text-white mb-3">Five structures · Randomized batches</h3>
-              <p className="text-sm text-slate-300">รวม 10 ภาพ Structure ละ 2 ภาพ: Food Fusion 16 คู่ บูธสินค้า 12 แบบ ผังโครงการ 12 แบบ Editorial Still Life 16 แบบ และ Dual Material 8 แบบ สร้างรูปทรงที่จำได้จากวัสดุหลักและวัสดุรองที่ตัดกัน สุ่มไม่ซ้ำในแต่ละประเภท ทุกภาพไม่มีคนและไม่มีตัวหนังสือ</p>
+              <h3 className="font-semibold text-white mb-3">Seven structures · Randomized batches</h3>
+              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 7 Structure: Food Fusion 16 คู่ บูธสินค้า 12 แบบ ผังโครงการ 12 แบบ Editorial Still Life 16 แบบ Dual Material 8 แบบ Beverage Campaign 12 ชุด และ Culinary Editorial 12 เมนู ทุก Structure มีอย่างน้อย 1 ภาพต่อวัน ส่วน 3 ช่องที่เหลือหมุนเวียนอย่างสมดุลตามวัน แต่ละชุดสุ่มไม่ซ้ำภายในประเภท ทุกภาพไม่มีคน ไม่มีมือ และไม่มีตัวหนังสือ</p>
               <details className="mt-3">
               <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -1316,6 +1316,32 @@ export default function Dashboard() {
                             </div>
                           </div>
 
+                          {img.culinaryEditorialStructure && (
+                            <details className="rounded-xl border border-orange-900/60 bg-orange-950/20 p-3">
+                              <summary className="cursor-pointer text-xs font-semibold text-orange-300">USER_INPUT · Culinary Editorial · 11 Fields</summary>
+                              <dl className="mt-3 space-y-2">
+                                {Object.entries(img.culinaryEditorialStructure).map(([field, value]) => (
+                                  <div key={field}>
+                                    <dt className="text-xs text-orange-300">{field}</dt>
+                                    <dd className="text-xs text-slate-300">{value}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            </details>
+                          )}
+                          {img.beverageCampaignStructure && (
+                            <details className="rounded-xl border border-cyan-900/60 bg-cyan-950/20 p-3">
+                              <summary className="cursor-pointer text-xs font-semibold text-cyan-300">USER_INPUT · Beverage Campaign · 9 Fields</summary>
+                              <dl className="mt-3 space-y-2">
+                                {Object.entries(img.beverageCampaignStructure).map(([field, value]) => (
+                                  <div key={field}>
+                                    <dt className="text-xs text-cyan-300">{field}</dt>
+                                    <dd className="text-xs text-slate-300">{value}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            </details>
+                          )}
                           {img.dualMaterialStructure && (
                             <details className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3">
                               <summary className="cursor-pointer text-xs font-semibold text-rose-300">USER_INPUT · Dual Material · 6 Fields</summary>

@@ -8,6 +8,9 @@ import { generateMetadataCsv } from "../lib/csv";
 import { buildExhibitionBoothBatch, BOOTH_RECIPES } from "../lib/exhibition-booth";
 import { buildResortMasterplanBatch, MASTERPLAN_RECIPES } from "../lib/resort-masterplan";
 import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "../lib/material-art";
+import { buildDualMaterialBatch } from "../lib/dual-material";
+import { buildBeverageCampaignBatch, BEVERAGE_CAMPAIGN_RECIPES } from "../lib/beverage-campaign";
+import { buildCulinaryEditorialBatch, CULINARY_EDITORIAL_RECIPES } from "../lib/culinary-editorial";
 
 test("editorial still life supports product campaigns and adapts composition to canvas shape", () => {
   const date = new Date("2026-10-16T12:00:00Z");
@@ -48,10 +51,35 @@ test("structures adapt merchandise, buildings, amenities and buyers to their cat
   assert.match(school.prompt, /Add pools and slides ONLY when explicitly included/);
 });
 
-test("all five structures contribute two valid distinct briefs without paid planning", async () => {
+test("beverage and culinary structures keep products, ingredients and blank buyer copy zones coherent", () => {
+  const date = new Date("2026-10-17T12:00:00Z");
+  const beverages = buildBeverageCampaignBatch(date, BEVERAGE_CAMPAIGN_RECIPES.length);
+  assert.equal(new Set(beverages.map(item => item.seoTitle)).size, BEVERAGE_CAMPAIGN_RECIPES.length);
+  for (const item of beverages) {
+    assert.equal(Object.keys(item.beverageCampaignStructure || {}).length, 9);
+    assert.match(item.prompt, /exactly three finished drinks/);
+    assert.match(item.prompt, /highest central plinth/i);
+    assert.match(item.negativePrompt || "", /fourth drink/);
+    assert.equal(isStockImageItem(item), true);
+  }
+
+  const culinary = buildCulinaryEditorialBatch(date, CULINARY_EDITORIAL_RECIPES.length);
+  assert.equal(new Set(culinary.map(item => item.seoTitle)).size, CULINARY_EDITORIAL_RECIPES.length);
+  for (const item of culinary) {
+    assert.equal(Object.keys(item.culinaryEditorialStructure || {}).length, 11);
+    assert.match(item.prompt, /copy-space reservations only/);
+    assert.match(item.prompt, /Do not render any text/);
+    assert.match(item.prompt, /no hand, arm, chef, person or face/i);
+    assert.match(item.culinaryEditorialStructure?.BRAND_TITLE_UPPER_LEFT || "", /render absolutely no letters/);
+    assert.equal(isStockImageItem(item), true);
+  }
+});
+
+test("all seven structures contribute valid rotating briefs without paid planning", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
+    const firstWeekTotals = [0, 0, 0, 0, 0, 0, 0];
     for (let day = 1; day <= 31; day++) {
       const result = await conductMarketResearchAndGeneratePrompts(new Date(Date.UTC(2026, 9, day, 5)).toISOString());
       assert.equal(result.items.length, 10);
@@ -64,8 +92,13 @@ test("all five structures contribute two valid distinct briefs without paid plan
         result.items.filter(item => item.masterplanStructure).length,
         result.items.filter(item => item.materialArtStructure).length,
         result.items.filter(item => item.dualMaterialStructure).length,
+        result.items.filter(item => item.beverageCampaignStructure).length,
+        result.items.filter(item => item.culinaryEditorialStructure).length,
       ];
-      assert.deepEqual(counts, [2, 2, 2, 2, 2]);
+      assert.equal(counts.reduce((sum, count) => sum + count, 0), 10);
+      assert.ok(counts.every(count => count === 1 || count === 2));
+      assert.equal(counts.filter(count => count === 2).length, 3);
+      if (day <= 7) counts.forEach((count, index) => { firstWeekTotals[index] += count; });
       assert.deepEqual(result.items.map(item => item.id), [1,2,3,4,5,6,7,8,9,10]);
       assert.equal(new Set(result.items.map(item => item.filename)).size, 10);
       for (const item of result.items) {
@@ -100,12 +133,24 @@ test("all five structures contribute two valid distinct briefs without paid plan
           assert.match(item.prompt, /single clearly readable CENTRAL_INSTALLATION/);
           assert.equal(isStockImageItem({ ...item, materialArtStructure: { ...item.materialArtStructure, TEXT_ELEMENTS: "Render a title" } }), false);
           assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
-        } else {
+        } else if (item.dualMaterialStructure) {
           assert.equal(Object.keys(item.dualMaterialStructure || {}).length, 6);
           assert.match(item.prompt, /exactly one complete, immediately recognizable silhouette/);
           assert.match(item.prompt, /Add no third construction material/);
           assert.equal(isStockImageItem({ ...item, dualMaterialStructure: { ...item.dualMaterialStructure, PRIMARY_MATERIAL: "" } }), false);
           assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
+        } else if (item.beverageCampaignStructure) {
+          assert.equal(Object.keys(item.beverageCampaignStructure).length, 9);
+          assert.match(item.prompt, /exactly three finished drinks/);
+          assert.match(item.prompt, /no labels, letters, numbers/i);
+          assert.equal(isStockImageItem({ ...item, beverageCampaignStructure: { ...item.beverageCampaignStructure, STAGING_PLINTHS: "" } }), false);
+          assert.equal(isStockImageItem({ ...item, dualMaterialStructure: buildDualMaterialBatch(new Date(), 1)[0].dualMaterialStructure }), false);
+        } else {
+          assert.equal(Object.keys(item.culinaryEditorialStructure || {}).length, 11);
+          assert.match(item.prompt, /one clear appetizing bite/);
+          assert.match(item.prompt, /buyer will add copy after licensing/i);
+          assert.equal(isStockImageItem({ ...item, culinaryEditorialStructure: { ...item.culinaryEditorialStructure!, FOREGROUND_HERO_CULINARY_ITEM: "" } }), false);
+          assert.equal(isStockImageItem({ ...item, beverageCampaignStructure: buildBeverageCampaignBatch(new Date(), 1)[0].beverageCampaignStructure }), false);
         }
         assert.doesNotMatch(item.prompt, /Do not reinterpret the subject|Set this photograph in contemporary Thailand/);
         assert.match(item.negativePrompt || "", /visible human face/);
@@ -115,6 +160,7 @@ test("all five structures contribute two valid distinct briefs without paid plan
       }
       assert.doesNotMatch(generateMetadataCsv(result.items, result.mode), /\.png/);
     }
+    assert.deepEqual(firstWeekTotals, [10, 10, 10, 10, 10, 10, 10]);
   } finally { globalThis.fetch = originalFetch; }
 });
 
