@@ -3,7 +3,7 @@ import { ImageQualityReview, StockImageItem } from "./types";
 import { getErrorMessage } from "./errors";
 import { fetchAllowlistedImage, validateRemoteImageUrl } from "./remote-image";
 import { assessGeneratedImageQuality } from "./image-quality";
-import { getGenerationBlockReason, NO_VISIBLE_FACE_RULE } from "./generation-policy";
+import { AERIAL_NO_VISIBLE_FACE_RULE, getGenerationBlockReason, NO_VISIBLE_FACE_RULE } from "./generation-policy";
 
 const OPENROUTER_API_BASE = "https://openrouter.ai/api/v1";
 const MAX_INPUT_PIXELS = 40_000_000;
@@ -231,7 +231,9 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        item.culinaryEditorialStructure
+        item.aerialLandscapeStructure
+          ? "Render one full-bleed painterly aerial landscape from a high bird's-eye view: broad connected terrain ribbons, the specified winding path with only tiny faceless overhead scale cues, and one physically grounded focal landmark with a coherent directional shadow. Preserve the named gouache, chalk-pastel and stippled texture. No map, masterplan, satellite view, diagram, legend, compass, pin, icon, labels, lettering, large people, portraits or visible faces."
+        : item.culinaryEditorialStructure
           ? "Render the specified complete hero dish in the foreground with exactly one utensil-held bite above it and only the named raw accompaniments at lower right. Preserve the physical dimensional backdrop and blank natural copy zones. No chef, people, hands, packages, labels or rendered text; continuous full-bleed physical set."
         : item.beverageCampaignStructure
           ? "Render exactly three separate finished drinks in the specified triangular hierarchy: center hero highest, left and right drinks lower. Preserve the named vessels, recipes, plinths and matching ingredient props. No fourth drink, people, hands, labels or lettering; continuous full-bleed physical background."
@@ -244,7 +246,7 @@ export async function generateSingleImage(
         : item.boothStructure
           ? "Render only the complete exhibition booth and specified merchandise. Strict frontal orthographic view on continuous pure white studio background. Preserve the canopy, platform, shelves, access and blank signage. No people, lettering or surrounding event hall."
           : "Use only the single food-hardware hybrid described in the brief; no people, scenery or extra cultural props.",
-        NO_VISIBLE_FACE_RULE,
+        item.aerialLandscapeStructure ? AERIAL_NO_VISIBLE_FACE_RULE : NO_VISIBLE_FACE_RULE,
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
         isTransparent
@@ -260,6 +262,8 @@ export async function generateSingleImage(
 
       const visualDirection = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : item.aerialLandscapeStructure
+          ? `Create one original painterly aerial landscape illustration, not a map or architectural plan. Use a high bird's-eye viewpoint bordering on top-down, broad connected terrain ribbons, one winding route, tiny featureless faceless scale subjects and one clear grounded landmark with its coherent shadow. The artwork must fill all four edges. Honor the eight-field USER_INPUT while treating TYPOGRAPHY_OVERLAY only as a strict non-visual no-text control: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.culinaryEditorialStructure
           ? `Create one premium editorial culinary advertising photograph. Keep the complete named hero dish dominant in the foreground, one clear appetizing bite held by the specified utensil above it, and only the exact raw accompaniments grouped at lower right. Use physical dimensional set pieces and unobstructed natural background areas. Follow the visual input: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.beverageCampaignStructure
@@ -281,6 +285,8 @@ export async function generateSingleImage(
       const userContent = attemptIndex > 0
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
+            : item.aerialLandscapeStructure
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Repaint the SAME aerial landscape theme with the SAME terrain ribbons, winding path, tiny faceless overhead scale subjects, focal landmark, artistic medium, palette, lighting and shadow direction. Correct terrain continuity, route geometry, landmark support and shadow coherence. Keep people minuscule and featureless with no face or anatomy detail. Fill every edge. No map, masterplan, satellite image, diagram, legend, compass, pin, icon, label, lettering, border, poster or large person.`
             : item.culinaryEditorialStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME named dish, SAME utensil-held bite, SAME recipe ingredients, dimensional set and palette. Keep the full dish physically supported and immediately recognizable, with one realistic utensil entering from an edge and no visible hand. Correct food anatomy, utensil geometry, gravity, scale and texture. Preserve natural blank copy zones without panels. No chef, people, hands, package, label, lettering, badge, outer frame, unrelated garnish or clutter.`
             : item.beverageCampaignStructure
@@ -456,6 +462,7 @@ export async function generateSingleImage(
               isDualMaterial: Boolean(item.dualMaterialStructure),
               isBeverageCampaign: Boolean(item.beverageCampaignStructure),
               isCulinaryEditorial: Boolean(item.culinaryEditorialStructure),
+              isAerialLandscape: Boolean(item.aerialLandscapeStructure),
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

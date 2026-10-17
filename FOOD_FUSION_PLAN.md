@@ -4,13 +4,13 @@ Replaces ordinary monthly photography with the user's seven-field USER_INPUT str
 CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
-Each batch now contains seven structures: food pairs selected from 16 matched
+Each batch now contains eight structures: food pairs selected from 16 matched
 concepts, exhibition booths selected from 12 templates and architectural masterplan
 sketches selected from 12 templates, plus material-art still lifes selected from
 16 category-specific editorial still-life recipes, 8 dual-material sculptures and
-12 three-drink beverage campaigns and 12 culinary-editorial dishes. Every structure
-appears at least once in each batch. The remaining three of ten slots are assigned
-to three distinct structures selected with system randomness for that batch, then
+12 three-drink beverage campaigns, 12 culinary-editorial dishes and 12 painterly
+aerial landscapes. Every structure appears at least once in each batch. The remaining
+two of ten slots are assigned to two distinct structures selected with system randomness for that batch, then
 all ten items are shuffled. Each type is sampled without
 duplicates within the batch. Booths use the user's 17-field specification;
 masterplans use the user's 8-field specification.
@@ -68,7 +68,7 @@ typography. QA and retry rules preserve the sketch medium, complete site
 boundary, coherent zoning, paths and perspective. They do not require
 photorealism, frontal booth views or food fusion.
 
-All seven structures output JPEG without people or lettering. No live image
+All eight structures output JPEG without visible human faces or lettering. No live image
 generation is required to prepare the briefs.
 
 Rendered text is a hard rejection for every structure. QA checks both readable
@@ -145,6 +145,18 @@ intentionally omitted. Twelve matched Thai dishes define accurate utensils,
 accompaniments, buyers and uses. Dedicated QA rejects distorted food, unrelated
 garnish, broken utensils, people/hands, packages, typography and poster frames;
 retries preserve the same dish, lifted bite, ingredients and dimensional set.
+
+The eighth structure is Aerial Landscape. Its eight fields cover scene theme,
+connected aerial terrain ribbons, a winding path with minuscule overhead scale
+subjects, one focal landmark, gouache/chalk-pastel/stippled texture, color harmony,
+the text-control field and lighting/mood. TYPOGRAPHY_OVERLAY is fixed exactly to
+"None (Text-free)" and is never forwarded as a visual instruction. People, when a
+recipe needs scale, remain extremely small featureless overhead marks with no face,
+profile or anatomical detail. The result is a full-bleed painterly illustration,
+not a map, masterplan, satellite image or infographic. Dedicated QA checks connected
+terrain, route coherence, landmark support, shadow direction, medium, commercial
+clarity, full-bleed edges and the global zero-text rule. Retries preserve the same
+scene, route, landmark, palette, light and texture.
 
 Old ordinary-photography briefs are blocked before paid generation. Refresh and
 prepare a new batch after deployment. Historical downloads remain available.

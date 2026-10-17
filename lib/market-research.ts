@@ -8,6 +8,7 @@ import { buildMaterialArtBatch } from "./material-art";
 import { buildDualMaterialBatch } from "./dual-material";
 import { buildBeverageCampaignBatch } from "./beverage-campaign";
 import { buildCulinaryEditorialBatch } from "./culinary-editorial";
+import { buildAerialLandscapeBatch } from "./aerial-landscape";
 import { randomInt } from "node:crypto";
 import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
@@ -26,9 +27,9 @@ export async function conductMarketResearchAndGeneratePrompts(
   if (forcedMode === "transparent_png") throw new Error("PNG generation has been disabled. Prepare a new JPEG batch.");
   const date = new Date(currentDate);
   const productionDate = getBangkokDate(date);
-  // Reserve one slot for every structure, then assign the three remaining slots
-  // to three distinct structures selected with system randomness for this batch.
-  const counts = [1, 1, 1, 1, 1, 1, 1];
+  // Reserve one slot for every structure, then assign the two remaining slots
+  // to two distinct structures selected with system randomness for this batch.
+  const counts = [1, 1, 1, 1, 1, 1, 1, 1];
   const extraSlotPool = counts.map((_, index) => index);
   for (let slot = counts.length; slot < BATCH_SIZE; slot++) {
     const poolIndex = randomInt(extraSlotPool.length);
@@ -42,6 +43,7 @@ export async function conductMarketResearchAndGeneratePrompts(
     ...buildDualMaterialBatch(date, counts[4]),
     ...buildBeverageCampaignBatch(date, counts[5]),
     ...buildCulinaryEditorialBatch(date, counts[6]),
+    ...buildAerialLandscapeBatch(date, counts[7]),
   ];
   for (let index = items.length - 1; index > 0; index--) {
     const other = randomInt(index + 1);
@@ -56,9 +58,9 @@ export async function conductMarketResearchAndGeneratePrompts(
   return {
     mode, items, conceptPlan: summarizeConceptPlan(items, mode),
     trend: {
-      theme: "Food Fusion + Booths + Masterplans + Still Life + Dual Material + Beverage + Culinary Editorial — randomized JPEG concepts",
-      targetMarket: "food and beverage, beauty and craft advertisers, exhibition designers and architectural presentation teams",
-      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " masterplan, " + counts[3] + " editorial still-life, " + counts[4] + " dual-material, " + counts[5] + " beverage-campaign and " + counts[6] + " culinary-editorial briefs, selected without duplicate concepts within each structure and shuffled together. Every structure appears daily; three distinct structures are randomly selected for a second image in each batch. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
+      theme: "Food Fusion + Booths + Masterplans + Still Life + Dual Material + Beverage + Culinary Editorial + Aerial Landscape — randomized JPEG concepts",
+      targetMarket: "food and beverage, beauty and craft advertisers, exhibition designers, architectural presentation teams, travel publishers and environmental campaigns",
+      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " masterplan, " + counts[3] + " editorial still-life, " + counts[4] + " dual-material, " + counts[5] + " beverage-campaign, " + counts[6] + " culinary-editorial and " + counts[7] + " aerial-landscape briefs, selected without duplicate concepts within each structure and shuffled together. Every structure appears daily; two distinct structures are randomly selected for a second image in each batch. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
       seasonalRelevance: "Bangkok production date " + productionDate + ". Thai ingredients where relevant; minimalist studio background.",
       buyerDemandRating: "Research Candidate",
     },

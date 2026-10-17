@@ -11,6 +11,7 @@ import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "../lib/material-art
 import { buildDualMaterialBatch } from "../lib/dual-material";
 import { buildBeverageCampaignBatch, BEVERAGE_CAMPAIGN_RECIPES } from "../lib/beverage-campaign";
 import { buildCulinaryEditorialBatch, CULINARY_EDITORIAL_RECIPES } from "../lib/culinary-editorial";
+import { AERIAL_LANDSCAPE_RECIPES, buildAerialLandscapeBatch } from "../lib/aerial-landscape";
 
 test("editorial still life supports product campaigns and adapts composition to canvas shape", () => {
   const date = new Date("2026-10-16T12:00:00Z");
@@ -88,7 +89,23 @@ test("CSV exports only prioritized single-word keywords", () => {
   assert.doesNotMatch(csv, /commercial still life|food & beverage|copy space/i);
 });
 
-test("all seven structures contribute valid rotating briefs without paid planning", async () => {
+test("aerial landscapes keep the eight-field structure text-free and visually coherent", () => {
+  const items = buildAerialLandscapeBatch(new Date("2026-10-17T12:00:00Z"), AERIAL_LANDSCAPE_RECIPES.length);
+  assert.equal(new Set(items.map(item => item.seoTitle)).size, AERIAL_LANDSCAPE_RECIPES.length);
+  for (const item of items) {
+    assert.equal(Object.keys(item.aerialLandscapeStructure || {}).length, 8);
+    assert.equal(item.aerialLandscapeStructure?.TYPOGRAPHY_OVERLAY, "None (Text-free)");
+    assert.match(item.prompt, /high bird's-eye oblique viewpoint bordering on top-down/);
+    assert.match(item.prompt, /Fill every edge with painted terrain/);
+    assert.doesNotMatch(item.prompt, /^TYPOGRAPHY_OVERLAY:/m);
+    assert.equal(item.aspectRatio, "3:2");
+    assert.equal(item.composition, "artwork");
+    assert.ok(item.keywords.every(keyword => !/[\s,]/u.test(keyword)));
+    assert.equal(isStockImageItem(item), true);
+  }
+});
+
+test("all eight structures contribute valid rotating briefs without paid planning", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
@@ -106,10 +123,11 @@ test("all seven structures contribute valid rotating briefs without paid plannin
         result.items.filter(item => item.dualMaterialStructure).length,
         result.items.filter(item => item.beverageCampaignStructure).length,
         result.items.filter(item => item.culinaryEditorialStructure).length,
+        result.items.filter(item => item.aerialLandscapeStructure).length,
       ];
       assert.equal(counts.reduce((sum, count) => sum + count, 0), 10);
       assert.ok(counts.every(count => count === 1 || count === 2));
-      assert.equal(counts.filter(count => count === 2).length, 3);
+      assert.equal(counts.filter(count => count === 2).length, 2);
       assert.deepEqual(result.items.map(item => item.id), [1,2,3,4,5,6,7,8,9,10]);
       assert.equal(new Set(result.items.map(item => item.filename)).size, 10);
       for (const item of result.items) {
@@ -161,6 +179,14 @@ test("all seven structures contribute valid rotating briefs without paid plannin
           assert.match(item.prompt, /no labels, letters, numbers/i);
           assert.equal(isStockImageItem({ ...item, beverageCampaignStructure: { ...item.beverageCampaignStructure, STAGING_PLINTHS: "" } }), false);
           assert.equal(isStockImageItem({ ...item, dualMaterialStructure: buildDualMaterialBatch(new Date(), 1)[0].dualMaterialStructure }), false);
+        } else if (item.aerialLandscapeStructure) {
+          assert.equal(Object.keys(item.aerialLandscapeStructure).length, 8);
+          assert.equal(item.aerialLandscapeStructure.TYPOGRAPHY_OVERLAY, "None (Text-free)");
+          assert.match(item.prompt, /terrain (?:ribbons|bands)/i);
+          assert.match(item.prompt, /featureless top-down silhouettes or color marks/);
+          assert.doesNotMatch(item.prompt, /^TYPOGRAPHY_OVERLAY:/m);
+          assert.equal(isStockImageItem({ ...item, aerialLandscapeStructure: { ...item.aerialLandscapeStructure, TYPOGRAPHY_OVERLAY: "Title" } }), false);
+          assert.equal(isStockImageItem({ ...item, beverageCampaignStructure: buildBeverageCampaignBatch(new Date(), 1)[0].beverageCampaignStructure }), false);
         } else {
           assert.equal(Object.keys(item.culinaryEditorialStructure || {}).length, 11);
           assert.match(item.prompt, /one clear appetizing bite/);

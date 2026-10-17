@@ -28,7 +28,14 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (typeof value.aspectRatio !== "string" || !ASPECT_RATIOS.has(value.aspectRatio)) return false;
   if (!isBoundedString(value.prompt, 8_000)) return false;
   if (!isBoundedString(value.modelUsed, 200)) return false;
-  if ([value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure].filter(field => field !== undefined).length > 1) return false;
+  if ([value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure, value.aerialLandscapeStructure].filter(field => field !== undefined).length > 1) return false;
+  if (value.aerialLandscapeStructure !== undefined) {
+    if (!isRecord(value.aerialLandscapeStructure)) return false;
+    const fields = ["SCENE_THEME", "AERIAL_TERRAIN_RIBBONS", "WINDING_PATH_AND_SUBJECTS", "FOCAL_LANDMARK_ELEMENT", "ARTISTIC_MEDIUM_AND_TEXTURE", "COLOR_HARMONY_AND_PALETTE", "TYPOGRAPHY_OVERLAY", "LIGHTING_AND_MOOD"];
+    if (Object.keys(value.aerialLandscapeStructure).length !== fields.length ||
+        !fields.every(field => isBoundedString((value.aerialLandscapeStructure as Record<string, unknown>)[field], 700)) ||
+        value.aerialLandscapeStructure.TYPOGRAPHY_OVERLAY !== "None (Text-free)") return false;
+  }
   if (value.culinaryEditorialStructure !== undefined) {
     if (!isRecord(value.culinaryEditorialStructure)) return false;
     const fields = ["PROJECT_CONTEXT", "BRAND_TITLE_UPPER_LEFT", "BRAND_SUBLINE_UPPER_LEFT", "EDITORIAL_HEADLINE_LOWER_LEFT", "EDITORIAL_TAGLINE_LOWER_LEFT", "FOOTER_NOTICE_LOWER_RIGHT", "FOREGROUND_HERO_CULINARY_ITEM", "SUSPENDED_HERO_ACTION_AND_UTENSIL", "DISH_SPECIFIC_RAW_ACCOMPANIMENTS", "GRAPHIC_BACKDROP_AND_FRAME", "COLOR_PALETTE"];
