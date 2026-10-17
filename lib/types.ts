@@ -75,6 +75,7 @@ export interface FoodFusionStructure {
 }
 
 export interface StockImageItem {
+  editorialPenSketchStructure?: EditorialPenSketchStructure;
   aerialLandscapeStructure?: AerialLandscapeStructure;
   culinaryEditorialStructure?: CulinaryEditorialStructure;
   beverageCampaignStructure?: BeverageCampaignStructure;
@@ -105,6 +106,19 @@ export interface StockImageItem {
   costEstimate?: string;
   description?: string;
   qualityReview?: ImageQualityReview;
+}
+
+export interface EditorialPenSketchStructure {
+  PROJECT_THEME: string;
+  LOCATION: string;
+  MAIN_SUBJECT: string;
+  SCENE_ELEMENTS: string;
+  COMPOSITION: string;
+  COLOR_PALETTE: string;
+  HATCHING_STYLE: string;
+  PAPER_STYLE: string;
+  TEXT_ELEMENTS: string;
+  MOOD: string;
 }
 
 export interface AerialLandscapeStructure {

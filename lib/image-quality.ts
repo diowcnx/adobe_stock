@@ -27,6 +27,7 @@ export interface ImageQualityContext {
   isBeverageCampaign?: boolean;
   isCulinaryEditorial?: boolean;
   isAerialLandscape?: boolean;
+  isEditorialPenSketch?: boolean;
 }
 
 /** Detect the common AI failure where a portrait image is placed inside white side mats. */
@@ -77,7 +78,7 @@ export async function assessGeneratedImageQuality(
     expectedTitle: "commercial image",
   },
 ): Promise<ImageQualityResult> {
-  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isResortMasterplan && !context.isMaterialArt && !context.isDualMaterial && !context.isBeverageCampaign && !context.isCulinaryEditorial && await detectUnintendedLightBorder(inputBuffer)) {
+  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isResortMasterplan && !context.isMaterialArt && !context.isDualMaterial && !context.isBeverageCampaign && !context.isCulinaryEditorial && !context.isEditorialPenSketch && await detectUnintendedLightBorder(inputBuffer)) {
     return {
       passed: false,
       issues: ["unintended white border or mat around the image"],
@@ -115,7 +116,9 @@ export async function assessGeneratedImageQuality(
               type: "text",
               text: `Inspect only the visible pixels of this generated commercial image. Expected title: ${context.expectedTitle}. Intended buyer use: ${context.intendedUse || "general commercial design"}. Mode: ${context.mode}.
 Reject it if ANY readable or pseudo-readable letters, words, numerals, captions, title, logo, signature or watermark appear anywhere. Also reject a poster/card/mockup layout, blank header/footer panel, outer frame, mat, border, canvas margin, or image placed inside another page.
-${context.isAerialLandscape
+${context.isEditorialPenSketch
+  ? "This is an INTENTIONAL EDITORIAL COLORED-PEN SKETCH. Require one complete immediately recognizable MAIN_SUBJECT in the named LOCATION, with the specified SCENE_ELEMENTS supporting one clear practical story and buyer use. Require coherent perspective, scale, physical support and object geometry. The visual medium must read as colored technical-pen linework on textured drawing paper: controlled directional hatching, cross-hatching only where needed, visible paper between strokes and restrained colored-ink accents. The paper texture must fill every edge. Reject a photograph, watercolor or oil painting, broad digital color fills, abstract symbolism, unrelated props, broken geometry, illegible subject, people, hands, portraits, letters, handwriting, labels, signatures, pseudo-text, border, mat, poster, mockup or visible paper sheet edge. Set hasClearLiteralStory=true only when the subject, location and intended practical use are understandable without metadata."
+  : context.isAerialLandscape
   ? "This is an INTENTIONAL PAINTERLY AERIAL LANDSCAPE ILLUSTRATION. Require a high bird's-eye or near-top-down view with broad geographically connected terrain ribbons, one coherent winding path, one clearly grounded focal landmark and one directional landmark shadow matching the lighting. Tiny vehicles and people are scale cues only: people must be minuscule, featureless overhead silhouettes or color marks with no face, profile, limbs, clothing or portrait anatomy. Require visible gouache, chalk-pastel and stippled-grain character, coherent color harmony and a full-bleed image. Reject a map, masterplan, satellite photograph, infographic, collage, legend, compass, pin, route label, symbol, icon, scale bar, text, border, floating landmark, conflicting shadows, large person or visible face. Set hasClearLiteralStory=true when the landscape type, route and landmark make the buyer use understandable at a glance."
   : context.isCulinaryEditorial
   ? "This is an INTENTIONAL EDITORIAL CULINARY ADVERTISING PHOTOGRAPH. Require one complete, immediately recognizable hero dish dominating the foreground, exactly one readable bite lifted above it by the named utensil, and a restrained lower-right group containing only recipe-specific raw accompaniments. The utensil may enter from an image edge with support outside frame, but no hand, arm, chef, person or face may appear. Require appetizing realistic food anatomy and texture, coherent scale and gravity, an intact utensil, a physically supported dish, and freestanding dimensional backdrop pieces. Natural blank copy zones are intentional. Reject distorted or ambiguous food, an unsupported or cropped dish, broken utensil, multiple lifted bites, unrelated garnish, ingredient clutter, packaging, labels, people, hands, text, badges, outer frame, poster page or fake typography panels. Set hasClearLiteralStory=true when the dish, lifted bite and authentic ingredients communicate a specific culinary campaign at a glance."
@@ -134,7 +137,9 @@ ${context.isAerialLandscape
   : "Apply a strict two-second clarity test: an ordinary viewer must immediately name the main subject and understand the literal action or practical purpose without reading metadata or guessing a symbolic metaphor. Reject abstract assemblages, surreal hybrids, unrelated object piles, ambiguous sculptures, decorative material metaphors, or scenes whose buyer use is not visually clear."}
 Mandatory face rule: ${NO_VISIBLE_FACE_RULE} Set hasVisibleHumanFace=true if any human face or part of a face is visible, however small, blurred or obscured. Human backs, hands and bodies with all faces outside the frame are allowed. Animal faces are allowed.
 For transparent_png, the dark gray shown around the subject represents transparency. Require exactly one intact, familiar, opaque subject with a simple readable silhouette. Its normal practical function must be obvious, but it does not need to show an action; set hasClearLiteralStory=true when the single object and its normal use are immediately clear. Reject missing chunks, accidental transparent holes through solid areas, ragged/dirty/haloed edges, fragmented pieces, multiple unrelated objects, or a result that does not visibly match the expected title.
-${context.isAerialLandscape
+${context.isEditorialPenSketch
+  ? "The colored-pen drawing on continuous textured paper IS the final commercial artwork. Do not demand photorealism, a technical masterplan, food-hardware fusion or lifestyle action. Accept intentional hatched shading and natural paper grain while rejecting painted fills, typography and page framing."
+  : context.isAerialLandscape
   ? "The painted terrain ribbons, winding route, tiny faceless overhead scale cues and single landmark ARE the correct final landscape artwork. Do not demand photographic realism, a lifestyle close-up, architectural zoning or technical map symbols. Reject actual labels, legends, text, page margins or poster framing."
   : context.isCulinaryEditorial
   ? "The hero dish, edge-entering utensil-held bite, recipe ingredients and freestanding dimensional backdrop ARE the correct final advertising scene. Do not demand a visible chef, hand, retail package or rendered headline. Copy placement fields represent natural empty background only; reject any actual or pseudo-text."

@@ -689,8 +689,8 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="Food Fusion · Booth · Masterplan · Editorial Still Life · Dual Material · Beverage Campaign · Culinary Editorial · Aerial Landscape">
-              8 Structures · JPEG
+            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="Food Fusion · Booth · Masterplan · Editorial Still Life · Dual Material · Beverage Campaign · Culinary Editorial · Aerial Landscape · Editorial Pen Sketch">
+              9 Structures · JPEG
             </div>
 
             {/* Run Button */}
@@ -907,7 +907,7 @@ export default function Dashboard() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
-                  Fusion · Booth · Plan · Still Life · Dual · Drinks · Food Editorial · Aerial
+                  Fusion · Booth · Plan · Still Life · Dual · Drinks · Food Editorial · Aerial · Pen Sketch
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   ทุก Structure อย่างน้อย 1 ภาพ · รวม 10 ภาพ · ไม่มีใบหน้าคน
@@ -916,8 +916,8 @@ export default function Dashboard() {
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-              <h3 className="font-semibold text-white mb-3">Eight structures · Randomized batches</h3>
-              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 8 Structure: Food Fusion 16 คู่ บูธสินค้า 12 แบบ ผังโครงการ 12 แบบ Editorial Still Life 16 แบบ Dual Material 8 แบบ Beverage Campaign 12 ชุด Culinary Editorial 12 เมนู และ Aerial Landscape 12 แบบ ทุก Structure มีอย่างน้อย 1 ภาพในทุกชุด ส่วนอีก 2 ช่องจะสุ่มเลือก 2 Structure แบบไม่ซ้ำให้ได้ภาพที่สอง จากนั้นสุ่มสูตรและสลับลำดับทั้ง 10 ภาพ เมื่อเพิ่มครบ 10 Structure ระบบจะสร้าง Structure ละ 1 ภาพพอดีโดยไม่มีช่องสุ่มซ้ำ ทุกภาพไม่มีใบหน้าคนและไม่มีตัวหนังสือ</p>
+              <h3 className="font-semibold text-white mb-3">Nine structures · Randomized batches</h3>
+              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 9 Structure: Food Fusion บูธสินค้า ผังโครงการ Editorial Still Life, Dual Material, Beverage Campaign, Culinary Editorial, Aerial Landscape และ Editorial Pen Sketch ทุก Structure มีอย่างน้อย 1 ภาพในทุกชุด ส่วนอีก 1 ช่องจะสุ่มเลือก 1 Structure ให้ได้ภาพที่สอง จากนั้นสุ่มสูตรและสลับลำดับทั้ง 10 ภาพ เมื่อเพิ่มครบ 10 Structure ระบบจะสร้าง Structure ละ 1 ภาพพอดีโดยไม่มีช่องสุ่มซ้ำ ทุกภาพไม่มีใบหน้าคนและไม่มีตัวหนังสือ</p>
               <details className="mt-3">
               <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -948,12 +948,12 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Builds all 8 structures every day, then randomly assigns 2 extra slots. At 10 active structures, each receives exactly 1 of the 10 JPEG slots. Prompt-level hard ban on visible faces and all text.</p>
+                  <p className="text-slate-400">Builds all 9 structures every day, then randomly assigns 1 extra slot. At 10 active structures, each receives exactly 1 of the 10 JPEG slots. Prompt-level hard ban on visible faces and all text.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
                   <div className="font-semibold text-white">Image Generation</div>
-                  <p className="text-slate-400">Generates JPEG photographs using Gemini via OpenRouter and checks the resulting images.</p>
+                  <p className="text-slate-400">Generates JPEG photographs and illustrations using Gemini via OpenRouter and checks the resulting images.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center">4</div>
@@ -1388,6 +1388,19 @@ export default function Dashboard() {
                                 {Object.entries(img.aerialLandscapeStructure).map(([field, value]) => (
                                   <div key={field}>
                                     <dt className="text-xs text-teal-300">{field}</dt>
+                                    <dd className="text-xs text-slate-300">{value}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            </details>
+                          )}
+                          {img.editorialPenSketchStructure && (
+                            <details className="rounded-xl border border-orange-900/60 bg-orange-950/20 p-3">
+                              <summary className="cursor-pointer text-xs font-semibold text-orange-300">USER_INPUT · Editorial Pen Sketch · 10 Fields</summary>
+                              <dl className="mt-3 space-y-2">
+                                {Object.entries(img.editorialPenSketchStructure).map(([field, value]) => (
+                                  <div key={field}>
+                                    <dt className="text-xs text-orange-300">{field}</dt>
                                     <dd className="text-xs text-slate-300">{value}</dd>
                                   </div>
                                 ))}

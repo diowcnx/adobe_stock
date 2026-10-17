@@ -231,7 +231,9 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        item.aerialLandscapeStructure
+        item.editorialPenSketchStructure
+          ? "Render one full-bleed editorial colored-pen sketch on continuous drawing paper. Keep the named main subject complete, dominant and immediately recognizable inside its specified practical location, with only the requested scene elements. Use controlled directional hatching and cross-hatching with visible paper between strokes. No people, hands, portraits, photorealism, paint wash, abstract symbolism, labels, handwriting, lettering or visible paper edge."
+        : item.aerialLandscapeStructure
           ? "Render one full-bleed painterly aerial landscape from a high bird's-eye view: broad connected terrain ribbons, the specified winding path with only tiny faceless overhead scale cues, and one physically grounded focal landmark with a coherent directional shadow. Preserve the named gouache, chalk-pastel and stippled texture. No map, masterplan, satellite view, diagram, legend, compass, pin, icon, labels, lettering, large people, portraits or visible faces."
         : item.culinaryEditorialStructure
           ? "Render the specified complete hero dish in the foreground with exactly one utensil-held bite above it and only the named raw accompaniments at lower right. Preserve the physical dimensional backdrop and blank natural copy zones. No chef, people, hands, packages, labels or rendered text; continuous full-bleed physical set."
@@ -262,6 +264,8 @@ export async function generateSingleImage(
 
       const visualDirection = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : item.editorialPenSketchStructure
+          ? `Create one original full-bleed editorial colored-pen illustration, not a photograph, watercolor painting, poster or technical diagram. Make the named main subject and its practical purpose understandable within two seconds, preserve the specified location and supporting scene elements, and use coherent perspective, colored ink linework, directional hatching and visible paper tooth. Honor only the nine supplied visual fields; the omitted control requires a completely text-free image: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.aerialLandscapeStructure
           ? `Create one original painterly aerial landscape illustration, not a map or architectural plan. Use a high bird's-eye viewpoint bordering on top-down, broad connected terrain ribbons, one winding route, tiny featureless faceless scale subjects and one clear grounded landmark with its coherent shadow. The artwork must fill all four edges. Honor the eight-field USER_INPUT while treating TYPOGRAPHY_OVERLAY only as a strict non-visual no-text control: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.culinaryEditorialStructure
@@ -285,6 +289,8 @@ export async function generateSingleImage(
       const userContent = attemptIndex > 0
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
+            : item.editorialPenSketchStructure
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Redraw the SAME project theme, location, main subject, supporting scene elements, composition, pen palette, hatching, paper and mood. Make the main subject complete and immediately recognizable; correct perspective, scale, joins, support and line direction. Keep colored-pen strokes and natural paper visible across a full-bleed canvas. No people, hands, portraits, photorealism, paint wash, new symbolic props, labels, handwriting, lettering, border, mat, poster or visible paper edge.`
             : item.aerialLandscapeStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Repaint the SAME aerial landscape theme with the SAME terrain ribbons, winding path, tiny faceless overhead scale subjects, focal landmark, artistic medium, palette, lighting and shadow direction. Correct terrain continuity, route geometry, landmark support and shadow coherence. Keep people minuscule and featureless with no face or anatomy detail. Fill every edge. No map, masterplan, satellite image, diagram, legend, compass, pin, icon, label, lettering, border, poster or large person.`
             : item.culinaryEditorialStructure
@@ -463,6 +469,7 @@ export async function generateSingleImage(
               isBeverageCampaign: Boolean(item.beverageCampaignStructure),
               isCulinaryEditorial: Boolean(item.culinaryEditorialStructure),
               isAerialLandscape: Boolean(item.aerialLandscapeStructure),
+              isEditorialPenSketch: Boolean(item.editorialPenSketchStructure),
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

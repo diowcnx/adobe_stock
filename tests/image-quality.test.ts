@@ -11,10 +11,46 @@ import { buildDualMaterialBatch } from "../lib/dual-material";
 import { buildBeverageCampaignBatch } from "../lib/beverage-campaign";
 import { buildCulinaryEditorialBatch } from "../lib/culinary-editorial";
 import { buildAerialLandscapeBatch } from "../lib/aerial-landscape";
+import { buildEditorialPenSketchBatch } from "../lib/editorial-pen-sketch";
 
 async function solidImage(background: string): Promise<Buffer> {
   return sharp({ create: { width: 256, height: 256, channels: 3, background } }).jpeg().toBuffer();
 }
+
+test("editorial pen-sketch QA and retry preserve the subject, setting and drawing medium", async () => {
+  const originalFetch = globalThis.fetch;
+  const item = buildEditorialPenSketchBatch(new Date("2026-10-18T12:00:00Z"), 1)[0];
+  const image = await solidImage("#9b8d72");
+  const prompts: string[] = [];
+  let qaCalls = 0;
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    if (body.model === "google/gemini-3.1-flash-lite-image") {
+      prompts.push(body.messages[0].content);
+      return new Response(JSON.stringify({ choices: [{ message: { images: [{ b64_json: image.toString("base64") }] } }] }));
+    }
+    const inspection = body.messages[0].content[0].text;
+    assert.match(inspection, /INTENTIONAL EDITORIAL COLORED-PEN SKETCH/);
+    assert.doesNotMatch(inspection, /INTENTIONAL PAINTERLY AERIAL LANDSCAPE/);
+    qaCalls++;
+    const passed = qaCalls === 2;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      passed, hasVisibleHumanFace: false, hasText: false, hasArtificialBorder: false,
+      hasPosterLayout: false, isImmediatelyRecognizable: passed, hasClearLiteralStory: passed,
+      hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: false,
+      issues: passed ? [] : ["main subject is unclear and shading looks like a broad paint wash"],
+    }) } }] }));
+  };
+  try {
+    const result = await generateSingleImage(item, "test-key");
+    assert.equal(qaCalls, 2);
+    assert.match(prompts[0], /^ABSOLUTE NO-TEXT OUTPUT RULE/);
+    assert.match(prompts[0], /original full-bleed editorial colored-pen illustration/);
+    assert.match(prompts[1], /SAME project theme, location, main subject/);
+    assert.match(prompts[1], /No people, hands, portraits, photorealism/);
+    assert.equal(result.qualityReview?.status, "passed_after_retries");
+  } finally { globalThis.fetch = originalFetch; }
+});
 
 test("aerial landscape QA and retry preserve terrain, route, landmark and text-free artwork", async () => {
   const originalFetch = globalThis.fetch;
