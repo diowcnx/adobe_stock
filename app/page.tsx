@@ -917,7 +917,7 @@ export default function Dashboard() {
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
               <h3 className="font-semibold text-white mb-3">Seven structures · Randomized batches</h3>
-              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 7 Structure: Food Fusion 16 คู่ บูธสินค้า 12 แบบ ผังโครงการ 12 แบบ Editorial Still Life 16 แบบ Dual Material 8 แบบ Beverage Campaign 12 ชุด และ Culinary Editorial 12 เมนู ทุก Structure มีอย่างน้อย 1 ภาพต่อวัน ส่วน 3 ช่องที่เหลือหมุนเวียนอย่างสมดุลตามวัน แต่ละชุดสุ่มไม่ซ้ำภายในประเภท ทุกภาพไม่มีคน ไม่มีมือ และไม่มีตัวหนังสือ</p>
+              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 7 Structure: Food Fusion 16 คู่ บูธสินค้า 12 แบบ ผังโครงการ 12 แบบ Editorial Still Life 16 แบบ Dual Material 8 แบบ Beverage Campaign 12 ชุด และ Culinary Editorial 12 เมนู ทุก Structure มีอย่างน้อย 1 ภาพในทุกชุด ส่วนอีก 3 ช่องจะสุ่มเลือก 3 Structure แบบไม่ซ้ำให้ได้ภาพที่สอง จากนั้นสุ่มสูตรและสลับลำดับทั้ง 10 ภาพ ทุกภาพไม่มีคน ไม่มีมือ และไม่มีตัวหนังสือ</p>
               <details className="mt-3">
               <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">

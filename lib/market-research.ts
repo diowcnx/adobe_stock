@@ -26,11 +26,13 @@ export async function conductMarketResearchAndGeneratePrompts(
   if (forcedMode === "transparent_png") throw new Error("PNG generation has been disabled. Prepare a new JPEG batch.");
   const date = new Date(currentDate);
   const productionDate = getBangkokDate(date);
-  // Every structure appears daily. The three extra slots rotate by Bangkok day,
-  // so all seven structures receive an equal number of images across seven days.
-  const counts = [0, 0, 0, 0, 0, 0, 0];
-  for (let index = 0; index < BATCH_SIZE; index++) {
-    counts[(index + Number(productionDate.slice(-2)) % counts.length) % counts.length]++;
+  // Reserve one slot for every structure, then assign the three remaining slots
+  // to three distinct structures selected with system randomness for this batch.
+  const counts = [1, 1, 1, 1, 1, 1, 1];
+  const extraSlotPool = counts.map((_, index) => index);
+  for (let slot = counts.length; slot < BATCH_SIZE; slot++) {
+    const poolIndex = randomInt(extraSlotPool.length);
+    counts[extraSlotPool.splice(poolIndex, 1)[0]]++;
   }
   const items = [
     ...buildFoodFusionBatch(date, counts[0]),
@@ -55,7 +57,7 @@ export async function conductMarketResearchAndGeneratePrompts(
     trend: {
       theme: "Food Fusion + Booths + Masterplans + Still Life + Dual Material + Beverage + Culinary Editorial — randomized JPEG concepts",
       targetMarket: "food and beverage, beauty and craft advertisers, exhibition designers and architectural presentation teams",
-      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " masterplan, " + counts[3] + " editorial still-life, " + counts[4] + " dual-material, " + counts[5] + " beverage-campaign and " + counts[6] + " culinary-editorial briefs, selected without duplicate concepts within each structure and shuffled together. Every structure appears daily; the three second slots rotate across seven Bangkok dates. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
+      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " masterplan, " + counts[3] + " editorial still-life, " + counts[4] + " dual-material, " + counts[5] + " beverage-campaign and " + counts[6] + " culinary-editorial briefs, selected without duplicate concepts within each structure and shuffled together. Every structure appears daily; three distinct structures are randomly selected for a second image in each batch. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
       seasonalRelevance: "Bangkok production date " + productionDate + ". Thai ingredients where relevant; minimalist studio background.",
       buyerDemandRating: "Research Candidate",
     },

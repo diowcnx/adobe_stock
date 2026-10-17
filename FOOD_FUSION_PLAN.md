@@ -9,9 +9,9 @@ concepts, exhibition booths selected from 12 templates and architectural masterp
 sketches selected from 12 templates, plus material-art still lifes selected from
 16 category-specific editorial still-life recipes, 8 dual-material sculptures and
 12 three-drink beverage campaigns and 12 culinary-editorial dishes. Every structure
-appears at least once in each batch. The remaining three of ten slots rotate across
-the seven structures by Bangkok production date, balancing totals over seven days,
-then all items are shuffled. Each type is sampled without
+appears at least once in each batch. The remaining three of ten slots are assigned
+to three distinct structures selected with system randomness for that batch, then
+all ten items are shuffled. Each type is sampled without
 duplicates within the batch. Booths use the user's 17-field specification;
 masterplans use the user's 8-field specification.
 Food pairs use system randomness.

@@ -79,7 +79,6 @@ test("all seven structures contribute valid rotating briefs without paid plannin
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
-    const firstWeekTotals = [0, 0, 0, 0, 0, 0, 0];
     for (let day = 1; day <= 31; day++) {
       const result = await conductMarketResearchAndGeneratePrompts(new Date(Date.UTC(2026, 9, day, 5)).toISOString());
       assert.equal(result.items.length, 10);
@@ -98,7 +97,6 @@ test("all seven structures contribute valid rotating briefs without paid plannin
       assert.equal(counts.reduce((sum, count) => sum + count, 0), 10);
       assert.ok(counts.every(count => count === 1 || count === 2));
       assert.equal(counts.filter(count => count === 2).length, 3);
-      if (day <= 7) counts.forEach((count, index) => { firstWeekTotals[index] += count; });
       assert.deepEqual(result.items.map(item => item.id), [1,2,3,4,5,6,7,8,9,10]);
       assert.equal(new Set(result.items.map(item => item.filename)).size, 10);
       for (const item of result.items) {
@@ -160,7 +158,6 @@ test("all seven structures contribute valid rotating briefs without paid plannin
       }
       assert.doesNotMatch(generateMetadataCsv(result.items, result.mode), /\.png/);
     }
-    assert.deepEqual(firstWeekTotals, [10, 10, 10, 10, 10, 10, 10]);
   } finally { globalThis.fetch = originalFetch; }
 });
 
