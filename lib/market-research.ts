@@ -20,6 +20,29 @@ export function isStructuredConceptsEnabled(_value?: string): boolean {
   return false;
 }
 
+/**
+ * Give every active structure one daily slot before distributing any remainder.
+ * Therefore ten active structures in a ten-image batch always receive one image each.
+ */
+export function allocateDailyStructureCounts(
+  structureCount: number,
+  batchSize = BATCH_SIZE,
+  choose: (maxExclusive: number) => number = randomInt,
+): number[] {
+  if (!Number.isInteger(structureCount) || structureCount < 1) throw new Error("Structure count must be a positive integer");
+  if (!Number.isInteger(batchSize) || batchSize < structureCount) throw new Error("Batch size must cover every active structure");
+
+  const counts = Array<number>(structureCount).fill(1);
+  let extraSlotPool = counts.map((_, index) => index);
+  for (let slot = structureCount; slot < batchSize; slot++) {
+    if (extraSlotPool.length === 0) extraSlotPool = counts.map((_, index) => index);
+    const poolIndex = choose(extraSlotPool.length);
+    if (!Number.isInteger(poolIndex) || poolIndex < 0 || poolIndex >= extraSlotPool.length) throw new Error("Invalid structure selection");
+    counts[extraSlotPool.splice(poolIndex, 1)[0]]++;
+  }
+  return counts;
+}
+
 export async function conductMarketResearchAndGeneratePrompts(
   currentDate: string = new Date().toISOString(),
   forcedMode?: GenerationMode,
@@ -29,12 +52,7 @@ export async function conductMarketResearchAndGeneratePrompts(
   const productionDate = getBangkokDate(date);
   // Reserve one slot for every structure, then assign the two remaining slots
   // to two distinct structures selected with system randomness for this batch.
-  const counts = [1, 1, 1, 1, 1, 1, 1, 1];
-  const extraSlotPool = counts.map((_, index) => index);
-  for (let slot = counts.length; slot < BATCH_SIZE; slot++) {
-    const poolIndex = randomInt(extraSlotPool.length);
-    counts[extraSlotPool.splice(poolIndex, 1)[0]]++;
-  }
+  const counts = allocateDailyStructureCounts(8);
   const items = [
     ...buildFoodFusionBatch(date, counts[0]),
     ...buildExhibitionBoothBatch(date, counts[1]),

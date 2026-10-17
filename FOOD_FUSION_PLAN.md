@@ -14,6 +14,9 @@ two of ten slots are assigned to two distinct structures selected with system ra
 all ten items are shuffled. Each type is sampled without
 duplicates within the batch. Booths use the user's 17-field specification;
 masterplans use the user's 8-field specification.
+When the catalog reaches ten active structures, all ten slots are reserved one per
+structure and no structure receives a duplicate slot. The planner rejects a catalog
+larger than the ten-image batch rather than silently omitting a structure.
 Food pairs use system randomness.
 Angles and neutral matte backgrounds vary independently. Pairs can recur across
 batches; this is not a guarantee of lifetime uniqueness. Preparation makes no paid

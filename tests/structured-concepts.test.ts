@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { conductMarketResearchAndGeneratePrompts } from "../lib/market-research";
+import { allocateDailyStructureCounts, conductMarketResearchAndGeneratePrompts } from "../lib/market-research";
 import { isStockImageItem } from "../lib/validation";
 import { getGenerationBlockReason } from "../lib/generation-policy";
 import { generateSingleImage } from "../lib/image-generator";
@@ -103,6 +103,12 @@ test("aerial landscapes keep the eight-field structure text-free and visually co
     assert.ok(item.keywords.every(keyword => !/[\s,]/u.test(keyword)));
     assert.equal(isStockImageItem(item), true);
   }
+});
+
+test("ten structures receive exactly one daily image each", () => {
+  assert.deepEqual(allocateDailyStructureCounts(10, 10, () => 0), Array(10).fill(1));
+  assert.deepEqual(allocateDailyStructureCounts(8, 10, () => 0), [2, 2, 1, 1, 1, 1, 1, 1]);
+  assert.throws(() => allocateDailyStructureCounts(11, 10), /cover every active structure/);
 });
 
 test("all eight structures contribute valid rotating briefs without paid planning", async () => {
