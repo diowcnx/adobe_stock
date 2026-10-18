@@ -13,6 +13,7 @@ import { buildBeverageCampaignBatch, BEVERAGE_CAMPAIGN_RECIPES } from "../lib/be
 import { buildCulinaryEditorialBatch, CULINARY_EDITORIAL_RECIPES } from "../lib/culinary-editorial";
 import { AERIAL_LANDSCAPE_RECIPES, buildAerialLandscapeBatch } from "../lib/aerial-landscape";
 import { buildEditorialPenSketchBatch, EDITORIAL_PEN_SKETCH_RECIPES } from "../lib/editorial-pen-sketch";
+import { buildSymmetricalStorefrontBatch, SYMMETRICAL_STOREFRONT_RECIPES } from "../lib/symmetrical-storefront";
 
 test("editorial still life supports product campaigns and adapts composition to canvas shape", () => {
   const date = new Date("2026-10-16T12:00:00Z");
@@ -129,7 +130,23 @@ test("editorial pen sketches keep ten fields, readable subjects and no text inst
   }
 });
 
-test("all nine structures contribute valid rotating briefs without paid planning", async () => {
+test("symmetrical storefronts keep eight fields, readable businesses and original text-free direction", () => {
+  const items = buildSymmetricalStorefrontBatch(new Date("2026-10-18T12:00:00Z"), SYMMETRICAL_STOREFRONT_RECIPES.length);
+  assert.equal(new Set(items.map(item => item.seoTitle)).size, SYMMETRICAL_STOREFRONT_RECIPES.length);
+  for (const item of items) {
+    assert.equal(Object.keys(item.symmetricalStorefrontStructure || {}).length, 8);
+    assert.match(item.prompt, /single standalone small storefront/);
+    assert.match(item.prompt, /centered straight-on eye-level camera/);
+    assert.match(item.prompt, /No letters, words, numerals, shop names/);
+    assert.doesNotMatch(item.prompt + item.seoTitle + item.keywords.join(" "), /Wes Anderson/i);
+    assert.equal(item.aspectRatio, "3:2");
+    assert.equal(item.composition, "advertising");
+    assert.ok(item.keywords.every(keyword => !/[\s,]/u.test(keyword)));
+    assert.equal(isStockImageItem(item), true);
+  }
+});
+
+test("all ten structures contribute exactly one valid rotating brief without paid planning", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
@@ -149,10 +166,10 @@ test("all nine structures contribute valid rotating briefs without paid planning
         result.items.filter(item => item.culinaryEditorialStructure).length,
         result.items.filter(item => item.aerialLandscapeStructure).length,
         result.items.filter(item => item.editorialPenSketchStructure).length,
+        result.items.filter(item => item.symmetricalStorefrontStructure).length,
       ];
       assert.equal(counts.reduce((sum, count) => sum + count, 0), 10);
-      assert.ok(counts.every(count => count === 1 || count === 2));
-      assert.equal(counts.filter(count => count === 2).length, 1);
+      assert.ok(counts.every(count => count === 1));
       assert.deepEqual(result.items.map(item => item.id), [1,2,3,4,5,6,7,8,9,10]);
       assert.equal(new Set(result.items.map(item => item.filename)).size, 10);
       for (const item of result.items) {
@@ -220,6 +237,13 @@ test("all nine structures contribute valid rotating briefs without paid planning
           assert.doesNotMatch(item.prompt, /TEXT_ELEMENTS/);
           assert.equal(isStockImageItem({ ...item, editorialPenSketchStructure: { ...item.editorialPenSketchStructure, TEXT_ELEMENTS: "Draw a title" } }), false);
           assert.equal(isStockImageItem({ ...item, aerialLandscapeStructure: buildAerialLandscapeBatch(new Date(), 1)[0].aerialLandscapeStructure }), false);
+        } else if (item.symmetricalStorefrontStructure) {
+          assert.equal(Object.keys(item.symmetricalStorefrontStructure).length, 8);
+          assert.match(item.prompt, /disciplined bilateral symmetry/);
+          assert.match(item.prompt, /visible interior merchandise/i);
+          assert.doesNotMatch(item.prompt, /Wes Anderson/i);
+          assert.equal(isStockImageItem({ ...item, symmetricalStorefrontStructure: { ...item.symmetricalStorefrontStructure, ARCHITECTURAL_FACADE: "" } }), false);
+          assert.equal(isStockImageItem({ ...item, editorialPenSketchStructure: buildEditorialPenSketchBatch(new Date(), 1)[0].editorialPenSketchStructure }), false);
         } else {
           assert.equal(Object.keys(item.culinaryEditorialStructure || {}).length, 11);
           assert.match(item.prompt, /one clear appetizing bite/);

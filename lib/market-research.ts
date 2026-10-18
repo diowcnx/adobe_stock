@@ -10,6 +10,7 @@ import { buildBeverageCampaignBatch } from "./beverage-campaign";
 import { buildCulinaryEditorialBatch } from "./culinary-editorial";
 import { buildAerialLandscapeBatch } from "./aerial-landscape";
 import { buildEditorialPenSketchBatch } from "./editorial-pen-sketch";
+import { buildSymmetricalStorefrontBatch } from "./symmetrical-storefront";
 import { randomInt } from "node:crypto";
 import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
@@ -51,9 +52,8 @@ export async function conductMarketResearchAndGeneratePrompts(
   if (forcedMode === "transparent_png") throw new Error("PNG generation has been disabled. Prepare a new JPEG batch.");
   const date = new Date(currentDate);
   const productionDate = getBangkokDate(date);
-  // Reserve one slot for every structure, then randomly assign the remaining slot.
-  // Once a tenth structure is added, every structure receives exactly one image.
-  const counts = allocateDailyStructureCounts(9);
+  // Ten active structures fill the ten-image batch with exactly one image each.
+  const counts = allocateDailyStructureCounts(10);
   const items = [
     ...buildFoodFusionBatch(date, counts[0]),
     ...buildExhibitionBoothBatch(date, counts[1]),
@@ -64,6 +64,7 @@ export async function conductMarketResearchAndGeneratePrompts(
     ...buildCulinaryEditorialBatch(date, counts[6]),
     ...buildAerialLandscapeBatch(date, counts[7]),
     ...buildEditorialPenSketchBatch(date, counts[8]),
+    ...buildSymmetricalStorefrontBatch(date, counts[9]),
   ];
   for (let index = items.length - 1; index > 0; index--) {
     const other = randomInt(index + 1);
@@ -78,9 +79,9 @@ export async function conductMarketResearchAndGeneratePrompts(
   return {
     mode, items, conceptPlan: summarizeConceptPlan(items, mode),
     trend: {
-      theme: "Food Fusion + Booths + Masterplans + Still Life + Dual Material + Beverage + Culinary Editorial + Aerial Landscape + Editorial Pen Sketch — randomized JPEG concepts",
-      targetMarket: "food and beverage, beauty and craft advertisers, exhibition designers, architectural presentation teams, travel publishers, environmental campaigns and editorial art buyers",
-      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " masterplan, " + counts[3] + " editorial still-life, " + counts[4] + " dual-material, " + counts[5] + " beverage-campaign, " + counts[6] + " culinary-editorial, " + counts[7] + " aerial-landscape and " + counts[8] + " editorial-pen-sketch briefs, selected without duplicate concepts within each structure and shuffled together. Every structure appears daily; while nine structures are active, one randomly selected structure receives a second image. At ten structures, every structure receives exactly one image. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
+      theme: "Food Fusion + Booths + Masterplans + Still Life + Dual Material + Beverage + Culinary Editorial + Aerial Landscape + Editorial Pen Sketch + Symmetrical Storefront — randomized JPEG concepts",
+      targetMarket: "food and beverage, beauty and craft advertisers, exhibition designers, architectural presentation teams, travel publishers, environmental campaigns, editorial art buyers and independent retail brands",
+      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " masterplan, " + counts[3] + " editorial still-life, " + counts[4] + " dual-material, " + counts[5] + " beverage-campaign, " + counts[6] + " culinary-editorial, " + counts[7] + " aerial-landscape, " + counts[8] + " editorial-pen-sketch and " + counts[9] + " symmetrical-storefront brief. The ten structures each receive exactly one daily image, with a unique recipe selected inside every structure before the ten results are shuffled. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
       seasonalRelevance: "Bangkok production date " + productionDate + ". Thai ingredients where relevant; minimalist studio background.",
       buyerDemandRating: "Research Candidate",
     },

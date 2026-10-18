@@ -75,6 +75,7 @@ export interface FoodFusionStructure {
 }
 
 export interface StockImageItem {
+  symmetricalStorefrontStructure?: SymmetricalStorefrontStructure;
   editorialPenSketchStructure?: EditorialPenSketchStructure;
   aerialLandscapeStructure?: AerialLandscapeStructure;
   culinaryEditorialStructure?: CulinaryEditorialStructure;
@@ -106,6 +107,17 @@ export interface StockImageItem {
   costEstimate?: string;
   description?: string;
   qualityReview?: ImageQualityReview;
+}
+
+export interface SymmetricalStorefrontStructure {
+  SCENE_THEME: string;
+  ARCHITECTURAL_FACADE: string;
+  DOORS_WINDOWS_AND_INTERIOR: string;
+  STOREFRONT_PROPS_AND_PLANTS: string;
+  FLANKING_FLORA_OR_STRUCTURES: string;
+  BACKGROUND_HORIZON_AND_SKY: string;
+  FOREGROUND_PAVEMENT: string;
+  COLOR_PALETTE_AND_LIGHTING: string;
 }
 
 export interface EditorialPenSketchStructure {

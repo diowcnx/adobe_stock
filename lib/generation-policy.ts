@@ -12,7 +12,7 @@ export function getGenerationBlockReason(item: StockImageItem): string | undefin
   }
   if (item.conceptMode === "structured_concept" || item.conceptStructure ||
       item.generationBriefVersion !== GENERATION_BRIEF_VERSION ||
-      [item.fusionStructure, item.boothStructure, item.masterplanStructure, item.materialArtStructure, item.dualMaterialStructure, item.beverageCampaignStructure, item.culinaryEditorialStructure, item.aerialLandscapeStructure, item.editorialPenSketchStructure].filter(Boolean).length !== 1) {
+      [item.fusionStructure, item.boothStructure, item.masterplanStructure, item.materialArtStructure, item.dualMaterialStructure, item.beverageCampaignStructure, item.culinaryEditorialStructure, item.aerialLandscapeStructure, item.editorialPenSketchStructure, item.symmetricalStorefrontStructure].filter(Boolean).length !== 1) {
     return "This is a retired generation brief. Refresh the page and prepare a new JPEG batch.";
   }
   return undefined;

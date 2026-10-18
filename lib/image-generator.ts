@@ -231,7 +231,9 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        item.editorialPenSketchStructure
+        item.symmetricalStorefrontStructure
+          ? "Render one complete standalone small storefront in a centered straight-on eye-level architectural photograph. Preserve the named façade, doors, windows, visible business interior, balanced props, flanking elements, background horizon, sky, foreground pavement, pastel palette and daylight. No second shop, neighboring storefront row, people, hands, faces, signage, menus, labels, lettering, pseudo-text, dollhouse, illustration, poster or cropped building."
+        : item.editorialPenSketchStructure
           ? "Render one full-bleed editorial colored-pen sketch on continuous drawing paper. Keep the named main subject complete, dominant and immediately recognizable inside its specified practical location, with only the requested scene elements. Use controlled directional hatching and cross-hatching with visible paper between strokes. No people, hands, portraits, photorealism, paint wash, abstract symbolism, labels, handwriting, lettering or visible paper edge."
         : item.aerialLandscapeStructure
           ? "Render one full-bleed painterly aerial landscape from a high bird's-eye view: broad connected terrain ribbons, the specified winding path with only tiny faceless overhead scale cues, and one physically grounded focal landmark with a coherent directional shadow. Preserve the named gouache, chalk-pastel and stippled texture. No map, masterplan, satellite view, diagram, legend, compass, pin, icon, labels, lettering, large people, portraits or visible faces."
@@ -264,6 +266,8 @@ export async function generateSingleImage(
 
       const visualDirection = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : item.symmetricalStorefrontStructure
+          ? `Create one original high-end architectural editorial photograph of a single standalone minimal storefront. Use a strict centered straight-on eye-level camera, disciplined bilateral symmetry, realistic building scale, crisp pastel production design and bright clean daylight. The complete building, named business interior and foreground pavement must be immediately understandable and fill a continuous full-bleed exterior scene. Do not copy any named director, film, franchise or real shop. Honor the eight-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.editorialPenSketchStructure
           ? `Create one original full-bleed editorial colored-pen illustration, not a photograph, watercolor painting, poster or technical diagram. Make the named main subject and its practical purpose understandable within two seconds, preserve the specified location and supporting scene elements, and use coherent perspective, colored ink linework, directional hatching and visible paper tooth. Honor only the nine supplied visual fields; the omitted control requires a completely text-free image: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.aerialLandscapeStructure
@@ -289,6 +293,8 @@ export async function generateSingleImage(
       const userContent = attemptIndex > 0
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
+            : item.symmetricalStorefrontStructure
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME single storefront with the SAME scene theme, façade, doors, windows, visible interior merchandise, balanced storefront props, flanking elements, background horizon, sky, pavement, pastel palette and lighting. Fix the camera to centered straight-on eye level; show the complete uncropped building with plausible connected architecture, supported objects and clean bilateral symmetry. Keep every surface plain and unmarked. No second shop, storefront row, people, hands, faces, lettering, signage, menu, price, logo, pseudo-text, vehicle obstruction, dollhouse, miniature, illustration, collage, poster, border or frame.`
             : item.editorialPenSketchStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Redraw the SAME project theme, location, main subject, supporting scene elements, composition, pen palette, hatching, paper and mood. Make the main subject complete and immediately recognizable; correct perspective, scale, joins, support and line direction. Keep colored-pen strokes and natural paper visible across a full-bleed canvas. No people, hands, portraits, photorealism, paint wash, new symbolic props, labels, handwriting, lettering, border, mat, poster or visible paper edge.`
             : item.aerialLandscapeStructure
@@ -470,6 +476,7 @@ export async function generateSingleImage(
               isCulinaryEditorial: Boolean(item.culinaryEditorialStructure),
               isAerialLandscape: Boolean(item.aerialLandscapeStructure),
               isEditorialPenSketch: Boolean(item.editorialPenSketchStructure),
+              isSymmetricalStorefront: Boolean(item.symmetricalStorefrontStructure),
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

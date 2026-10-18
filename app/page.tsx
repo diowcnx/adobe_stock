@@ -907,17 +907,17 @@ export default function Dashboard() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
-                  Fusion · Booth · Plan · Still Life · Dual · Drinks · Food Editorial · Aerial · Pen Sketch
+                  Fusion · Booth · Plan · Still Life · Dual · Drinks · Food Editorial · Aerial · Pen Sketch · Storefront
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  ทุก Structure อย่างน้อย 1 ภาพ · รวม 10 ภาพ · ไม่มีใบหน้าคน
+                  10 Structure · อย่างละ 1 ภาพ · ไม่มีใบหน้าคน
                 </p>
               </div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-              <h3 className="font-semibold text-white mb-3">Nine structures · Randomized batches</h3>
-              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 9 Structure: Food Fusion บูธสินค้า ผังโครงการ Editorial Still Life, Dual Material, Beverage Campaign, Culinary Editorial, Aerial Landscape และ Editorial Pen Sketch ทุก Structure มีอย่างน้อย 1 ภาพในทุกชุด ส่วนอีก 1 ช่องจะสุ่มเลือก 1 Structure ให้ได้ภาพที่สอง จากนั้นสุ่มสูตรและสลับลำดับทั้ง 10 ภาพ เมื่อเพิ่มครบ 10 Structure ระบบจะสร้าง Structure ละ 1 ภาพพอดีโดยไม่มีช่องสุ่มซ้ำ ทุกภาพไม่มีใบหน้าคนและไม่มีตัวหนังสือ</p>
+              <h3 className="font-semibold text-white mb-3">Ten structures · One each daily</h3>
+              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 10 Structure: Food Fusion บูธสินค้า ผังโครงการ Editorial Still Life, Dual Material, Beverage Campaign, Culinary Editorial, Aerial Landscape, Editorial Pen Sketch และ Symmetrical Minimal Storefront ระบบสุ่มสูตรภายในแต่ละ Structure แล้วสร้างอย่างละ 1 ภาพพอดี ก่อนสลับลำดับทั้งชุด ทุกภาพไม่มีใบหน้าคน ไม่มีตัวหนังสือ และ Storefront ใช้ลักษณะภาพสมมาตร สีพาสเทล และกล้องตรงกลางในงานต้นฉบับโดยไม่อ้างชื่อผู้กำกับหรือเลียนแบบสถานที่จริง</p>
               <details className="mt-3">
               <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -948,7 +948,7 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Builds all 9 structures every day, then randomly assigns 1 extra slot. At 10 active structures, each receives exactly 1 of the 10 JPEG slots. Prompt-level hard ban on visible faces and all text.</p>
+                  <p className="text-slate-400">Builds all 10 structures every day with exactly 1 JPEG slot each, then shuffles the final batch. Prompt-level hard ban on visible faces and all text.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
@@ -1401,6 +1401,19 @@ export default function Dashboard() {
                                 {Object.entries(img.editorialPenSketchStructure).map(([field, value]) => (
                                   <div key={field}>
                                     <dt className="text-xs text-orange-300">{field}</dt>
+                                    <dd className="text-xs text-slate-300">{value}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            </details>
+                          )}
+                          {img.symmetricalStorefrontStructure && (
+                            <details className="rounded-xl border border-pink-900/60 bg-pink-950/20 p-3">
+                              <summary className="cursor-pointer text-xs font-semibold text-pink-300">USER_INPUT · Symmetrical Minimal Storefront · 8 Fields</summary>
+                              <dl className="mt-3 space-y-2">
+                                {Object.entries(img.symmetricalStorefrontStructure).map(([field, value]) => (
+                                  <div key={field}>
+                                    <dt className="text-xs text-pink-300">{field}</dt>
                                     <dd className="text-xs text-slate-300">{value}</dd>
                                   </div>
                                 ))}
