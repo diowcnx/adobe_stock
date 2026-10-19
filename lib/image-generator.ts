@@ -231,7 +231,9 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        item.symmetricalStorefrontStructure
+        item.thaiNaturePosterStructure
+          ? "Render one full-bleed hand-painted poster-color landscape of Thai nature and flower fields from a gently elevated scenic viewpoint. Preserve the named Thai flower species, terrain bands, winding route, single grounded landmark, vintage paper grain, palette, season and light. No top-down plan, map, masterplan, site plan, diagram, satellite view, poster page, border, text, pseudo-text, flags, temples, costumes, large people, portraits or visible faces."
+        : item.symmetricalStorefrontStructure
           ? "Render one complete standalone small storefront in a centered straight-on eye-level architectural photograph. Preserve the named façade, doors, windows, visible business interior, balanced props, flanking elements, background horizon, sky, foreground pavement, pastel palette and daylight. No second shop, neighboring storefront row, people, hands, faces, signage, menus, labels, lettering, pseudo-text, dollhouse, illustration, poster or cropped building."
         : item.editorialPenSketchStructure
           ? "Render one full-bleed editorial colored-pen sketch on continuous drawing paper. Keep the named main subject complete, dominant and immediately recognizable inside its specified practical location, with only the requested scene elements. Use controlled directional hatching and cross-hatching with visible paper between strokes. No people, hands, portraits, photorealism, paint wash, abstract symbolism, labels, handwriting, lettering or visible paper edge."
@@ -248,7 +250,7 @@ export async function generateSingleImage(
         : item.boothStructure
           ? "Render only the complete exhibition booth and specified merchandise. Strict frontal orthographic view on continuous pure white studio background. Preserve the canopy, platform, shelves, access and blank signage. No people, lettering or surrounding event hall."
           : "Use only the single food-hardware hybrid described in the brief; no people, scenery or extra cultural props.",
-        item.aerialLandscapeStructure ? AERIAL_NO_VISIBLE_FACE_RULE : NO_VISIBLE_FACE_RULE,
+        item.aerialLandscapeStructure || item.thaiNaturePosterStructure ? AERIAL_NO_VISIBLE_FACE_RULE : NO_VISIBLE_FACE_RULE,
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
         isTransparent
@@ -264,6 +266,8 @@ export async function generateSingleImage(
 
       const visualDirection = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : item.thaiNaturePosterStructure
+          ? `Create one original full-bleed hand-painted poster-color illustration of a real Thai natural landscape and flower field. Use a gently elevated panoramic scenic view with natural overlapping hills, meadow, water and flower bands, not a top-down map. Make the specified flower species, Thai geography, season, winding path, landmark, vintage paper fibers and matte opaque brushwork immediately readable. Honor the eight-field USER_INPUT while treating TYPOGRAPHY_OVERLAY only as a strict non-visual no-text control: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.symmetricalStorefrontStructure
           ? `Create one original high-end architectural editorial photograph of a single standalone minimal storefront. Use a strict centered straight-on eye-level camera, disciplined bilateral symmetry, realistic building scale, crisp pastel production design and bright clean daylight. The complete building, named business interior and foreground pavement must be immediately understandable and fill a continuous full-bleed exterior scene. Do not copy any named director, film, franchise or real shop. Honor the eight-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.editorialPenSketchStructure
@@ -289,6 +293,8 @@ export async function generateSingleImage(
       const userContent = attemptIndex > 0
         ? `${originalUserContent} ${isTransparent
             ? buildTransparentQualityRetryDirection(attemptIndex, rejectionReasons)
+            : item.thaiNaturePosterStructure
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Repaint the SAME Thai landscape, flower species, terrain bands, winding route, tiny faceless scale cues, focal landmark, poster-color medium, vintage paper texture, palette, season, lighting and shadow direction. Use a gently elevated scenic panorama with clear depth, plausible geography and a single grounded landmark. Keep any people minuscule and featureless. Fill every edge with painted scenery. No top-down plan, map, masterplan, satellite image, diagram, title panel, border, blank margin, letters, pseudo-text, logo, temple, flag, costume, large person or visible face.`
             : item.symmetricalStorefrontStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME single storefront with the SAME scene theme, façade, doors, windows, visible interior merchandise, balanced storefront props, flanking elements, background horizon, sky, pavement, pastel palette and lighting. Fix the camera to centered straight-on eye level; show the complete uncropped building with plausible connected architecture, supported objects and clean bilateral symmetry. Keep every surface plain and unmarked. No second shop, storefront row, people, hands, faces, lettering, signage, menu, price, logo, pseudo-text, vehicle obstruction, dollhouse, miniature, illustration, collage, poster, border or frame.`
             : item.editorialPenSketchStructure
@@ -468,6 +474,7 @@ export async function generateSingleImage(
               isBeverageCampaign: Boolean(item.beverageCampaignStructure),
               isCulinaryEditorial: Boolean(item.culinaryEditorialStructure),
               isAerialLandscape: Boolean(item.aerialLandscapeStructure),
+              isThaiNaturePoster: Boolean(item.thaiNaturePosterStructure),
               isEditorialPenSketch: Boolean(item.editorialPenSketchStructure),
               isSymmetricalStorefront: Boolean(item.symmetricalStorefrontStructure),
             });

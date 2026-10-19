@@ -4,15 +4,16 @@ Replaces ordinary monthly photography with the user's seven-field USER_INPUT str
 CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
-Each batch now contains nine active structures: food pairs selected from 16 matched
+Each batch now contains ten active structures: food pairs selected from 16 matched
 concepts, exhibition booths selected from 12 templates, plus material-art still lifes selected from
 16 category-specific editorial still-life recipes, 8 dual-material sculptures and
 12 three-drink beverage campaigns, 12 culinary-editorial dishes, 12 painterly
-aerial landscapes, 12 editorial pen sketches and 12 symmetrical minimal storefronts.
-Every active structure receives at least one slot in each ten-image batch. One
-randomly selected structure receives a second least-used concept, then all ten items
+aerial landscapes, 12 editorial pen sketches, 12 symmetrical minimal storefronts
+and 12 hand-painted Thai nature and flower-field posters.
+Every active structure receives exactly one slot in each ten-image batch, then all ten items
 are shuffled. Each type is sampled without duplicates within the batch. Booths use
-the user's 17-field specification. Architectural masterplans are retired and cannot
+the user's 17-field specification. Thai nature and flower-field poster art replaces
+the retired architectural masterplan slot. Architectural masterplans are retired and cannot
 reach paid generation. The planner rejects a catalog
 larger than the ten-image batch rather than silently omitting a structure.
 Before any paid image request, the planner reads a durable prompt-history ledger,
@@ -80,7 +81,7 @@ typography. New planning omits this structure and stale prepared briefs are bloc
 before paid generation. The old schema remains readable only so saved batches can
 still be viewed or downloaded.
 
-All nine active structures output JPEG without visible human faces or lettering. No live image
+All ten active structures output JPEG without visible human faces or lettering. No live image
 generation is required to prepare the briefs.
 
 Rendered text is a hard rejection for every structure. QA checks both readable
@@ -189,6 +190,14 @@ Dedicated QA rejects rows of shops, cropped façades, angled cameras, broken geo
 floating props, incoherent interiors, miniatures, illustrations, people and all text.
 Retries preserve all eight selected fields and the same business type. Plain boards,
 awnings, packaging and display surfaces remain completely unmarked.
+
+The tenth active structure is Thai Nature Poster. Its eight fields cover a named Thai
+landscape and flower season, natural terrain bands, a winding path with optional tiny
+faceless scale cues, one grounded landmark, hand-painted opaque poster color, integrated
+vintage-paper texture, color harmony and light/mood. TYPOGRAPHY_OVERLAY is fixed to
+`None (Text-free)` and removed from the visual prompt. The gently elevated panorama
+must read as real scenery rather than a top-down map, masterplan, site plan or diagram.
+Each daily batch includes exactly one Thai Nature Poster image.
 
 Old ordinary-photography briefs are blocked before paid generation. Refresh and
 prepare a new batch after deployment. Historical downloads remain available.

@@ -10,6 +10,7 @@ import { buildCulinaryEditorialBatch, CULINARY_EDITORIAL_RECIPES } from "./culin
 import { AERIAL_LANDSCAPE_RECIPES, buildAerialLandscapeBatch } from "./aerial-landscape";
 import { buildEditorialPenSketchBatch, EDITORIAL_PEN_SKETCH_RECIPES } from "./editorial-pen-sketch";
 import { buildSymmetricalStorefrontBatch, SYMMETRICAL_STOREFRONT_RECIPES } from "./symmetrical-storefront";
+import { buildThaiNaturePosterBatch, THAI_NATURE_POSTER_RECIPES } from "./thai-nature-poster";
 import { applyCreativeEdition, getDateBasedCreativeSequence, getPromptConceptKey, type PromptPlanningState } from "./prompt-novelty";
 import { randomInt } from "node:crypto";
 import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
@@ -69,9 +70,8 @@ export async function conductMarketResearchAndGeneratePrompts(
   if (forcedMode === "transparent_png") throw new Error("PNG generation has been disabled. Prepare a new JPEG batch.");
   const date = new Date(currentDate);
   const productionDate = getBangkokDate(date);
-  // Nine active structures receive one slot each; one randomly selected
-  // structure receives the tenth slot without repeating a concept in the batch.
-  const counts = allocateDailyStructureCounts(9);
+  // Ten active structures receive exactly one slot each.
+  const counts = allocateDailyStructureCounts(10);
   const conceptUsage = planningState?.conceptUsage ?? {};
   const sequence = planningState?.sequence ?? getDateBasedCreativeSequence(date);
   const candidatePools = [
@@ -84,6 +84,7 @@ export async function conductMarketResearchAndGeneratePrompts(
     buildAerialLandscapeBatch(date, AERIAL_LANDSCAPE_RECIPES.length),
     buildEditorialPenSketchBatch(date, EDITORIAL_PEN_SKETCH_RECIPES.length),
     buildSymmetricalStorefrontBatch(date, SYMMETRICAL_STOREFRONT_RECIPES.length),
+    buildThaiNaturePosterBatch(date, THAI_NATURE_POSTER_RECIPES.length),
   ];
   const items = candidatePools.flatMap((pool, index) =>
     selectLeastUsedConcepts(pool, conceptUsage, counts[index]).map(item => applyCreativeEdition(item, sequence))
@@ -101,10 +102,10 @@ export async function conductMarketResearchAndGeneratePrompts(
   return {
     mode, items, conceptPlan: summarizeConceptPlan(items, mode),
     trend: {
-      theme: "Food Fusion + Booths + Still Life + Dual Material + Beverage + Culinary Editorial + Aerial Landscape + Editorial Pen Sketch + Symmetrical Storefront — randomized JPEG concepts",
+      theme: "Food Fusion + Booths + Still Life + Dual Material + Beverage + Culinary Editorial + Aerial Landscape + Editorial Pen Sketch + Symmetrical Storefront + Thai Nature Poster — randomized JPEG concepts",
       targetMarket: "food and beverage, beauty and craft advertisers, exhibition designers, travel publishers, environmental campaigns, editorial art buyers and independent retail brands",
-      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " editorial still-life, " + counts[3] + " dual-material, " + counts[4] + " beverage-campaign, " + counts[5] + " culinary-editorial, " + counts[6] + " aerial-landscape, " + counts[7] + " editorial-pen-sketch and " + counts[8] + " symmetrical-storefront briefs. All nine active structures appear in every ten-image batch; one structure receives a second least-used concept. Architectural masterplans are retired. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
-      seasonalRelevance: "Bangkok production date " + productionDate + ". Thai ingredients where relevant; minimalist studio background.",
+      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " editorial still-life, " + counts[3] + " dual-material, " + counts[4] + " beverage-campaign, " + counts[5] + " culinary-editorial, " + counts[6] + " aerial-landscape, " + counts[7] + " editorial-pen-sketch, " + counts[8] + " symmetrical-storefront and " + counts[9] + " Thai-nature-poster briefs. All ten active structures appear exactly once in every ten-image batch. Architectural masterplans are retired. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
+      seasonalRelevance: "Bangkok production date " + productionDate + ". Thai ingredients and seasonally appropriate Thai flowers or landscapes are used only where relevant to each structure.",
       buyerDemandRating: "Research Candidate",
     },
   };

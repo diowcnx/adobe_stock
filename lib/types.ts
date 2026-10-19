@@ -75,6 +75,7 @@ export interface FoodFusionStructure {
 }
 
 export interface StockImageItem {
+  thaiNaturePosterStructure?: ThaiNaturePosterStructure;
   symmetricalStorefrontStructure?: SymmetricalStorefrontStructure;
   editorialPenSketchStructure?: EditorialPenSketchStructure;
   aerialLandscapeStructure?: AerialLandscapeStructure;
@@ -143,6 +144,8 @@ export interface AerialLandscapeStructure {
   TYPOGRAPHY_OVERLAY: string;
   LIGHTING_AND_MOOD: string;
 }
+
+export type ThaiNaturePosterStructure = AerialLandscapeStructure;
 
 export interface CulinaryEditorialStructure {
   PROJECT_CONTEXT: string;

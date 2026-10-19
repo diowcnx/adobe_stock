@@ -91,6 +91,7 @@ export function getPromptConceptKey(item: StockImageItem): string {
     : item.aerialLandscapeStructure ? "aerial"
     : item.editorialPenSketchStructure ? "pen-sketch"
     : item.symmetricalStorefrontStructure ? "storefront"
+    : item.thaiNaturePosterStructure ? "thai-nature-poster"
     : "unknown";
   return `${structure}:${item.seoTitle.trim().toLowerCase()}`;
 }

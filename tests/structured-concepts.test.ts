@@ -14,6 +14,7 @@ import { buildCulinaryEditorialBatch, CULINARY_EDITORIAL_RECIPES } from "../lib/
 import { AERIAL_LANDSCAPE_RECIPES, buildAerialLandscapeBatch } from "../lib/aerial-landscape";
 import { buildEditorialPenSketchBatch, EDITORIAL_PEN_SKETCH_RECIPES } from "../lib/editorial-pen-sketch";
 import { buildSymmetricalStorefrontBatch, SYMMETRICAL_STOREFRONT_RECIPES } from "../lib/symmetrical-storefront";
+import { buildThaiNaturePosterBatch, THAI_NATURE_POSTER_RECIPES } from "../lib/thai-nature-poster";
 import { reserveUniquePromptBatch } from "../lib/prompt-history";
 import { getPromptConceptKey } from "../lib/prompt-novelty";
 import { clearLatestBatch } from "../lib/batch-store";
@@ -102,6 +103,24 @@ test("aerial landscapes keep the eight-field structure text-free and visually co
   }
 });
 
+test("Thai nature posters keep eight fields, real flower landscapes and vintage poster-color direction", () => {
+  const items = buildThaiNaturePosterBatch(new Date("2026-10-19T12:00:00Z"), THAI_NATURE_POSTER_RECIPES.length);
+  assert.equal(new Set(items.map(item => item.seoTitle)).size, THAI_NATURE_POSTER_RECIPES.length);
+  for (const item of items) {
+    assert.equal(Object.keys(item.thaiNaturePosterStructure || {}).length, 8);
+    assert.equal(item.thaiNaturePosterStructure?.TYPOGRAPHY_OVERLAY, "None (Text-free)");
+    assert.match(item.prompt, /Thai nature and flower fields/);
+    assert.match(item.prompt, /poster color/i);
+    assert.match(item.prompt, /vintage paper/i);
+    assert.match(item.prompt, /not a top-down plan/);
+    assert.doesNotMatch(item.prompt, /^TYPOGRAPHY_OVERLAY:/m);
+    assert.equal(item.aspectRatio, "3:2");
+    assert.equal(item.composition, "artwork");
+    assert.ok(item.keywords.every(keyword => !/[\s,]/u.test(keyword)));
+    assert.equal(isStockImageItem(item), true);
+  }
+});
+
 test("structure allocation fills ten slots without omitting any active structure", () => {
   assert.deepEqual(allocateDailyStructureCounts(10, 10, () => 0), Array(10).fill(1));
   assert.deepEqual(allocateDailyStructureCounts(9, 10, () => 0), [2, 1, 1, 1, 1, 1, 1, 1, 1]);
@@ -141,7 +160,7 @@ test("symmetrical storefronts keep eight fields, readable businesses and origina
   }
 });
 
-test("all nine active structures contribute valid rotating briefs without paid planning", async () => {
+test("all ten active structures contribute exactly one valid brief without paid planning", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
@@ -161,10 +180,10 @@ test("all nine active structures contribute valid rotating briefs without paid p
         result.items.filter(item => item.aerialLandscapeStructure).length,
         result.items.filter(item => item.editorialPenSketchStructure).length,
         result.items.filter(item => item.symmetricalStorefrontStructure).length,
+        result.items.filter(item => item.thaiNaturePosterStructure).length,
       ];
       assert.equal(counts.reduce((sum, count) => sum + count, 0), 10);
-      assert.ok(counts.every(count => count === 1 || count === 2));
-      assert.equal(counts.filter(count => count === 2).length, 1);
+      assert.ok(counts.every(count => count === 1));
       assert.equal(result.items.some(item => item.masterplanStructure), false);
       assert.deepEqual(result.items.map(item => item.id), [1,2,3,4,5,6,7,8,9,10]);
       assert.equal(new Set(result.items.map(item => item.filename)).size, 10);
@@ -230,6 +249,15 @@ test("all nine active structures contribute valid rotating briefs without paid p
           assert.doesNotMatch(item.prompt, /Wes Anderson/i);
           assert.equal(isStockImageItem({ ...item, symmetricalStorefrontStructure: { ...item.symmetricalStorefrontStructure, ARCHITECTURAL_FACADE: "" } }), false);
           assert.equal(isStockImageItem({ ...item, editorialPenSketchStructure: buildEditorialPenSketchBatch(new Date(), 1)[0].editorialPenSketchStructure }), false);
+        } else if (item.thaiNaturePosterStructure) {
+          assert.equal(Object.keys(item.thaiNaturePosterStructure).length, 8);
+          assert.equal(item.thaiNaturePosterStructure.TYPOGRAPHY_OVERLAY, "None (Text-free)");
+          assert.match(item.prompt, /Thai nature and flower fields/);
+          assert.match(item.prompt, /vintage paper/i);
+          assert.match(item.prompt, /never as a map, masterplan, site plan/i);
+          assert.doesNotMatch(item.prompt, /^TYPOGRAPHY_OVERLAY:/m);
+          assert.equal(isStockImageItem({ ...item, thaiNaturePosterStructure: { ...item.thaiNaturePosterStructure, TYPOGRAPHY_OVERLAY: "Thai title" } }), false);
+          assert.equal(isStockImageItem({ ...item, aerialLandscapeStructure: buildAerialLandscapeBatch(new Date(), 1)[0].aerialLandscapeStructure }), false);
         } else {
           assert.equal(Object.keys(item.culinaryEditorialStructure || {}).length, 11);
           assert.match(item.prompt, /one clear appetizing bite/);
@@ -302,6 +330,7 @@ test("forced PNG plans and stale browser briefs cannot spend credits", async () 
       aerialLandscapeStructure: undefined,
       editorialPenSketchStructure: undefined,
       symmetricalStorefrontStructure: undefined,
+      thaiNaturePosterStructure: undefined,
       masterplanStructure: {
         PROJECT_THEME: "retired plan",
         PROJECT_TITLE: "No text",

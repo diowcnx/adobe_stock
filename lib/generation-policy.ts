@@ -1,6 +1,6 @@
 import type { StockImageItem } from "./types";
 
-export const GENERATION_BRIEF_VERSION = "food-hardware-fusion-v1";
+export const GENERATION_BRIEF_VERSION = "ten-structure-thai-nature-v2";
 export const THAI_CONTEXT_RULE = "Set this photograph in contemporary Thailand. Make the Thai context visible through appropriate everyday surroundings, architecture, local materials, household objects, food preparation or working life that naturally belong to the named activity. Use ordinary contemporary clothing and plausible Thai homes, shops, clinics, transit or community spaces. Match climate, vegetation and practical details to the Thai location. Preserve the literal subject and buyer use; add only a few relevant local details. Do not add decorative flags, ceremonial costumes, temples or cultural symbols unless explicitly required by the subject. No invented landmarks or claims of a specific real venue.";
 export const NO_VISIBLE_FACE_RULE = "No visible human faces anywhere in the image, including background people, side profiles, partial faces, reflections, photographs, posters and screens. Show people strictly from behind with the face fully turned away, or crop below the neck and show only hands or the body. Blurring, masks, sunglasses and distant faces do not satisfy this rule. Preserve the practical action using hands, tools and body posture.";
 export const AERIAL_NO_VISIBLE_FACE_RULE = "No visible human faces anywhere in the image. If the scene requires people for scale, show them only as extremely small featureless overhead silhouettes or color marks with no face, profile, limbs, hands, clothing detail or portrait anatomy. Never enlarge a person into a subject.";
@@ -12,7 +12,7 @@ export function getGenerationBlockReason(item: StockImageItem): string | undefin
   }
   if (item.conceptMode === "structured_concept" || item.conceptStructure || item.masterplanStructure ||
       item.generationBriefVersion !== GENERATION_BRIEF_VERSION ||
-      [item.fusionStructure, item.boothStructure, item.materialArtStructure, item.dualMaterialStructure, item.beverageCampaignStructure, item.culinaryEditorialStructure, item.aerialLandscapeStructure, item.editorialPenSketchStructure, item.symmetricalStorefrontStructure].filter(Boolean).length !== 1) {
+      [item.fusionStructure, item.boothStructure, item.materialArtStructure, item.dualMaterialStructure, item.beverageCampaignStructure, item.culinaryEditorialStructure, item.aerialLandscapeStructure, item.editorialPenSketchStructure, item.symmetricalStorefrontStructure, item.thaiNaturePosterStructure].filter(Boolean).length !== 1) {
     return "This is a retired generation brief. Refresh the page and prepare a new JPEG batch.";
   }
   return undefined;
