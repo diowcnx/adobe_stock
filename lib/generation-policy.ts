@@ -10,9 +10,9 @@ export function getGenerationBlockReason(item: StockImageItem): string | undefin
   if (item.generationMode === "transparent_png" || item.isTransparent || item.filename?.toLowerCase().endsWith(".png")) {
     return "PNG generation is disabled. Prepare a new JPEG batch.";
   }
-  if (item.conceptMode === "structured_concept" || item.conceptStructure ||
+  if (item.conceptMode === "structured_concept" || item.conceptStructure || item.masterplanStructure ||
       item.generationBriefVersion !== GENERATION_BRIEF_VERSION ||
-      [item.fusionStructure, item.boothStructure, item.masterplanStructure, item.materialArtStructure, item.dualMaterialStructure, item.beverageCampaignStructure, item.culinaryEditorialStructure, item.aerialLandscapeStructure, item.editorialPenSketchStructure, item.symmetricalStorefrontStructure].filter(Boolean).length !== 1) {
+      [item.fusionStructure, item.boothStructure, item.materialArtStructure, item.dualMaterialStructure, item.beverageCampaignStructure, item.culinaryEditorialStructure, item.aerialLandscapeStructure, item.editorialPenSketchStructure, item.symmetricalStorefrontStructure].filter(Boolean).length !== 1) {
     return "This is a retired generation brief. Refresh the page and prepare a new JPEG batch.";
   }
   return undefined;

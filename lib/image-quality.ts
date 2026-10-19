@@ -21,7 +21,6 @@ export interface ImageQualityContext {
   intendedUse?: string;
   isFoodFusion?: boolean;
   isExhibitionBooth?: boolean;
-  isResortMasterplan?: boolean;
   isMaterialArt?: boolean;
   isDualMaterial?: boolean;
   isBeverageCampaign?: boolean;
@@ -79,7 +78,7 @@ export async function assessGeneratedImageQuality(
     expectedTitle: "commercial image",
   },
 ): Promise<ImageQualityResult> {
-  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isResortMasterplan && !context.isMaterialArt && !context.isDualMaterial && !context.isBeverageCampaign && !context.isCulinaryEditorial && !context.isEditorialPenSketch && await detectUnintendedLightBorder(inputBuffer)) {
+  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isMaterialArt && !context.isDualMaterial && !context.isBeverageCampaign && !context.isCulinaryEditorial && !context.isEditorialPenSketch && await detectUnintendedLightBorder(inputBuffer)) {
     return {
       passed: false,
       issues: ["unintended white border or mat around the image"],
@@ -131,8 +130,6 @@ ${context.isSymmetricalStorefront
   ? "This is an INTENTIONAL DUAL-MATERIAL SCULPTURE. Require exactly one intact, immediately recognizable subject made from two distinct construction materials. The primary material should define the main volume and the secondary material a connected accent. Accept unexpected material combinations and deliberate sculptural anatomy while requiring convincing textures, coherent joins and support, a readable silhouette and natural studio shadows. Animal faces and recognizable stylized organ shapes are allowed; human faces are not. Reject extra objects, multiple disconnected subjects, random patchwork, unnecessary third materials, illegible shapes, melted textures, lettering, people or portrait busts. A neutral studio background and breathing room are intentional, not artificial borders. Set hasClearLiteralStory=true when the subject and material contrast are clear."
   : context.isMaterialArt
   ? "This is an INTENTIONAL MATERIAL-ART STILL-LIFE PHOTOGRAPH or Editorial Still Life brand image. Accept a dominant raw-material artwork OR a recognizable hero product in restrained conceptual staging for fashion, beauty, advertising or lifestyle. A normal product need not transform into a sculpture. Accept visual metaphor when named products/materials, arrangement and buyer use are clear. Require photographic texture, realistic scale, intact product geometry, coherent physical support, natural contact shadows and continuous studio background. Supporting objects must contribute to the same concept and stay secondary. Require framing and breathing room suited to the canvas, with no cropped hero or letterboxing. Reject clutter, unrelated piles, illegible elaborate symbolism, multiple competing motifs, hardware fusion, architecture, flat sketch rendering, text or people. Natural background and copy space are intentional, not artificial mats. Set hasClearLiteralStory=true when the campaign concept is readable."
-  : context.isResortMasterplan
-  ? "This is an ARCHITECTURAL PROJECT MASTERPLAN SKETCH, not a photograph. Require a coherent elevated bird's-eye oblique view showing the complete project, category-appropriate amenities, buildings, landscape/terrain and connected circulation at consistent scale. Use the expected title and intended use to determine the project category: schools, community parks, workplaces and housing do not require pools, waterparks or villas. Reject irrelevant amenities that contradict the category. Require fine ink/graphite linework, plentiful unpainted warm-white paper and sparse pastel tints at any specified water, roofs and planting. White paper and quiet title-free negative space are intentional, NOT artificial borders or blank poster panels. Reject actual drawn frames or inset sheets, cropped site, frontal booth views, saturated photorealistic renders, disconnected paths, floating buildings or incomprehensible zoning. Set hasClearLiteralStory=true when the site program and planning relationships are understandable. No title, lettering, labels, scale bars, legends, people or visible faces."
   : context.isExhibitionBooth
   ? "This is a FULL-SIZE EXHIBITION-BOOTH ARCHITECTURAL VISUALIZATION. Accept a centered complete booth on a seamless pure WHITE studio background with balanced white breathing room: white negative space is intentional and is NOT an artificial border or mat. Set hasArtificialBorder=false for a continuous white backdrop; reject only an actual drawn frame or inset page. Require strict straight-on frontal orthographic elevation, eye-level centered camera, complete canopy, platform and features visible, plausible joined structure, supported shelves, organized merchandise, open accessible front and realistic material/light detail. Blank sign surfaces and architectural display panels are intentional; they are not poster layouts. No people or lettering. Set hasClearLiteralStory=true when the exhibition architecture and retail-display use are clear. Reject cropped parts, cluttered real-world event halls, disconnected supports, dollhouse miniatures or wrong camera angle."
   : context.isFoodFusion
@@ -154,8 +151,6 @@ ${context.isSymmetricalStorefront
   ? "The single two-material sculpture on the requested background IS the final artwork. Do not demand a food-hardware pairing, an advertising product with props, a building or an everyday action. Preserve its non-human-face subject and material contrast."
   : context.isMaterialArt
   ? "The photographed material artwork on its physical surface IS the correct setting. Do not require a real-world lifestyle action, a food-hardware joint, booth structure or project plan. Reject genuine frames or inset page layouts, while accepting natural negative space on the same surface."
-  : context.isResortMasterplan
-  ? "The paper drawing itself is the final artwork, with no visible page edge or mockup. Accept linework and pale watercolor as the requested medium; do not demand food/hardware textures, architectural photorealism or a lifestyle setting."
   : context.isExhibitionBooth
   ? "The white studio backdrop and floor ARE the requested setting; do not require a room or real event hall. This is an architectural design proposal, not a food fusion or lifestyle photograph."
   : context.isFoodFusion

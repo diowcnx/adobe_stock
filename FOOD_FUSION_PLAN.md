@@ -4,17 +4,16 @@ Replaces ordinary monthly photography with the user's seven-field USER_INPUT str
 CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
-Each batch now contains ten structures: food pairs selected from 16 matched
-concepts, exhibition booths selected from 12 templates and architectural masterplan
-sketches selected from 12 templates, plus material-art still lifes selected from
+Each batch now contains nine active structures: food pairs selected from 16 matched
+concepts, exhibition booths selected from 12 templates, plus material-art still lifes selected from
 16 category-specific editorial still-life recipes, 8 dual-material sculptures and
 12 three-drink beverage campaigns, 12 culinary-editorial dishes, 12 painterly
 aerial landscapes, 12 editorial pen sketches and 12 symmetrical minimal storefronts.
-Every structure receives exactly one slot in each ten-image batch, then all ten items
-are shuffled. Each type is sampled without duplicates within the batch. Booths use the user's 17-field specification;
-masterplans use the user's 8-field specification.
-All ten slots are reserved one per structure and no structure receives a duplicate
-slot. The planner rejects a catalog
+Every active structure receives at least one slot in each ten-image batch. One
+randomly selected structure receives a second least-used concept, then all ten items
+are shuffled. Each type is sampled without duplicates within the batch. Booths use
+the user's 17-field specification. Architectural masterplans are retired and cannot
+reach paid generation. The planner rejects a catalog
 larger than the ten-image batch rather than silently omitting a structure.
 Before any paid image request, the planner reads a durable prompt-history ledger,
 selects the least-used recipe in each structure, adds a distinct six-axis creative
@@ -70,17 +69,18 @@ Both structures remain JPEG with no people or visible human faces. Historic
 downloads and saved metadata remain readable. Future structures can be represented
 separately without merging incompatible USER_INPUT fields.
 
-Resort masterplans use PROJECT_THEME, PROJECT_TITLE, VIEW_AND_PERSPECTIVE,
+Architectural masterplans are retired. Historical manifests may still contain
+PROJECT_THEME, PROJECT_TITLE, VIEW_AND_PERSPECTIVE,
 LINEWORK_AND_TINT_STYLE, WATERPARK_AND_AMENITY_ZONE,
 ACCOMMODATION_AND_STRUCTURES, LANDSCAPE_AND_TERRAIN and COLOR_PALETTE.
-They are elevated bird's-eye sketches on continuous warm-white paper, with
+These historical entries were elevated bird's-eye sketches on continuous warm-white paper, with
 fine graphite/ink linework and restrained pastel water, roof and planting
 tints. PROJECT_TITLE stays metadata with unmarked space reserved for later
-typography. QA and retry rules preserve the sketch medium, complete site
-boundary, coherent zoning, paths and perspective. They do not require
-photorealism, frontal booth views or food fusion.
+typography. New planning omits this structure and stale prepared briefs are blocked
+before paid generation. The old schema remains readable only so saved batches can
+still be viewed or downloaded.
 
-All ten structures output JPEG without visible human faces or lettering. No live image
+All nine active structures output JPEG without visible human faces or lettering. No live image
 generation is required to prepare the briefs.
 
 Rendered text is a hard rejection for every structure. QA checks both readable
@@ -95,16 +95,10 @@ split into meaningful Unicode words, filler words are removed, source priority i
 preserved, duplicates are removed and output is capped at 25 keywords.
 
 Structures are reusable across suitable buyer categories. Booths include crafts,
-coffee/food, cosmetics, technology and tourism. Masterplans include hospitality,
-education, community wellness, workplaces and senior housing. Adapt products,
-fixtures, buildings, amenities, keywords and intended buyer use together.
-WATERPARK_AND_AMENITY_ZONE supports non-water amenities, and
-ACCOMMODATION_AND_STRUCTURES supports project-appropriate buildings.
-Pools/slides/villas must never be added to an unrelated project merely because
-the original structure example was a waterpark resort. QA and retry prompts use
-the same category-adaptation rule. Food fusion remains food/hardware-specific.
+coffee/food, cosmetics, technology and tourism. Adapt products, fixtures, keywords
+and intended buyer use together. Food fusion remains food/hardware-specific.
 
-The fourth structure is the user's new 18-field Material Art brief. It uses
+The third active structure is the user's 18-field Material Art brief. It uses
 CAMPAIGN_THEME through TEXT_ELEMENTS, saved separately as materialArtStructure.
 This does not restore the retired automatic metaphor-conversion planner.
 Material Art explicitly specifies one readable physical artwork, named raw
@@ -126,7 +120,7 @@ Background material and camera treatment vary compatibly with the subject;
 upright hero products use a frontal three-quarter view. All variants retain
 No text, no people, full-bleed physical studio backgrounds and JPEG output.
 
-The fifth structure is Dual Material, with exactly SUBJECT, PRIMARY_MATERIAL,
+The fourth active structure is Dual Material, with exactly SUBJECT, PRIMARY_MATERIAL,
 SECONDARY_MATERIAL, BACKGROUND, SHADOW_STYLE and VISUAL_STYLE.
 It builds one recognizable animal, flower, organ-shaped sculpture, household
 object or other appropriate form from two contrasting materials. The primary
@@ -137,7 +131,7 @@ human-face rule. No medical accuracy claims are made for organ-shaped artworks.
 Dedicated QA and retries preserve the subject and both materials without
 applying the food-hardware fusion, booth, masterplan or editorial staging rules.
 
-The sixth structure is Beverage Campaign, with CAMPAIGN_THEME,
+The fifth active structure is Beverage Campaign, with CAMPAIGN_THEME,
 HERO_DRINK_CENTER_ELEVATED, SUPPORTING_DRINK_LEFT, SUPPORTING_DRINK_RIGHT,
 STAGING_PLINTHS, RELEVANT_INGREDIENT_PROPS, BACKGROUND_ENVIRONMENT,
 LIGHTING_MOOD and COLOR_PALETTE. Each recipe creates exactly three separate drinks:
@@ -147,7 +141,7 @@ define a buyer/use hypothesis. QA checks count, hierarchy, vessel geometry, supp
 liquid/ice/foam/condensation realism and ingredient relevance. Replacements preserve
 the same three recipes and set. No people, hands, labels, lettering or fourth drink.
 
-The seventh structure is Culinary Editorial. Its 11 fields cover project context,
+The sixth active structure is Culinary Editorial. Its 11 fields cover project context,
 five buyer-copy placement zones, a foreground hero dish, a single utensil-held bite,
 recipe-specific raw accompaniments, a freestanding dimensional backdrop and palette.
 The copy fields reserve natural negative space only: no brand title, tagline, footer,
@@ -158,7 +152,7 @@ accompaniments, buyers and uses. Dedicated QA rejects distorted food, unrelated
 garnish, broken utensils, people/hands, packages, typography and poster frames;
 retries preserve the same dish, lifted bite, ingredients and dimensional set.
 
-The eighth structure is Aerial Landscape. Its eight fields cover scene theme,
+The seventh active structure is Aerial Landscape. Its eight fields cover scene theme,
 connected aerial terrain ribbons, a winding path with minuscule overhead scale
 subjects, one focal landmark, gouache/chalk-pastel/stippled texture, color harmony,
 the text-control field and lighting/mood. TYPOGRAPHY_OVERLAY is fixed exactly to
@@ -170,7 +164,7 @@ terrain, route coherence, landmark support, shadow direction, medium, commercial
 clarity, full-bleed edges and the global zero-text rule. Retries preserve the same
 scene, route, landmark, palette, light and texture.
 
-The ninth structure is Editorial Pen Sketch. Its ten fields cover project theme,
+The eighth active structure is Editorial Pen Sketch. Its ten fields cover project theme,
 location, main subject, supporting scene elements, composition, colored-pen palette,
 hatching, paper, text control and mood. TEXT_ELEMENTS is fixed to "No text" and is
 not forwarded as visual content. Twelve curated practical scenes define an explicit
@@ -182,7 +176,7 @@ abstract symbolism, people, hands, lettering and visible page edges are rejected
 Dedicated QA and retry instructions preserve the same theme, location, subject,
 supporting objects, composition, palette, hatching, paper and mood.
 
-The tenth structure is Symmetrical Minimal Storefront. Its eight fields cover scene
+The ninth active structure is Symmetrical Minimal Storefront. Its eight fields cover scene
 theme, architectural façade, doors/windows/interior, storefront props/plants,
 flanking flora or structures, background horizon/sky, foreground pavement and
 palette/lighting. Twelve curated small-business recipes define explicit buyers,

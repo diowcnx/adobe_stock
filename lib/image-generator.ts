@@ -245,8 +245,6 @@ export async function generateSingleImage(
           ? "Render exactly the specified recognizable sculpture made from the named primary and secondary materials, joined as one intact subject. No extra construction materials, props, people or lettering; continuous studio background and specified shadows."
         : item.materialArtStructure
           ? "Render the specified single Editorial Still Life arrangement: a clear hero product or material-built artwork with restrained conceptual staging. Use only named objects/materials and minimal requested background detail; photographic surfaces and natural contact shadows. No people or rendered text."
-        : item.masterplanStructure
-          ? "Render the complete project masterplan as fine architectural sketch linework with sparse pastel tints on continuous warm-white paper. Use an elevated bird's-eye overview, category-appropriate buildings and amenities, readable zones and coherent terrain. Water features are allowed only when explicitly specified. No people, lettering, title, labels or extra objects."
         : item.boothStructure
           ? "Render only the complete exhibition booth and specified merchandise. Strict frontal orthographic view on continuous pure white studio background. Preserve the canopy, platform, shelves, access and blank signage. No people, lettering or surrounding event hall."
           : "Use only the single food-hardware hybrid described in the brief; no people, scenery or extra cultural props.",
@@ -280,8 +278,6 @@ export async function generateSingleImage(
           ? `Create one sculptural art object from two contrasting materials. The named subject silhouette must be familiar and intact, with realistic primary-material volume and a restrained secondary-material accent. Honor the six-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.materialArtStructure
           ? `Create an original Editorial Still Life studio photograph. Use the named hero product or raw materials in one clearly readable conceptual arrangement, with realistic textures and natural contact shadows on a continuous studio surface. Adapt composition to the requested aspect ratio, keeping the hero complete with an unobstructed natural background area. Follow the visual input: ${sanitizedPrompt}. ${mandatoryExclusions}`
-        : item.masterplanStructure
-          ? `Create one architectural project masterplan SKETCH ILLUSTRATION, not a photograph. Fine graphite/ink lines and sparse pale watercolor tints, elevated bird's-eye oblique view, complete site, clear category-appropriate amenities, buildings and landscape zones. Natural unpainted paper fills every edge with no visible sheet border. Follow this eight-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.boothStructure
           ? `Create a full-size premium exhibition-booth architectural visualization on a seamless pure white studio background, strictly frontal orthographic elevation, all architecture visible. Balanced white negative space is studio backdrop, not a frame. Follow the booth USER_INPUT structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.fusionStructure
@@ -307,8 +303,6 @@ export async function generateSingleImage(
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME subject using the SAME two named materials. Simplify the silhouette until instantly recognizable, keep the primary material dominant, and attach the secondary accent coherently. Fix texture, support and specified shadow. No third material, props, lettering, people, hardware substitution, architecture or diagram.`
             : item.materialArtStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-stage the SAME material-art motif using the SAME raw materials and named hero products, retaining their recognizable normal shapes. Simplify the arrangement, remove unnecessary accents, fix scale and physical support, preserve clear negative space and credible texture. Adapt spacing to the actual canvas without cropping the hero. Keep one readable Editorial Still Life arrangement on a continuous studio background, no lettering, people, hardware fusion, architecture or poster layout.`
-            : item.masterplanStructure
-              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Redraw the SAME project as an elevated bird's-eye architectural sketch, retaining its specified category, site program, amenities, buildings and terrain. Do not add unrequested resort pools, slides or villas to other project types. Correct zone relationships, perspective, path connections and roof geometry. Use fine loose lines, sparse pastel accents and plentiful unpainted paper. No title, lettering, labels, people, photo rendering, booth or food hybrid.`
             : item.boothStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME exhibition-booth design, retaining its architectural structure, merchandise and palette. Fix camera to strict frontal orthographic, show the full canopy and platform, use plausible connected supports and organized shelving, keep pure white studio background and soft contact shadows. No people, text, logo, surrounding hall or food-hardware hybrid. Blank signs are intentional.`
             : item.fusionStructure
@@ -469,7 +463,6 @@ export async function generateSingleImage(
               intendedUse: item.commercialIntent?.intendedUse,
               isFoodFusion: Boolean(item.fusionStructure),
               isExhibitionBooth: Boolean(item.boothStructure),
-              isResortMasterplan: Boolean(item.masterplanStructure),
               isMaterialArt: Boolean(item.materialArtStructure),
               isDualMaterial: Boolean(item.dualMaterialStructure),
               isBeverageCampaign: Boolean(item.beverageCampaignStructure),

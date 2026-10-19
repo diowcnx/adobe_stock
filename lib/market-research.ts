@@ -3,7 +3,6 @@ import { BATCH_SIZE, getBangkokDate, type GenerationMode } from "./production-pl
 import { summarizeConceptPlan } from "./structured-concepts";
 import { buildFoodFusionBatch, FUSION_RECIPES } from "./food-fusion";
 import { BOOTH_RECIPES, buildExhibitionBoothBatch } from "./exhibition-booth";
-import { buildResortMasterplanBatch, MASTERPLAN_RECIPES } from "./resort-masterplan";
 import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "./material-art";
 import { buildDualMaterialBatch, DUAL_MATERIAL_RECIPES } from "./dual-material";
 import { BEVERAGE_CAMPAIGN_RECIPES, buildBeverageCampaignBatch } from "./beverage-campaign";
@@ -46,14 +45,20 @@ export function allocateDailyStructureCounts(
   return counts;
 }
 
-function selectLeastUsedConcept(
+function selectLeastUsedConcepts(
   candidates: StockImageItem[],
   conceptUsage: Record<string, number>,
-): StockImageItem {
-  if (candidates.length === 0) throw new Error("Structure has no prompt candidates");
-  const minimumUsage = Math.min(...candidates.map(item => conceptUsage[getPromptConceptKey(item)] ?? 0));
-  const leastUsed = candidates.filter(item => (conceptUsage[getPromptConceptKey(item)] ?? 0) === minimumUsage);
-  return leastUsed[randomInt(leastUsed.length)];
+  count: number,
+): StockImageItem[] {
+  if (!Number.isInteger(count) || count < 1 || count > candidates.length) throw new Error("Invalid structure selection count");
+  const shuffled = [...candidates];
+  for (let index = shuffled.length - 1; index > 0; index--) {
+    const other = randomInt(index + 1);
+    [shuffled[index], shuffled[other]] = [shuffled[other], shuffled[index]];
+  }
+  return shuffled
+    .sort((left, right) => (conceptUsage[getPromptConceptKey(left)] ?? 0) - (conceptUsage[getPromptConceptKey(right)] ?? 0))
+    .slice(0, count);
 }
 
 export async function conductMarketResearchAndGeneratePrompts(
@@ -64,14 +69,14 @@ export async function conductMarketResearchAndGeneratePrompts(
   if (forcedMode === "transparent_png") throw new Error("PNG generation has been disabled. Prepare a new JPEG batch.");
   const date = new Date(currentDate);
   const productionDate = getBangkokDate(date);
-  // Ten active structures fill the ten-image batch with exactly one image each.
-  const counts = allocateDailyStructureCounts(10);
+  // Nine active structures receive one slot each; one randomly selected
+  // structure receives the tenth slot without repeating a concept in the batch.
+  const counts = allocateDailyStructureCounts(9);
   const conceptUsage = planningState?.conceptUsage ?? {};
   const sequence = planningState?.sequence ?? getDateBasedCreativeSequence(date);
   const candidatePools = [
     buildFoodFusionBatch(date, FUSION_RECIPES.length),
     buildExhibitionBoothBatch(date, BOOTH_RECIPES.length),
-    buildResortMasterplanBatch(date, MASTERPLAN_RECIPES.length),
     buildMaterialArtBatch(date, MATERIAL_ART_RECIPES.length),
     buildDualMaterialBatch(date, DUAL_MATERIAL_RECIPES.length),
     buildBeverageCampaignBatch(date, BEVERAGE_CAMPAIGN_RECIPES.length),
@@ -80,7 +85,9 @@ export async function conductMarketResearchAndGeneratePrompts(
     buildEditorialPenSketchBatch(date, EDITORIAL_PEN_SKETCH_RECIPES.length),
     buildSymmetricalStorefrontBatch(date, SYMMETRICAL_STOREFRONT_RECIPES.length),
   ];
-  const items = candidatePools.map(pool => applyCreativeEdition(selectLeastUsedConcept(pool, conceptUsage), sequence));
+  const items = candidatePools.flatMap((pool, index) =>
+    selectLeastUsedConcepts(pool, conceptUsage, counts[index]).map(item => applyCreativeEdition(item, sequence))
+  );
   for (let index = items.length - 1; index > 0; index--) {
     const other = randomInt(index + 1);
     [items[index], items[other]] = [items[other], items[index]];
@@ -94,9 +101,9 @@ export async function conductMarketResearchAndGeneratePrompts(
   return {
     mode, items, conceptPlan: summarizeConceptPlan(items, mode),
     trend: {
-      theme: "Food Fusion + Booths + Masterplans + Still Life + Dual Material + Beverage + Culinary Editorial + Aerial Landscape + Editorial Pen Sketch + Symmetrical Storefront — randomized JPEG concepts",
-      targetMarket: "food and beverage, beauty and craft advertisers, exhibition designers, architectural presentation teams, travel publishers, environmental campaigns, editorial art buyers and independent retail brands",
-      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " masterplan, " + counts[3] + " editorial still-life, " + counts[4] + " dual-material, " + counts[5] + " beverage-campaign, " + counts[6] + " culinary-editorial, " + counts[7] + " aerial-landscape, " + counts[8] + " editorial-pen-sketch and " + counts[9] + " symmetrical-storefront brief. The ten structures each receive exactly one daily image, with a unique recipe selected inside every structure before the ten results are shuffled. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
+      theme: "Food Fusion + Booths + Still Life + Dual Material + Beverage + Culinary Editorial + Aerial Landscape + Editorial Pen Sketch + Symmetrical Storefront — randomized JPEG concepts",
+      targetMarket: "food and beverage, beauty and craft advertisers, exhibition designers, travel publishers, environmental campaigns, editorial art buyers and independent retail brands",
+      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " editorial still-life, " + counts[3] + " dual-material, " + counts[4] + " beverage-campaign, " + counts[5] + " culinary-editorial, " + counts[6] + " aerial-landscape, " + counts[7] + " editorial-pen-sketch and " + counts[8] + " symmetrical-storefront briefs. All nine active structures appear in every ten-image batch; one structure receives a second least-used concept. Architectural masterplans are retired. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
       seasonalRelevance: "Bangkok production date " + productionDate + ". Thai ingredients where relevant; minimalist studio background.",
       buyerDemandRating: "Research Candidate",
     },

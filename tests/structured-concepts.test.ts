@@ -7,7 +7,6 @@ import { getGenerationBlockReason } from "../lib/generation-policy";
 import { generateSingleImage } from "../lib/image-generator";
 import { generateMetadataCsv, normalizeStockKeywords } from "../lib/csv";
 import { buildExhibitionBoothBatch, BOOTH_RECIPES } from "../lib/exhibition-booth";
-import { buildResortMasterplanBatch, MASTERPLAN_RECIPES } from "../lib/resort-masterplan";
 import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "../lib/material-art";
 import { buildDualMaterialBatch } from "../lib/dual-material";
 import { buildBeverageCampaignBatch, BEVERAGE_CAMPAIGN_RECIPES } from "../lib/beverage-campaign";
@@ -39,7 +38,7 @@ test("editorial still life supports product campaigns and adapts composition to 
   }
 });
 
-test("structures adapt merchandise, buildings, amenities and buyers to their categories", () => {
+test("booth structures adapt merchandise and buyers to their categories", () => {
   const date = new Date("2026-10-16T12:00:00Z");
   const booths = buildExhibitionBoothBatch(date, BOOTH_RECIPES.length);
   const technology = booths.find(item => item.seoTitle.includes("Technology"))!;
@@ -48,14 +47,6 @@ test("structures adapt merchandise, buildings, amenities and buyers to their cat
   assert.match(technology.commercialIntent?.intendedUse || "", /Technology/);
   assert.equal(isStockImageItem(technology), true);
 
-  const plans = buildResortMasterplanBatch(date, MASTERPLAN_RECIPES.length);
-  const school = plans.find(item => item.seoTitle.includes("School Campus"))!;
-  assert.match(school.masterplanStructure?.ACCOMMODATION_AND_STRUCTURES || "", /classroom/);
-  assert.match(school.masterplanStructure?.WATERPARK_AND_AMENITY_ZONE || "", /no swimming pool or waterpark/);
-  assert.match(school.commercialIntent?.intendedUse || "", /School Campus/);
-  assert.doesNotMatch(school.keywords.join(" "), /resort|waterpark|villa/);
-  assert.equal(isStockImageItem(school), true);
-  assert.match(school.prompt, /Add pools and slides ONLY when explicitly included/);
 });
 
 test("beverage and culinary structures keep products, ingredients and blank buyer copy zones coherent", () => {
@@ -111,7 +102,7 @@ test("aerial landscapes keep the eight-field structure text-free and visually co
   }
 });
 
-test("ten structures receive exactly one daily image each", () => {
+test("structure allocation fills ten slots without omitting any active structure", () => {
   assert.deepEqual(allocateDailyStructureCounts(10, 10, () => 0), Array(10).fill(1));
   assert.deepEqual(allocateDailyStructureCounts(9, 10, () => 0), [2, 1, 1, 1, 1, 1, 1, 1, 1]);
   assert.deepEqual(allocateDailyStructureCounts(8, 10, () => 0), [2, 2, 1, 1, 1, 1, 1, 1]);
@@ -150,7 +141,7 @@ test("symmetrical storefronts keep eight fields, readable businesses and origina
   }
 });
 
-test("all ten structures contribute exactly one valid rotating brief without paid planning", async () => {
+test("all nine active structures contribute valid rotating briefs without paid planning", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
@@ -163,7 +154,6 @@ test("all ten structures contribute exactly one valid rotating brief without pai
       const counts = [
         result.items.filter(item => item.fusionStructure).length,
         result.items.filter(item => item.boothStructure).length,
-        result.items.filter(item => item.masterplanStructure).length,
         result.items.filter(item => item.materialArtStructure).length,
         result.items.filter(item => item.dualMaterialStructure).length,
         result.items.filter(item => item.beverageCampaignStructure).length,
@@ -173,7 +163,9 @@ test("all ten structures contribute exactly one valid rotating brief without pai
         result.items.filter(item => item.symmetricalStorefrontStructure).length,
       ];
       assert.equal(counts.reduce((sum, count) => sum + count, 0), 10);
-      assert.ok(counts.every(count => count === 1));
+      assert.ok(counts.every(count => count === 1 || count === 2));
+      assert.equal(counts.filter(count => count === 2).length, 1);
+      assert.equal(result.items.some(item => item.masterplanStructure), false);
       assert.deepEqual(result.items.map(item => item.id), [1,2,3,4,5,6,7,8,9,10]);
       assert.equal(new Set(result.items.map(item => item.filename)).size, 10);
       for (const item of result.items) {
@@ -196,16 +188,6 @@ test("all ten structures contribute exactly one valid rotating brief without pai
           assert.doesNotMatch(item.prompt, /PRIMARY_SIGNAGE/);
           assert.doesNotMatch(item.prompt, /Fuse ORGANIC_FOOD_PART/);
           assert.equal(isStockImageItem({ ...item, fusionStructure: result.items.find(entry => entry.fusionStructure)?.fusionStructure }), false);
-        } else if (item.masterplanStructure) {
-          assert.equal(Object.keys(item.masterplanStructure || {}).length, 8);
-          assert.match(item.prompt, /elevated bird's-eye oblique/);
-          assert.match(item.prompt, /sparse pale watercolor tints/);
-          assert.match(item.prompt, /quiet unmarked portion of the same paper/);
-          assert.doesNotMatch(item.prompt, /PROJECT_TITLE/);
-          assert.equal(item.composition, "artwork");
-          assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
-          const invalid = { ...item.masterplanStructure, PROJECT_THEME: "" };
-          assert.equal(isStockImageItem({ ...item, masterplanStructure: invalid }), false);
         } else if (item.materialArtStructure) {
           assert.equal(Object.keys(item.materialArtStructure || {}).length, 18);
           assert.equal(item.materialArtStructure?.TEXT_ELEMENTS, "No text");
@@ -309,6 +291,31 @@ test("forced PNG plans and stale browser briefs cannot spend credits", async () 
     const result = await generateSingleImage(stale, "test-key");
     assert.equal(result.imageUrl, "");
     assert.match(result.error || "", /retired generation brief/);
+    const retiredMasterplan = {
+      ...items[0],
+      fusionStructure: undefined,
+      boothStructure: undefined,
+      materialArtStructure: undefined,
+      dualMaterialStructure: undefined,
+      beverageCampaignStructure: undefined,
+      culinaryEditorialStructure: undefined,
+      aerialLandscapeStructure: undefined,
+      editorialPenSketchStructure: undefined,
+      symmetricalStorefrontStructure: undefined,
+      masterplanStructure: {
+        PROJECT_THEME: "retired plan",
+        PROJECT_TITLE: "No text",
+        VIEW_AND_PERSPECTIVE: "bird eye view",
+        LINEWORK_AND_TINT_STYLE: "fine linework",
+        WATERPARK_AND_AMENITY_ZONE: "central amenity",
+        ACCOMMODATION_AND_STRUCTURES: "small buildings",
+        LANDSCAPE_AND_TERRAIN: "connected paths",
+        COLOR_PALETTE: "pale green",
+      },
+    };
+    const retiredResult = await generateSingleImage(retiredMasterplan, "test-key");
+    assert.equal(retiredResult.imageUrl, "");
+    assert.match(retiredResult.error || "", /retired generation brief/);
     assert.equal(calls, 0);
   } finally { globalThis.fetch = originalFetch; }
 });

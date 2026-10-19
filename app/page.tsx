@@ -689,7 +689,7 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="Food Fusion · Booth · Masterplan · Editorial Still Life · Dual Material · Beverage Campaign · Culinary Editorial · Aerial Landscape · Editorial Pen Sketch">
+            <div className="bg-violet-950/70 border border-violet-700/60 text-xs text-violet-200 rounded-xl px-3 py-2 font-medium" title="Food Fusion · Booth · Editorial Still Life · Dual Material · Beverage Campaign · Culinary Editorial · Aerial Landscape · Editorial Pen Sketch · Symmetrical Storefront">
               9 Structures · JPEG
             </div>
 
@@ -907,17 +907,17 @@ export default function Dashboard() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </div>
                 <div className="text-sm font-bold text-cyan-300 truncate">
-                  Fusion · Booth · Plan · Still Life · Dual · Drinks · Food Editorial · Aerial · Pen Sketch · Storefront
+                  Fusion · Booth · Still Life · Dual · Drinks · Food Editorial · Aerial · Pen Sketch · Storefront
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  10 Structure · อย่างละ 1 ภาพ · ไม่มีใบหน้าคน
+                  9 Structure · ครบทุกแบบ · รวม 10 ภาพ · ไม่มีใบหน้าคน
                 </p>
               </div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-              <h3 className="font-semibold text-white mb-3">Ten structures · One each daily</h3>
-              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 10 Structure: Food Fusion บูธสินค้า ผังโครงการ Editorial Still Life, Dual Material, Beverage Campaign, Culinary Editorial, Aerial Landscape, Editorial Pen Sketch และ Symmetrical Minimal Storefront ระบบเลือกสูตรที่ถูกใช้น้อยที่สุดก่อน แล้วสร้างอย่างละ 1 ภาพพอดี พร้อมบันทึก Prompt History ถาวรก่อนเริ่มสร้างภาพ เพื่อไม่ใช้ Prompt เดิมซ้ำแม้ลบ Batch ที่ดาวน์โหลดแล้ว ทุกภาพไม่มีใบหน้าคนและไม่มีตัวหนังสือ</p>
+              <h3 className="font-semibold text-white mb-3">Nine structures · All included daily</h3>
+              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 9 Structure: Food Fusion บูธสินค้า Editorial Still Life, Dual Material, Beverage Campaign, Culinary Editorial, Aerial Landscape, Editorial Pen Sketch และ Symmetrical Minimal Storefront โดยยกเลิก Structure แบบผังโครงการแล้ว ทุก Structure ที่เหลือได้อย่างน้อย 1 ภาพ และอีก 1 ภาพเลือกจาก Structure ที่ใช้แนวคิดน้อยที่สุด พร้อมบันทึก Prompt History ถาวรก่อนเริ่มสร้างภาพ</p>
               <details className="mt-3">
               <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -948,7 +948,7 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Builds all 10 structures with exactly 1 JPEG slot each, reserves every prompt in durable history before image generation, and rotates least-used concepts. Prompt-level hard ban on visible faces and all text.</p>
+                  <p className="text-slate-400">Builds all 9 active structures in every 10-image JPEG batch, assigns one extra least-used concept, and reserves every prompt in durable history before generation. Architectural masterplans are retired.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>
@@ -1370,7 +1370,7 @@ export default function Dashboard() {
                           )}
                           {img.masterplanStructure && (
                             <details className="rounded-xl border border-sky-900/60 bg-sky-950/20 p-3">
-                              <summary className="cursor-pointer text-xs font-semibold text-sky-300">USER_INPUT · Architectural Masterplan · 8 Fields</summary>
+                              <summary className="cursor-pointer text-xs font-semibold text-sky-300">ประวัติเก่า · Architectural Masterplan ที่ยกเลิกแล้ว · 8 Fields</summary>
                               <dl className="mt-3 space-y-2">
                                 {Object.entries(img.masterplanStructure).map(([field, value]) => (
                                   <div key={field}>
