@@ -1,5 +1,5 @@
 import { getOpenRouterCredits } from "./openrouter";
-import { conductMarketResearchAndGeneratePrompts } from "./market-research";
+import { reserveUniquePromptBatch } from "./prompt-history";
 import { generateAllStockImages } from "./image-generator";
 import { sendDailyStockEmail, sendCreditDepletedEmergencyAlert } from "./smtp2go";
 import { WorkflowResult } from "./types";
@@ -30,7 +30,7 @@ async function runDailyStockWorkflow(
 
   // 2. วางแผน 10 briefs ตามหมวดประจำวันของเวลาไทย
   console.log(`Conducting market research (mode: ${forcedMode || "auto-scheduled"})...`);
-  const { trend, items, mode, conceptPlan } = await conductMarketResearchAndGeneratePrompts(undefined, forcedMode);
+  const { trend, items, mode, conceptPlan } = await reserveUniquePromptBatch(undefined, forcedMode);
   console.log(`Resolved generation mode: ${mode} (${items.length} items; ${conceptPlan.structuredCount} structured concepts)`);
 
   // 3. สร้างภาพจำนวนตามชุดประจำวันที่กำหนด

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import test from "node:test";
 import { allocateDailyStructureCounts, conductMarketResearchAndGeneratePrompts } from "../lib/market-research";
 import { isStockImageItem } from "../lib/validation";
@@ -14,6 +15,9 @@ import { buildCulinaryEditorialBatch, CULINARY_EDITORIAL_RECIPES } from "../lib/
 import { AERIAL_LANDSCAPE_RECIPES, buildAerialLandscapeBatch } from "../lib/aerial-landscape";
 import { buildEditorialPenSketchBatch, EDITORIAL_PEN_SKETCH_RECIPES } from "../lib/editorial-pen-sketch";
 import { buildSymmetricalStorefrontBatch, SYMMETRICAL_STOREFRONT_RECIPES } from "../lib/symmetrical-storefront";
+import { reserveUniquePromptBatch } from "../lib/prompt-history";
+import { getPromptConceptKey } from "../lib/prompt-novelty";
+import { clearLatestBatch } from "../lib/batch-store";
 
 test("editorial still life supports product campaigns and adapts composition to canvas shape", () => {
   const date = new Date("2026-10-16T12:00:00Z");
@@ -261,6 +265,37 @@ test("all ten structures contribute exactly one valid rotating brief without pai
       assert.doesNotMatch(generateMetadataCsv(result.items, result.mode), /\.png/);
     }
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test("a prompt already used on an earlier production date is never selected again", async () => {
+  const seenPrompts = new Set<string>();
+  for (let day = 1; day <= 13; day++) {
+    const result = await conductMarketResearchAndGeneratePrompts(new Date(Date.UTC(2026, 9, day, 5)).toISOString());
+    for (const item of result.items) {
+      assert.equal(seenPrompts.has(item.prompt), false, `reused prompt: ${item.seoTitle}`);
+      seenPrompts.add(item.prompt);
+    }
+  }
+});
+
+test("durable planning survives batch deletion and rotates base concepts before same-day image generation", async () => {
+  const localHistory = "/tmp/adobe-stock-prompt-history-v1.json";
+  fs.rmSync(localHistory, { force: true });
+  const originalVercel = process.env.VERCEL;
+  delete process.env.VERCEL;
+  try {
+    const first = await reserveUniquePromptBatch("2026-10-19T11:50:00.000Z");
+    await clearLatestBatch();
+    const second = await reserveUniquePromptBatch("2026-10-19T11:51:00.000Z");
+    const firstPrompts = new Set(first.items.map(item => item.prompt));
+    const firstConcepts = new Set(first.items.map(getPromptConceptKey));
+    assert.ok(second.items.every(item => !firstPrompts.has(item.prompt)));
+    assert.ok(second.items.every(item => !firstConcepts.has(getPromptConceptKey(item))));
+  } finally {
+    fs.rmSync(localHistory, { force: true });
+    if (originalVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = originalVercel;
+  }
 });
 
 test("forced PNG plans and stale browser briefs cannot spend credits", async () => {

@@ -16,6 +16,16 @@ masterplans use the user's 8-field specification.
 All ten slots are reserved one per structure and no structure receives a duplicate
 slot. The planner rejects a catalog
 larger than the ten-image batch rather than silently omitting a structure.
+Before any paid image request, the planner reads a durable prompt-history ledger,
+selects the least-used recipe in each structure, adds a distinct six-axis creative
+direction, hashes every final prompt and reserves the whole batch with an optimistic
+ETag write. A simultaneous manual or cron request must retry against the winning
+ledger version, so it cannot claim the same prompt. The ledger uses its own
+`adobe-stock-prompt-history/` Blob prefix and is never removed when a downloaded
+batch or its images are deleted. Existing saved batch manifests seed the ledger on
+first deployment. Deleted historical batches cannot be reconstructed, so all new
+briefs also carry a visually meaningful creative edition rather than relying only
+on the old recipe text.
 Food pairs use system randomness.
 Angles and neutral matte backgrounds vary independently. Pairs can recur across
 batches; this is not a guarantee of lifetime uniqueness. Preparation makes no paid

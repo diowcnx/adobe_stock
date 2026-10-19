@@ -1,16 +1,17 @@
 import type { ConceptPlanSummary, MarketTrend, StockImageItem } from "./types";
 import { BATCH_SIZE, getBangkokDate, type GenerationMode } from "./production-plan";
 import { summarizeConceptPlan } from "./structured-concepts";
-import { buildFoodFusionBatch } from "./food-fusion";
-import { buildExhibitionBoothBatch } from "./exhibition-booth";
-import { buildResortMasterplanBatch } from "./resort-masterplan";
-import { buildMaterialArtBatch } from "./material-art";
-import { buildDualMaterialBatch } from "./dual-material";
-import { buildBeverageCampaignBatch } from "./beverage-campaign";
-import { buildCulinaryEditorialBatch } from "./culinary-editorial";
-import { buildAerialLandscapeBatch } from "./aerial-landscape";
-import { buildEditorialPenSketchBatch } from "./editorial-pen-sketch";
-import { buildSymmetricalStorefrontBatch } from "./symmetrical-storefront";
+import { buildFoodFusionBatch, FUSION_RECIPES } from "./food-fusion";
+import { BOOTH_RECIPES, buildExhibitionBoothBatch } from "./exhibition-booth";
+import { buildResortMasterplanBatch, MASTERPLAN_RECIPES } from "./resort-masterplan";
+import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "./material-art";
+import { buildDualMaterialBatch, DUAL_MATERIAL_RECIPES } from "./dual-material";
+import { BEVERAGE_CAMPAIGN_RECIPES, buildBeverageCampaignBatch } from "./beverage-campaign";
+import { buildCulinaryEditorialBatch, CULINARY_EDITORIAL_RECIPES } from "./culinary-editorial";
+import { AERIAL_LANDSCAPE_RECIPES, buildAerialLandscapeBatch } from "./aerial-landscape";
+import { buildEditorialPenSketchBatch, EDITORIAL_PEN_SKETCH_RECIPES } from "./editorial-pen-sketch";
+import { buildSymmetricalStorefrontBatch, SYMMETRICAL_STOREFRONT_RECIPES } from "./symmetrical-storefront";
+import { applyCreativeEdition, getDateBasedCreativeSequence, getPromptConceptKey, type PromptPlanningState } from "./prompt-novelty";
 import { randomInt } from "node:crypto";
 import { generateUniqueStockFilename, normalizeStockKeywords } from "./csv";
 
@@ -45,27 +46,41 @@ export function allocateDailyStructureCounts(
   return counts;
 }
 
+function selectLeastUsedConcept(
+  candidates: StockImageItem[],
+  conceptUsage: Record<string, number>,
+): StockImageItem {
+  if (candidates.length === 0) throw new Error("Structure has no prompt candidates");
+  const minimumUsage = Math.min(...candidates.map(item => conceptUsage[getPromptConceptKey(item)] ?? 0));
+  const leastUsed = candidates.filter(item => (conceptUsage[getPromptConceptKey(item)] ?? 0) === minimumUsage);
+  return leastUsed[randomInt(leastUsed.length)];
+}
+
 export async function conductMarketResearchAndGeneratePrompts(
   currentDate: string = new Date().toISOString(),
   forcedMode?: GenerationMode,
+  planningState?: PromptPlanningState,
 ): Promise<{ trend: MarketTrend; items: StockImageItem[]; mode: GenerationMode; conceptPlan: ConceptPlanSummary }> {
   if (forcedMode === "transparent_png") throw new Error("PNG generation has been disabled. Prepare a new JPEG batch.");
   const date = new Date(currentDate);
   const productionDate = getBangkokDate(date);
   // Ten active structures fill the ten-image batch with exactly one image each.
   const counts = allocateDailyStructureCounts(10);
-  const items = [
-    ...buildFoodFusionBatch(date, counts[0]),
-    ...buildExhibitionBoothBatch(date, counts[1]),
-    ...buildResortMasterplanBatch(date, counts[2]),
-    ...buildMaterialArtBatch(date, counts[3]),
-    ...buildDualMaterialBatch(date, counts[4]),
-    ...buildBeverageCampaignBatch(date, counts[5]),
-    ...buildCulinaryEditorialBatch(date, counts[6]),
-    ...buildAerialLandscapeBatch(date, counts[7]),
-    ...buildEditorialPenSketchBatch(date, counts[8]),
-    ...buildSymmetricalStorefrontBatch(date, counts[9]),
+  const conceptUsage = planningState?.conceptUsage ?? {};
+  const sequence = planningState?.sequence ?? getDateBasedCreativeSequence(date);
+  const candidatePools = [
+    buildFoodFusionBatch(date, FUSION_RECIPES.length),
+    buildExhibitionBoothBatch(date, BOOTH_RECIPES.length),
+    buildResortMasterplanBatch(date, MASTERPLAN_RECIPES.length),
+    buildMaterialArtBatch(date, MATERIAL_ART_RECIPES.length),
+    buildDualMaterialBatch(date, DUAL_MATERIAL_RECIPES.length),
+    buildBeverageCampaignBatch(date, BEVERAGE_CAMPAIGN_RECIPES.length),
+    buildCulinaryEditorialBatch(date, CULINARY_EDITORIAL_RECIPES.length),
+    buildAerialLandscapeBatch(date, AERIAL_LANDSCAPE_RECIPES.length),
+    buildEditorialPenSketchBatch(date, EDITORIAL_PEN_SKETCH_RECIPES.length),
+    buildSymmetricalStorefrontBatch(date, SYMMETRICAL_STOREFRONT_RECIPES.length),
   ];
+  const items = candidatePools.map(pool => applyCreativeEdition(selectLeastUsedConcept(pool, conceptUsage), sequence));
   for (let index = items.length - 1; index > 0; index--) {
     const other = randomInt(index + 1);
     [items[index], items[other]] = [items[other], items[index]];

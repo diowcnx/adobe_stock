@@ -917,7 +917,7 @@ export default function Dashboard() {
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
               <h3 className="font-semibold text-white mb-3">Ten structures · One each daily</h3>
-              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 10 Structure: Food Fusion บูธสินค้า ผังโครงการ Editorial Still Life, Dual Material, Beverage Campaign, Culinary Editorial, Aerial Landscape, Editorial Pen Sketch และ Symmetrical Minimal Storefront ระบบสุ่มสูตรภายในแต่ละ Structure แล้วสร้างอย่างละ 1 ภาพพอดี ก่อนสลับลำดับทั้งชุด ทุกภาพไม่มีใบหน้าคน ไม่มีตัวหนังสือ และ Storefront ใช้ลักษณะภาพสมมาตร สีพาสเทล และกล้องตรงกลางในงานต้นฉบับโดยไม่อ้างชื่อผู้กำกับหรือเลียนแบบสถานที่จริง</p>
+              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 10 Structure: Food Fusion บูธสินค้า ผังโครงการ Editorial Still Life, Dual Material, Beverage Campaign, Culinary Editorial, Aerial Landscape, Editorial Pen Sketch และ Symmetrical Minimal Storefront ระบบเลือกสูตรที่ถูกใช้น้อยที่สุดก่อน แล้วสร้างอย่างละ 1 ภาพพอดี พร้อมบันทึก Prompt History ถาวรก่อนเริ่มสร้างภาพ เพื่อไม่ใช้ Prompt เดิมซ้ำแม้ลบ Batch ที่ดาวน์โหลดแล้ว ทุกภาพไม่มีใบหน้าคนและไม่มีตัวหนังสือ</p>
               <details className="mt-3">
               <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -948,7 +948,7 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center">2</div>
                   <div className="font-semibold text-white">{BATCH_SIZE} Stock Prompts</div>
-                  <p className="text-slate-400">Builds all 10 structures every day with exactly 1 JPEG slot each, then shuffles the final batch. Prompt-level hard ban on visible faces and all text.</p>
+                  <p className="text-slate-400">Builds all 10 structures with exactly 1 JPEG slot each, reserves every prompt in durable history before image generation, and rotates least-used concepts. Prompt-level hard ban on visible faces and all text.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 font-bold flex items-center justify-center">3</div>

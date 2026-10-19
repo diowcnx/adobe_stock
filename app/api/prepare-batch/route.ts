@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { conductMarketResearchAndGeneratePrompts } from "@/lib/market-research";
+import { reserveUniquePromptBatch } from "@/lib/prompt-history";
 import { getOpenRouterCredits } from "@/lib/openrouter";
 import { readJsonBody, validationErrorResponse } from "@/lib/request";
 import { parseGenerationMode } from "@/lib/validation";
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const body = await readJsonBody(request, 1_024);
     const mode = parseGenerationMode(body.mode);
 
-    const { trend, items, mode: resolvedMode, conceptPlan } = await conductMarketResearchAndGeneratePrompts(undefined, mode);
+    const { trend, items, mode: resolvedMode, conceptPlan } = await reserveUniquePromptBatch(undefined, mode);
     const credits = await getOpenRouterCredits();
 
     return NextResponse.json({
