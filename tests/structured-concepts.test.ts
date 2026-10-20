@@ -6,6 +6,7 @@ import { isStockImageItem } from "../lib/validation";
 import { getGenerationBlockReason } from "../lib/generation-policy";
 import { generateSingleImage } from "../lib/image-generator";
 import { generateMetadataCsv, normalizeStockKeywords } from "../lib/csv";
+import { buildFoodFusionBatch } from "../lib/food-fusion";
 import { buildExhibitionBoothBatch, BOOTH_RECIPES } from "../lib/exhibition-booth";
 import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "../lib/material-art";
 import { buildDualMaterialBatch, DUAL_MATERIAL_RECIPES } from "../lib/dual-material";
@@ -16,7 +17,7 @@ import { buildEditorialPenSketchBatch, EDITORIAL_PEN_SKETCH_RECIPES } from "../l
 import { buildSymmetricalStorefrontBatch, SYMMETRICAL_STOREFRONT_RECIPES } from "../lib/symmetrical-storefront";
 import { buildThaiNaturePosterBatch, THAI_NATURE_POSTER_RECIPES } from "../lib/thai-nature-poster";
 import { reserveUniquePromptBatch } from "../lib/prompt-history";
-import { getPromptConceptKey } from "../lib/prompt-novelty";
+import { applyCreativeEdition, getPromptConceptKey } from "../lib/prompt-novelty";
 import { clearLatestBatch } from "../lib/batch-store";
 
 test("editorial still life supports product campaigns and adapts composition to canvas shape", () => {
@@ -286,6 +287,36 @@ test("a prompt already used on an earlier production date is never selected agai
       seenPrompts.add(item.prompt);
     }
   }
+});
+
+test("creative direction changes story and Adobe trend treatment for every structure across a month", () => {
+  const date = new Date("2026-10-20T12:00:00.000Z");
+  const samples = [
+    buildFoodFusionBatch(date, 1)[0],
+    buildExhibitionBoothBatch(date, 1)[0],
+    buildMaterialArtBatch(date, 1)[0],
+    buildDualMaterialBatch(date, 1)[0],
+    buildBeverageCampaignBatch(date, 1)[0],
+    buildCulinaryEditorialBatch(date, 1)[0],
+    buildAerialLandscapeBatch(date, 1)[0],
+    buildEditorialPenSketchBatch(date, 1)[0],
+    buildSymmetricalStorefrontBatch(date, 1)[0],
+    buildThaiNaturePosterBatch(date, 1)[0],
+  ];
+
+  for (const sample of samples) {
+    const editions = Array.from({ length: 31 }, (_, sequence) => applyCreativeEdition(sample, sequence).prompt);
+    assert.equal(new Set(editions).size, 31, `repeated daily direction for ${sample.seoTitle}`);
+    assert.ok(editions.every(prompt => prompt.includes("Narrative hook:")));
+    assert.ok(editions.every(prompt => prompt.includes("Buyer-ready layout:")));
+    assert.ok(editions.every(prompt => prompt.includes("must be understood within two seconds")));
+    assert.ok(editions.every(prompt => /All the Feels|Connectioneering|Surreal Silliness|Local Flavors/.test(prompt)));
+    assert.ok(editions.every(prompt => /Add no letters, words, numerals, pseudo-text/.test(prompt)));
+    assert.ok(editions.every(prompt => /visible human faces/.test(prompt)));
+  }
+
+  const sameDayDirections = samples.map(item => applyCreativeEdition(item, 42).prompt.split("[DAILY CREATIVE DIRECTION")[1]);
+  assert.equal(new Set(sameDayDirections).size, samples.length, "structures received the same daily art direction");
 });
 
 test("durable planning survives batch deletion and rotates base concepts before same-day image generation", async () => {

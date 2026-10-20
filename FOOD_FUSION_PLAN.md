@@ -17,7 +17,7 @@ the retired architectural masterplan slot. Architectural masterplans are retired
 reach paid generation. The planner rejects a catalog
 larger than the ten-image batch rather than silently omitting a structure.
 Before any paid image request, the planner reads a durable prompt-history ledger,
-selects the least-used recipe in each structure, adds a distinct six-axis creative
+selects the least-used recipe in each structure, adds a distinct eight-axis creative
 direction, hashes every final prompt and reserves the whole batch with an optimistic
 ETag write. A simultaneous manual or cron request must retry against the winning
 ledger version, so it cannot claim the same prompt. The ledger uses its own
@@ -26,6 +26,16 @@ batch or its images are deleted. Existing saved batch manifests seed the ledger 
 first deployment. Deleted historical batches cannot be reconstructed, so all new
 briefs also carry a visually meaningful creative edition rather than relying only
 on the old recipe text.
+
+The Creative Direction Engine adapts Adobe's 2026 Creative Trends—All the Feels,
+Connectioneering, Surreal Silliness and Local Flavors—into stock-safe directions.
+Each structure owns eight narrative hooks, so a booth, beverage set and landscape
+never receive the same generic story. A permuted eight-axis sequence changes the
+narrative, trend treatment, buyer layout, light, material, spacing, depth and color
+across consecutive production days instead of changing only light for the first
+week. A final clarity gate requires one idea that reads within two seconds and
+forbids text, pseudo-text, logos, borders, visible faces, extra hero objects and
+cryptic abstraction. Mandatory structure geometry and object counts always win.
 
 The ledger also keeps a most-recently-used concept list across structures. Planning
 excludes concepts from the preceding batch before ranking usage; after a catalog has

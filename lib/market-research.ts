@@ -115,9 +115,9 @@ export async function conductMarketResearchAndGeneratePrompts(
   return {
     mode, items, conceptPlan: summarizeConceptPlan(items, mode),
     trend: {
-      theme: "Food Fusion + Booths + Still Life + Dual Material + Beverage + Culinary Editorial + Aerial Landscape + Editorial Pen Sketch + Symmetrical Storefront + Thai Nature Poster — randomized JPEG concepts",
+      theme: "10-Structure Creative Trend Matrix — distinct daily JPEG stories",
       targetMarket: "food and beverage, beauty and craft advertisers, exhibition designers, travel publishers, environmental campaigns, editorial art buyers and independent retail brands",
-      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " editorial still-life, " + counts[3] + " dual-material, " + counts[4] + " beverage-campaign, " + counts[5] + " culinary-editorial, " + counts[6] + " aerial-landscape, " + counts[7] + " editorial-pen-sketch, " + counts[8] + " symmetrical-storefront and " + counts[9] + " Thai-nature-poster briefs. All ten active structures appear exactly once in every ten-image batch. Architectural masterplans are retired. Each has its own USER_INPUT, buyer use and quality rules. No verified sales claims or paid planning calls.",
+      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " editorial still-life, " + counts[3] + " dual-material, " + counts[4] + " beverage-campaign, " + counts[5] + " culinary-editorial, " + counts[6] + " aerial-landscape, " + counts[7] + " editorial-pen-sketch, " + counts[8] + " symmetrical-storefront and " + counts[9] + " Thai-nature-poster briefs. Every structure receives its own rotating narrative hook, buyer layout and one of four Adobe 2026 trend lenses: All the Feels, Connectioneering, Surreal Silliness or Local Flavors. A clarity gate keeps the subject readable within two seconds and preserves all no-text, no-face, count and geometry rules. These are creative research directions, not verified sales claims, and planning makes no paid calls.",
       seasonalRelevance: "Bangkok production date " + productionDate + ". Thai ingredients and seasonally appropriate Thai flowers or landscapes are used only where relevant to each structure.",
       buyerDemandRating: "Research Candidate",
     },

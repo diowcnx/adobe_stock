@@ -917,7 +917,7 @@ export default function Dashboard() {
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
               <h3 className="font-semibold text-white mb-3">Ten structures · One image each daily</h3>
-              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 10 Structure แบบละ 1 ภาพ: Food Fusion, บูธสินค้า, Editorial Still Life, Dual Material, Beverage Campaign, Culinary Editorial, Aerial Landscape, Editorial Pen Sketch, Symmetrical Minimal Storefront และทิวทัศน์ธรรมชาติ–ทุ่งดอกไม้เมืองไทยแบบสีโปสเตอร์วาดมือบนกระดาษวินเทจ ซึ่งเข้ามาแทน Structure แบบผังโครงการ พร้อมบันทึก Prompt History ถาวรก่อนเริ่มสร้างภาพ</p>
+              <p className="text-sm text-slate-300">รวม 10 ภาพจาก 10 Structure แบบละ 1 ภาพ: Food Fusion, บูธสินค้า, Editorial Still Life, Dual Material, Beverage Campaign, Culinary Editorial, Aerial Landscape, Editorial Pen Sketch, Symmetrical Minimal Storefront และทิวทัศน์ธรรมชาติ–ทุ่งดอกไม้เมืองไทยแบบสีโปสเตอร์วาดมือ พร้อม Creative Direction Engine ที่เปลี่ยนแกนเรื่อง อารมณ์ ประสาทสัมผัส บริบทท้องถิ่น และเลย์เอาต์สำหรับผู้ซื้อในแต่ละวัน โดยบันทึก Prompt History ถาวรก่อนเริ่มสร้างภาพ</p>
               <details className="mt-3">
               <summary className="cursor-pointer text-xs text-slate-400">แผนหมวดเดิม (ยกเลิกการใช้สร้างภาพ)</summary>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -930,7 +930,7 @@ export default function Dashboard() {
                 ))}
               </div>
               </details>
-              <p className="text-[11px] text-slate-500 mt-3">แนวคิดอ้างอิงการใช้งานของผู้ซื้อและ Surreal Silliness ของ Adobe เป็นสมมติฐานที่ต้องทดลอง ไม่ใช่ยอดขายยืนยัน</p>
+              <p className="text-[11px] text-slate-500 mt-3">Creative Direction หมุนเวียนตาม Adobe Creative Trends 2026: All the Feels, Connectioneering, Surreal Silliness และ Local Flavors พร้อมกฎให้ภาพสื่อสารได้ภายใน 2 วินาที ทั้งหมดเป็นสมมติฐานเชิงสร้างสรรค์ที่ต้องทดลอง ไม่ใช่ยอดขายยืนยัน</p>
             </div>
 
             {/* Workflow Pipeline Card */}
