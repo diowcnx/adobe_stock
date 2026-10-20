@@ -4,6 +4,7 @@ import type { StockImageItem } from "./types";
 export interface PromptPlanningState {
   sequence: number;
   conceptUsage: Record<string, number>;
+  recentConceptKeys: string[];
 }
 
 const LIGHT_DIRECTIONS = [

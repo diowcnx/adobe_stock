@@ -6,7 +6,7 @@ BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
 Each batch now contains ten active structures: food pairs selected from 16 matched
 concepts, exhibition booths selected from 12 templates, plus material-art still lifes selected from
-16 category-specific editorial still-life recipes, 8 dual-material sculptures and
+16 category-specific editorial still-life recipes, 7 active dual-material sculptures and
 12 three-drink beverage campaigns, 12 culinary-editorial dishes, 12 painterly
 aerial landscapes, 12 editorial pen sketches, 12 symmetrical minimal storefronts
 and 12 hand-painted Thai nature and flower-field posters.
@@ -26,6 +26,13 @@ batch or its images are deleted. Existing saved batch manifests seed the ledger 
 first deployment. Deleted historical batches cannot be reconstructed, so all new
 briefs also carry a visually meaningful creative edition rather than relying only
 on the old recipe text.
+
+The ledger also keeps a most-recently-used concept list across structures. Planning
+excludes concepts from the preceding batch before ranking usage; after a catalog has
+been fully used, it selects the least-recently-used concept rather than randomly
+returning the previous day's subject. Legacy ledgers without this field hydrate it
+from the newest stored batch. The repeatedly generated Cork Copper Elephant recipe
+is retired and cannot be selected again.
 Food pairs use system randomness.
 Angles and neutral matte backgrounds vary independently. Pairs can recur across
 batches; this is not a guarantee of lifetime uniqueness. Preparation makes no paid

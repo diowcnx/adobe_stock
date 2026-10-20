@@ -9,12 +9,14 @@ import type { StockImageItem } from "./types";
 const PROMPT_HISTORY_PATH = "adobe-stock-prompt-history/ledger-v1.json";
 const LOCAL_PROMPT_HISTORY_FILE = path.join("/tmp", "adobe-stock-prompt-history-v1.json");
 const MAX_RESERVATION_RETRIES = 8;
+const MAX_RECENT_CONCEPTS = 300;
 
 export interface PromptHistoryState {
   version: 1;
   nextSequence: number;
   promptHashes: string[];
   conceptUsage: Record<string, number>;
+  recentConceptKeys: string[];
   updatedAt: string;
 }
 
@@ -28,7 +30,7 @@ function isVercelRuntime(): boolean {
 }
 
 function emptyPromptHistory(): PromptHistoryState {
-  return { version: 1, nextSequence: 0, promptHashes: [], conceptUsage: {}, updatedAt: new Date(0).toISOString() };
+  return { version: 1, nextSequence: 0, promptHashes: [], conceptUsage: {}, recentConceptKeys: [], updatedAt: new Date(0).toISOString() };
 }
 
 function parsePromptHistory(value: unknown): PromptHistoryState | null {
@@ -38,8 +40,11 @@ function parsePromptHistory(value: unknown): PromptHistoryState | null {
   if (!Array.isArray(candidate.promptHashes) || !candidate.promptHashes.every(hash => typeof hash === "string" && /^[0-9a-f]{64}$/.test(hash))) return null;
   if (typeof candidate.conceptUsage !== "object" || candidate.conceptUsage === null || Array.isArray(candidate.conceptUsage)) return null;
   if (!Object.entries(candidate.conceptUsage).every(([key, count]) => key.length > 0 && key.length <= 500 && Number.isSafeInteger(count) && Number(count) >= 0)) return null;
+  const recentConceptKeys = candidate.recentConceptKeys ?? [];
+  if (!Array.isArray(recentConceptKeys) || recentConceptKeys.length > MAX_RECENT_CONCEPTS ||
+      !recentConceptKeys.every(key => typeof key === "string" && key.length > 0 && key.length <= 500)) return null;
   if (typeof candidate.updatedAt !== "string" || Number.isNaN(Date.parse(candidate.updatedAt))) return null;
-  return candidate as PromptHistoryState;
+  return { ...candidate, recentConceptKeys } as PromptHistoryState;
 }
 
 function addItemsToHistory(state: PromptHistoryState, items: StockImageItem[], sequence: number): PromptHistoryState {
@@ -50,11 +55,17 @@ function addItemsToHistory(state: PromptHistoryState, items: StockImageItem[], s
     const conceptKey = getPromptConceptKey(item);
     conceptUsage[conceptKey] = (conceptUsage[conceptKey] ?? 0) + 1;
   }
+  const selectedConceptKeys = items.map(getPromptConceptKey);
+  const selectedConceptSet = new Set(selectedConceptKeys);
   return {
     version: 1,
     nextSequence: sequence + 1,
     promptHashes: [...hashes],
     conceptUsage,
+    recentConceptKeys: [
+      ...selectedConceptKeys,
+      ...state.recentConceptKeys.filter(key => !selectedConceptSet.has(key)),
+    ].slice(0, MAX_RECENT_CONCEPTS),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -65,8 +76,15 @@ async function seedFromStoredBatches(): Promise<PromptHistoryState> {
   const { getStoredBatches } = await import("./batch-store");
   const batches = await getStoredBatches();
   let seeded = state;
-  for (const batch of batches) seeded = addItemsToHistory(seeded, batch.images, seeded.nextSequence);
+  for (const batch of [...batches].reverse()) seeded = addItemsToHistory(seeded, batch.images, seeded.nextSequence);
   return seeded;
+}
+
+async function hydrateRecentConceptsFromLatestBatch(state: PromptHistoryState): Promise<PromptHistoryState> {
+  if (state.recentConceptKeys.length > 0) return state;
+  const { getStoredBatches } = await import("./batch-store");
+  const latest = (await getStoredBatches())[0];
+  return latest ? { ...state, recentConceptKeys: latest.images.map(getPromptConceptKey) } : state;
 }
 
 async function readPromptHistory(): Promise<StoredPromptHistory> {
@@ -75,7 +93,7 @@ async function readPromptHistory(): Promise<StoredPromptHistory> {
       if (!fs.existsSync(LOCAL_PROMPT_HISTORY_FILE)) return { state: emptyPromptHistory() };
       const parsed = parsePromptHistory(JSON.parse(fs.readFileSync(LOCAL_PROMPT_HISTORY_FILE, "utf8")));
       if (!parsed) throw new Error("Local prompt history is invalid");
-      return { state: parsed };
+      return { state: await hydrateRecentConceptsFromLatestBatch(parsed) };
     } catch (error) {
       if (error instanceof SyntaxError) throw new Error("Local prompt history is invalid", { cause: error });
       throw error;
@@ -86,7 +104,7 @@ async function readPromptHistory(): Promise<StoredPromptHistory> {
   if (!result || result.statusCode !== 200) return { state: await seedFromStoredBatches() };
   const parsed = parsePromptHistory(JSON.parse(await new Response(result.stream).text()));
   if (!parsed) throw new Error("Stored prompt history is invalid");
-  return { state: parsed, etag: result.blob.etag };
+  return { state: await hydrateRecentConceptsFromLatestBatch(parsed), etag: result.blob.etag };
 }
 
 async function writePromptHistory(state: PromptHistoryState, etag?: string): Promise<boolean> {
@@ -129,6 +147,7 @@ export async function reserveUniquePromptBatch(
     let result = await conductMarketResearchAndGeneratePrompts(currentDate, forcedMode, {
       sequence,
       conceptUsage: stored.state.conceptUsage,
+      recentConceptKeys: stored.state.recentConceptKeys,
     });
     let hashes = result.items.map(item => getPromptFingerprint(item.prompt));
 
@@ -137,6 +156,7 @@ export async function reserveUniquePromptBatch(
       result = await conductMarketResearchAndGeneratePrompts(currentDate, forcedMode, {
         sequence,
         conceptUsage: stored.state.conceptUsage,
+        recentConceptKeys: stored.state.recentConceptKeys,
       });
       hashes = result.items.map(item => getPromptFingerprint(item.prompt));
     }

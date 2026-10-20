@@ -8,7 +8,7 @@ import { generateSingleImage } from "../lib/image-generator";
 import { generateMetadataCsv, normalizeStockKeywords } from "../lib/csv";
 import { buildExhibitionBoothBatch, BOOTH_RECIPES } from "../lib/exhibition-booth";
 import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "../lib/material-art";
-import { buildDualMaterialBatch } from "../lib/dual-material";
+import { buildDualMaterialBatch, DUAL_MATERIAL_RECIPES } from "../lib/dual-material";
 import { buildBeverageCampaignBatch, BEVERAGE_CAMPAIGN_RECIPES } from "../lib/beverage-campaign";
 import { buildCulinaryEditorialBatch, CULINARY_EDITORIAL_RECIPES } from "../lib/culinary-editorial";
 import { AERIAL_LANDSCAPE_RECIPES, buildAerialLandscapeBatch } from "../lib/aerial-landscape";
@@ -301,11 +301,38 @@ test("durable planning survives batch deletion and rotates base concepts before 
     const firstConcepts = new Set(first.items.map(getPromptConceptKey));
     assert.ok(second.items.every(item => !firstPrompts.has(item.prompt)));
     assert.ok(second.items.every(item => !firstConcepts.has(getPromptConceptKey(item))));
+
+    let previousConcepts = new Set(second.items.map(getPromptConceptKey));
+    for (let batchIndex = 2; batchIndex < 12; batchIndex++) {
+      const next = await reserveUniquePromptBatch(new Date(Date.parse("2026-10-19T11:50:00.000Z") + batchIndex * 60_000).toISOString());
+      assert.ok(next.items.every(item => !previousConcepts.has(getPromptConceptKey(item))), `repeated a concept from batch ${batchIndex}`);
+      previousConcepts = new Set(next.items.map(getPromptConceptKey));
+    }
   } finally {
     fs.rmSync(localHistory, { force: true });
     if (originalVercel === undefined) delete process.env.VERCEL;
     else process.env.VERCEL = originalVercel;
   }
+});
+
+test("the immediately previous concept is not selected again even when its usage counter is stale", async () => {
+  const date = new Date("2026-10-20T12:00:00.000Z");
+  const dualCandidates = buildDualMaterialBatch(date, DUAL_MATERIAL_RECIPES.length);
+  const previousConceptKey = getPromptConceptKey(dualCandidates[0]);
+  const conceptUsage = Object.fromEntries(dualCandidates.map(item => [getPromptConceptKey(item), 1]));
+  conceptUsage[previousConceptKey] = 0;
+
+  const result = await conductMarketResearchAndGeneratePrompts(
+    date.toISOString(),
+    undefined,
+    { sequence: 20, conceptUsage, recentConceptKeys: [previousConceptKey] },
+  );
+  const selectedDualConcept = getPromptConceptKey(result.items.find(item => item.dualMaterialStructure)!);
+  assert.notEqual(selectedDualConcept, previousConceptKey, "repeated the immediately previous dual-material concept");
+});
+
+test("the overused Cork Copper Elephant concept is retired", () => {
+  assert.equal(DUAL_MATERIAL_RECIPES.map(recipe => String(recipe[0])).includes("Cork Copper Elephant"), false);
 });
 
 test("forced PNG plans and stale browser briefs cannot spend credits", async () => {

@@ -49,16 +49,28 @@ export function allocateDailyStructureCounts(
 function selectLeastUsedConcepts(
   candidates: StockImageItem[],
   conceptUsage: Record<string, number>,
+  recentConceptKeys: readonly string[],
   count: number,
 ): StockImageItem[] {
   if (!Number.isInteger(count) || count < 1 || count > candidates.length) throw new Error("Invalid structure selection count");
-  const shuffled = [...candidates];
+  const recentIndex = new Map(recentConceptKeys.map((key, index) => [key, index]));
+  const cooledCandidates = candidates.filter(item => !recentIndex.has(getPromptConceptKey(item)));
+  const usingUnseenConcepts = cooledCandidates.length >= count;
+  const shuffled = [...(cooledCandidates.length >= count ? cooledCandidates : candidates)];
   for (let index = shuffled.length - 1; index > 0; index--) {
     const other = randomInt(index + 1);
     [shuffled[index], shuffled[other]] = [shuffled[other], shuffled[index]];
   }
   return shuffled
-    .sort((left, right) => (conceptUsage[getPromptConceptKey(left)] ?? 0) - (conceptUsage[getPromptConceptKey(right)] ?? 0))
+    .sort((left, right) => {
+      const leftKey = getPromptConceptKey(left);
+      const rightKey = getPromptConceptKey(right);
+      if (!usingUnseenConcepts) {
+        const recencyDifference = (recentIndex.get(rightKey) ?? -1) - (recentIndex.get(leftKey) ?? -1);
+        if (recencyDifference !== 0) return recencyDifference;
+      }
+      return (conceptUsage[leftKey] ?? 0) - (conceptUsage[rightKey] ?? 0);
+    })
     .slice(0, count);
 }
 
@@ -73,6 +85,7 @@ export async function conductMarketResearchAndGeneratePrompts(
   // Ten active structures receive exactly one slot each.
   const counts = allocateDailyStructureCounts(10);
   const conceptUsage = planningState?.conceptUsage ?? {};
+  const recentConceptKeys = planningState?.recentConceptKeys ?? [];
   const sequence = planningState?.sequence ?? getDateBasedCreativeSequence(date);
   const candidatePools = [
     buildFoodFusionBatch(date, FUSION_RECIPES.length),
@@ -87,7 +100,7 @@ export async function conductMarketResearchAndGeneratePrompts(
     buildThaiNaturePosterBatch(date, THAI_NATURE_POSTER_RECIPES.length),
   ];
   const items = candidatePools.flatMap((pool, index) =>
-    selectLeastUsedConcepts(pool, conceptUsage, counts[index]).map(item => applyCreativeEdition(item, sequence))
+    selectLeastUsedConcepts(pool, conceptUsage, recentConceptKeys, counts[index]).map(item => applyCreativeEdition(item, sequence))
   );
   for (let index = items.length - 1; index > 0; index--) {
     const other = randomInt(index + 1);
