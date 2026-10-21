@@ -1,7 +1,7 @@
 import { getOpenRouterCredits } from "./openrouter";
 import { reserveUniquePromptBatch } from "./prompt-history";
 import { generateAllStockImages } from "./image-generator";
-import { sendDailyStockEmail, sendCreditDepletedEmergencyAlert } from "./smtp2go";
+import { sendDailyStockEmail, sendCreditDepletedEmergencyAlert, sendWorkflowFailureAlert } from "./smtp2go";
 import { WorkflowResult } from "./types";
 
 declare global {
@@ -21,6 +21,10 @@ async function runDailyStockWorkflow(
     throw new Error("OPENROUTER_API_KEY is not configured");
   }
   if (initialCredits.label === "Connection Error" || initialCredits.label === "Unable to retrieve credits") {
+    await sendWorkflowFailureAlert({
+      stage: "OpenRouter credit audit",
+      reason: "Unable to verify the OpenRouter balance after retries and the /key fallback.",
+    });
     throw new Error("Unable to verify OpenRouter credit balance");
   }
   if (initialCredits.remainingCredits <= 0.01) {

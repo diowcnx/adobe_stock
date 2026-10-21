@@ -375,6 +375,56 @@ export async function sendCreditDepletedEmergencyAlert({
   }
 }
 
+/** Notify the owner when an upstream dependency stops the batch before image generation. */
+export async function sendWorkflowFailureAlert({
+  stage,
+  reason,
+  recipientEmail,
+  senderEmail,
+  apiKey,
+}: {
+  stage: string;
+  reason: string;
+  recipientEmail?: string;
+  senderEmail?: string;
+  apiKey?: string;
+}): Promise<boolean> {
+  const toEmail = recipientEmail || process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
+  const fromEmail = senderEmail || process.env.SENDER_EMAIL || "fms@ptis.ac.th";
+  const key = apiKey || process.env.SMTP2GO_API_KEY;
+  if (!key) return false;
+
+  const safeStage = escapeHtml(stage);
+  const safeReason = escapeHtml(reason);
+  const html = `
+    <div style="font-family: sans-serif; padding: 20px; max-width: 560px; margin: 0 auto; border: 2px solid #f59e0b; border-radius: 12px; background: #fffbeb;">
+      <h2 style="color: #b45309; margin-top: 0;">⚠️ Adobe Stock batch did not start</h2>
+      <p style="color: #374151;">ระบบหยุดที่ขั้นตอน <strong>${safeStage}</strong> ก่อนเริ่มสร้างภาพ จึงไม่มีการใช้เครดิตสร้างภาพในรอบนี้</p>
+      <p style="color: #374151;"><strong>สาเหตุ:</strong> ${safeReason}</p>
+      <p style="font-size: 12px; color: #6b7280;">ระบบลองใหม่และลอง OpenRouter endpoint สำรองแล้ว อีเมลนี้ส่งอัตโนมัติจาก adobe_stock บน Vercel</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch("https://api.smtp2go.com/v3/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: key,
+        to: [toEmail],
+        sender: fromEmail,
+        subject: `⚠️ Adobe Stock batch stopped before generation: ${stage}`,
+        html_body: html,
+        text_body: `Adobe Stock batch did not start. Stage: ${stage}. Reason: ${reason}. No image-generation credit was used.`,
+      }),
+      signal: AbortSignal.timeout(12_000),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 function escapeHtml(unsafe: string): string {
   return unsafe
     .replace(/&/g, "&amp;")
