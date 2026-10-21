@@ -314,14 +314,6 @@ export default function Dashboard() {
       setLatestResult(initialBatch);
       selectTab("images");
 
-      // Authenticated, opt-in diagnostics: exercise planning and durable prompt
-      // reservation without making any billed image-generation requests.
-      if (new URLSearchParams(window.location.search).get("diagnostic") === "prepare") {
-        setRunProgress("");
-        showNotice(`เตรียม ${prepData.items.length} prompts สำเร็จ โดยยังไม่ได้เรียกสร้างภาพ`, "success");
-        return;
-      }
-
       // 2. สร้างภาพทั้งชุดแบบต่อเนื่องในพื้นหลัง (สร้างทีละ 3 ภาพพร้อมกัน)
       let completedCount = 0;
       const updatedImages = [...prepData.items];
