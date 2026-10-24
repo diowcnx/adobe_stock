@@ -22,36 +22,91 @@ export function formatBeverageCampaignPrompt(fields: BeverageCampaignStructure):
   return [
     "[USER_INPUT]", ...Object.entries(fields).map(([key, value]) => key + ": " + value),
     "[ROLE & TASK] Create a premium photorealistic commercial beverage-advertising still life based strictly on all nine USER_INPUT fields.",
-    "Show exactly three finished drinks as three separate, complete vessels. HERO_DRINK_CENTER_ELEVATED is the largest visual priority and stands on the highest central plinth. SUPPORTING_DRINK_LEFT and SUPPORTING_DRINK_RIGHT sit clearly lower on their named sides, forming one stable triangular product composition. Do not merge the drinks, duplicate a glass, swap sides or add a fourth beverage.",
-    "Use STAGING_PLINTHS as physically believable supports with every vessel base fully supported. Keep RELEVANT_INGREDIENT_PROPS sparse, fresh and visibly matched to the specified recipes only; props remain secondary and never block the drinks. Add no unrelated fruit, flowers, tableware, packages or decorative clutter.",
+    "Obey DRINK_COUNT_AND_SELECTION literally. Show only the named one, two or three finished drinks as separate complete vessels; do not add, duplicate, merge or omit a drink. HERO_DRINK remains the unmistakable priority and SUPPORTING_DRINKS contains either the exact supporting recipes or an explicit instruction to omit them.",
+    "Obey COMPOSITION_AND_CAMERA instead of defaulting to a centered three-level triangle. The permitted layouts deliberately include a single off-center hero, an asymmetric pair, a top-down ingredient story, a shallow editorial row or a diagonal depth composition. Do not silently convert any of them into three drinks on tiered blocks.",
+    "Use STAGING_SURFACE as a physically believable support with every vessel base fully supported. Keep RELEVANT_INGREDIENT_PROPS sparse, fresh and visibly matched only to the selected drinks; props remain secondary and never block a vessel. Add no unrelated fruit, flowers, tableware, packages or decorative clutter.",
     "Render accurate liquid color and viscosity, plausible ice geometry, natural bubbles or foam where named, fine cold-glass condensation, clean rims, realistic refraction and controlled reflections. Glasses and handles must be intact, symmetric and usable. Steam appears only when explicitly requested.",
-    "BACKGROUND_ENVIRONMENT is one continuous physical set reaching every image edge. Apply LIGHTING_MOOD and COLOR_PALETTE faithfully while preserving natural copy space for a buyer to add typography later. This is the final full-bleed photograph, not a poster, menu page, collage, packaging mockup or contact sheet.",
+    "BACKGROUND_AND_LIGHTING is one continuous physical set reaching every image edge. Apply COLOR_PALETTE faithfully while preserving natural copy space for a buyer to add typography later. This is the final full-bleed photograph, not a poster, menu page, collage, packaging mockup or contact sheet.",
     "All vessels, plinths and props are completely unbranded. No labels, letters, numbers, logos, watermarks, captions or rendered typography. No people, hands, human faces, bartenders or customers.",
     NO_VISIBLE_FACE_RULE,
   ].join("\n");
 }
 
+const BEVERAGE_LAYOUTS = [
+  {
+    label: "Single Hero",
+    count: 1,
+    supporting: (left: string, right: string) => `None. Omit both supporting recipes entirely: ${left}; ${right}`,
+    composition: "One off-center hero vessel in a close eye-level three-quarter view, occupying the left third with a broad uninterrupted copy field on the right; no tiered trio and no symmetric product lineup",
+    staging: "one low honed-stone slab flush with the tabletop, with no extra blocks or empty drink stands",
+    ratio: "3:2" as const,
+  },
+  {
+    label: "Asymmetric Pair",
+    count: 2,
+    supporting: (left: string) => left,
+    composition: "Two drinks at unequal depth in an asymmetric diagonal conversation, photographed from a slightly elevated 35-degree angle; the hero is nearer and larger while the supporting vessel sits behind, with side copy space and no central pyramid",
+    staging: "one shared narrow natural-stone shelf and continuous tabletop, not separate tiered cubes",
+    ratio: "16:9" as const,
+  },
+  {
+    label: "Overhead Ingredient Story",
+    count: 1,
+    supporting: (left: string, right: string) => `None. Omit both supporting recipes entirely: ${left}; ${right}`,
+    composition: "Strict overhead editorial view of one hero drink placed off-center, with its few matching ingredients tracing a loose crop-safe curve and a clean negative-space quadrant; no plinth and no upright front-view lineup",
+    staging: "flat tactile tabletop only, with the vessel fully supported and no blocks, risers or pedestal",
+    ratio: "1:1" as const,
+  },
+  {
+    label: "Editorial Pair",
+    count: 2,
+    supporting: (_left: string, right: string) => right,
+    composition: "Two drinks in a calm horizontal editorial spread seen at table height, separated by generous breathing room rather than stacked together; one vessel may be partially backlit, with no triangular hierarchy",
+    staging: "continuous table surface with one thin coaster beneath the hero and no display plinths",
+    ratio: "3:2" as const,
+  },
+  {
+    label: "Shallow Flavor Row",
+    count: 3,
+    supporting: (left: string, right: string) => `${left}; ${right}`,
+    composition: "Three drinks in a shallow left-to-right editorial row with varied vessel heights but all bases on one plane, photographed straight-on with an open upper copy field; no raised center, no pyramid and no separate blocks",
+    staging: "one continuous counter surface with no risers or pedestals",
+    ratio: "16:9" as const,
+  },
+  {
+    label: "Diagonal Flavor Journey",
+    count: 3,
+    supporting: (left: string, right: string) => `${left}; ${right}`,
+    composition: "Three drinks receding along one diagonal from foreground hero to two smaller background vessels, photographed from a high three-quarter angle with visible depth and a protected corner copy zone; no centered triangle",
+    staging: "one continuous matte tabletop with a single shallow tray linking the set, no individual blocks",
+    ratio: "4:5" as const,
+  },
+] as const;
+
 export function buildBeverageCampaignBatch(date: Date, count = 2): StockImageItem[] {
   if (!Number.isInteger(count) || count < 1 || count > BEVERAGE_CAMPAIGN_RECIPES.length) throw new Error("Invalid beverage-campaign batch size");
   const pool = [...BEVERAGE_CAMPAIGN_RECIPES];
   return Array.from({ length: count }, (_, index) => {
-    const [title, theme, hero, left, right, plinths, props, background, lighting, palette, buyer, use, reason] = pool.splice(randomInt(pool.length), 1)[0];
+    const [title, theme, hero, left, right, , props, background, lighting, palette, buyer, use, reason] = pool.splice(randomInt(pool.length), 1)[0];
+    const dayIndex = Math.floor(date.getTime() / 86_400_000);
+    const layout = BEVERAGE_LAYOUTS[(dayIndex + index) % BEVERAGE_LAYOUTS.length];
+    const supporting = layout.supporting(left, right);
     const fields: BeverageCampaignStructure = {
       CAMPAIGN_THEME: theme,
-      HERO_DRINK_CENTER_ELEVATED: hero,
-      SUPPORTING_DRINK_LEFT: left,
-      SUPPORTING_DRINK_RIGHT: right,
-      STAGING_PLINTHS: plinths,
+      DRINK_COUNT_AND_SELECTION: `Exactly ${layout.count} finished drink${layout.count === 1 ? "" : "s"}. Use HERO_DRINK${layout.count > 1 ? " plus only the recipes named in SUPPORTING_DRINKS" : " only"}`,
+      HERO_DRINK: hero,
+      SUPPORTING_DRINKS: supporting,
+      COMPOSITION_AND_CAMERA: layout.composition,
+      STAGING_SURFACE: layout.staging,
       RELEVANT_INGREDIENT_PROPS: props,
-      BACKGROUND_ENVIRONMENT: background,
-      LIGHTING_MOOD: lighting,
+      BACKGROUND_AND_LIGHTING: `${background}. ${lighting}`,
       COLOR_PALETTE: palette,
     };
     return {
       id: index + 1,
-      seoTitle: title + " Premium Beverage Campaign",
+      seoTitle: `${title} ${layout.label} Beverage Campaign`,
       category: "Commercial Beverage Still Life",
-      aspectRatio: "4:5",
+      aspectRatio: layout.ratio,
       composition: "advertising",
       generationMode: "regular_scene",
       isTransparent: false,
@@ -60,14 +115,14 @@ export function buildBeverageCampaignBatch(date: Date, count = 2): StockImageIte
       generationBriefVersion: GENERATION_BRIEF_VERSION,
       beverageCampaignStructure: fields,
       prompt: formatBeverageCampaignPrompt(fields),
-      negativePrompt: "people, hands, visible human face, fourth drink, duplicate glass, merged vessels, floating glass, unsupported vessel, broken rim, deformed handle, irrelevant ingredients, clutter, packaging, bottle label, text, lettering, logo, watermark, frame, border, poster, menu layout",
-      keywords: normalizeStockKeywords([title.toLowerCase(), "beverage campaign", "drink trio", "commercial still life", "premium cafe", "menu background", "refreshment", "three drinks", "product staging", "ingredient story", "glass condensation", "studio photography", "hospitality marketing", "drink collection", "copy space", "unbranded", "photorealistic drinks", "advertising background"]),
+      negativePrompt: "people, hands, visible human face, extra drink, missing drink, duplicate glass, merged vessels, default triangular plinth arrangement, floating glass, unsupported vessel, broken rim, deformed handle, irrelevant ingredients, clutter, packaging, bottle label, text, lettering, logo, watermark, frame, border, poster, menu layout",
+      keywords: normalizeStockKeywords([title.toLowerCase(), layout.label.toLowerCase(), "beverage campaign", "commercial still life", "premium cafe", "menu background", "refreshment", "product staging", "ingredient story", "glass condensation", "studio photography", "hospitality marketing", "drink collection", "copy space", "unbranded", "photorealistic drinks", "advertising background"]),
       modelUsed: "google/gemini-3.1-flash-lite-image",
       filename: generateUniqueStockFilename(title, index + 1, date, "regular_scene"),
       commercialIntent: {
         targetBuyer: buyer,
         intendedUse: use,
-        purchaseReason: reason + ". The elevated center hero, supporting pair and natural copy space are designed for adaptable campaign layouts. This is a buyer-use hypothesis; sales are unverified.",
+        purchaseReason: `${reason}. The ${layout.label.toLowerCase()} composition and natural copy space give buyers a layout that differs from a routine three-glass pyramid. This is a buyer-use hypothesis; sales are unverified.`,
       },
     };
   });

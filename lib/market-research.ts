@@ -7,7 +7,6 @@ import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "./material-art";
 import { buildDualMaterialBatch, DUAL_MATERIAL_RECIPES } from "./dual-material";
 import { BEVERAGE_CAMPAIGN_RECIPES, buildBeverageCampaignBatch } from "./beverage-campaign";
 import { buildCulinaryEditorialBatch, CULINARY_EDITORIAL_RECIPES } from "./culinary-editorial";
-import { AERIAL_LANDSCAPE_RECIPES, buildAerialLandscapeBatch } from "./aerial-landscape";
 import { buildEditorialPenSketchBatch, EDITORIAL_PEN_SKETCH_RECIPES } from "./editorial-pen-sketch";
 import { buildSymmetricalStorefrontBatch, SYMMETRICAL_STOREFRONT_RECIPES } from "./symmetrical-storefront";
 import { buildThaiNaturePosterBatch, THAI_NATURE_POSTER_RECIPES } from "./thai-nature-poster";
@@ -25,7 +24,8 @@ export function isStructuredConceptsEnabled(_value?: string): boolean {
 
 /**
  * Give every active structure one daily slot before distributing any remainder.
- * Therefore ten active structures in a ten-image batch always receive one image each.
+ * The production planner may instead assign a deliberate extra slot to a named
+ * structure when a structure is retired or buyer strategy changes.
  */
 export function allocateDailyStructureCounts(
   structureCount: number,
@@ -82,8 +82,9 @@ export async function conductMarketResearchAndGeneratePrompts(
   if (forcedMode === "transparent_png") throw new Error("PNG generation has been disabled. Prepare a new JPEG batch.");
   const date = new Date(currentDate);
   const productionDate = getBangkokDate(date);
-  // Ten active structures receive exactly one slot each.
-  const counts = allocateDailyStructureCounts(10);
+  // Nine active structures fill ten images. The retired generic aerial-landscape
+  // slot is deliberately reassigned to a second, distinct food-hardware fusion.
+  const counts = [2, 1, 1, 1, 1, 1, 1, 1, 1] as const;
   const conceptUsage = planningState?.conceptUsage ?? {};
   const recentConceptKeys = planningState?.recentConceptKeys ?? [];
   const sequence = planningState?.sequence ?? getDateBasedCreativeSequence(date);
@@ -94,13 +95,13 @@ export async function conductMarketResearchAndGeneratePrompts(
     buildDualMaterialBatch(date, DUAL_MATERIAL_RECIPES.length),
     buildBeverageCampaignBatch(date, BEVERAGE_CAMPAIGN_RECIPES.length),
     buildCulinaryEditorialBatch(date, CULINARY_EDITORIAL_RECIPES.length),
-    buildAerialLandscapeBatch(date, AERIAL_LANDSCAPE_RECIPES.length),
     buildEditorialPenSketchBatch(date, EDITORIAL_PEN_SKETCH_RECIPES.length),
     buildSymmetricalStorefrontBatch(date, SYMMETRICAL_STOREFRONT_RECIPES.length),
     buildThaiNaturePosterBatch(date, THAI_NATURE_POSTER_RECIPES.length),
   ];
   const items = candidatePools.flatMap((pool, index) =>
-    selectLeastUsedConcepts(pool, conceptUsage, recentConceptKeys, counts[index]).map(item => applyCreativeEdition(item, sequence))
+    selectLeastUsedConcepts(pool, conceptUsage, recentConceptKeys, counts[index])
+      .map((item, itemIndex) => applyCreativeEdition(item, sequence + itemIndex))
   );
   for (let index = items.length - 1; index > 0; index--) {
     const other = randomInt(index + 1);
@@ -115,9 +116,9 @@ export async function conductMarketResearchAndGeneratePrompts(
   return {
     mode, items, conceptPlan: summarizeConceptPlan(items, mode),
     trend: {
-      theme: "10-Structure Creative Trend Matrix — distinct daily JPEG stories",
+      theme: "9-Structure Creative Trend Matrix — 10 distinct daily JPEG stories",
       targetMarket: "food and beverage, beauty and craft advertisers, exhibition designers, travel publishers, environmental campaigns, editorial art buyers and independent retail brands",
-      commercialReasoning: counts[0] + " food fusion, " + counts[1] + " booth, " + counts[2] + " editorial still-life, " + counts[3] + " dual-material, " + counts[4] + " beverage-campaign, " + counts[5] + " culinary-editorial, " + counts[6] + " aerial-landscape, " + counts[7] + " editorial-pen-sketch, " + counts[8] + " symmetrical-storefront and " + counts[9] + " Thai-nature-poster briefs. Every structure receives its own rotating narrative hook, buyer layout and one of four Adobe 2026 trend lenses: All the Feels, Connectioneering, Surreal Silliness or Local Flavors. A clarity gate keeps the subject readable within two seconds and preserves all no-text, no-face, count and geometry rules. These are creative research directions, not verified sales claims, and planning makes no paid calls.",
+      commercialReasoning: counts[0] + " distinct food-hardware fusion, " + counts[1] + " booth, " + counts[2] + " editorial still-life, " + counts[3] + " dual-material, " + counts[4] + " flexible beverage-campaign, " + counts[5] + " culinary-editorial, " + counts[6] + " editorial-pen-sketch, " + counts[7] + " symmetrical-storefront and " + counts[8] + " Thai-nature-poster briefs. The generic painterly aerial-landscape structure is retired. Beverage campaigns rotate one, two or three drinks plus camera and staging instead of repeating a three-glass pyramid. Every structure receives its own rotating narrative hook, buyer layout and one of four Adobe 2026 trend lenses: All the Feels, Connectioneering, Surreal Silliness or Local Flavors. A clarity gate keeps the subject readable within two seconds and preserves all no-text, no-face, count and geometry rules. These are creative research directions, not verified sales claims, and planning makes no paid calls.",
       seasonalRelevance: "Bangkok production date " + productionDate + ". Thai ingredients and seasonally appropriate Thai flowers or landscapes are used only where relevant to each structure.",
       buyerDemandRating: "Research Candidate",
     },

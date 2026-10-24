@@ -64,7 +64,7 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   }
   if (value.beverageCampaignStructure !== undefined) {
     if (!isRecord(value.beverageCampaignStructure)) return false;
-    const fields = ["CAMPAIGN_THEME", "HERO_DRINK_CENTER_ELEVATED", "SUPPORTING_DRINK_LEFT", "SUPPORTING_DRINK_RIGHT", "STAGING_PLINTHS", "RELEVANT_INGREDIENT_PROPS", "BACKGROUND_ENVIRONMENT", "LIGHTING_MOOD", "COLOR_PALETTE"];
+    const fields = ["CAMPAIGN_THEME", "DRINK_COUNT_AND_SELECTION", "HERO_DRINK", "SUPPORTING_DRINKS", "COMPOSITION_AND_CAMERA", "STAGING_SURFACE", "RELEVANT_INGREDIENT_PROPS", "BACKGROUND_AND_LIGHTING", "COLOR_PALETTE"];
     if (Object.keys(value.beverageCampaignStructure).length !== fields.length ||
         !fields.every(field => isBoundedString((value.beverageCampaignStructure as Record<string, unknown>)[field], 700))) return false;
   }

@@ -242,7 +242,7 @@ export async function generateSingleImage(
         : item.culinaryEditorialStructure
           ? "Render the specified complete hero dish in the foreground with exactly one utensil-held bite above it and only the named raw accompaniments at lower right. Preserve the physical dimensional backdrop and blank natural copy zones. No chef, people, hands, packages, labels or rendered text; continuous full-bleed physical set."
         : item.beverageCampaignStructure
-          ? "Render exactly three separate finished drinks in the specified triangular hierarchy: center hero highest, left and right drinks lower. Preserve the named vessels, recipes, plinths and matching ingredient props. No fourth drink, people, hands, labels or lettering; continuous full-bleed physical background."
+          ? `Render only the finished drinks named by DRINK_COUNT_AND_SELECTION, using the exact COMPOSITION_AND_CAMERA and STAGING_SURFACE. Preserve the named vessels, recipes and matching ingredient props. Never default to a centered three-glass pyramid. No extra or missing drink, people, hands, labels or lettering; continuous full-bleed physical background.`
         : item.dualMaterialStructure
           ? "Render exactly the specified recognizable sculpture made from the named primary and secondary materials, joined as one intact subject. No extra construction materials, props, people or lettering; continuous studio background and specified shadows."
         : item.materialArtStructure
@@ -277,7 +277,7 @@ export async function generateSingleImage(
         : item.culinaryEditorialStructure
           ? `Create one premium editorial culinary advertising photograph. Keep the complete named hero dish dominant in the foreground, one clear appetizing bite held by the specified utensil above it, and only the exact raw accompaniments grouped at lower right. Use physical dimensional set pieces and unobstructed natural background areas. Follow the visual input: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.beverageCampaignStructure
-          ? `Create one premium commercial beverage-advertising still life with exactly three complete drinks. The center drink is elevated as the hero while the left and right drinks sit lower as a stable triangular set. Use only the specified recipe ingredients, vessels and plinths, with photorealistic liquid, ice, foam, bubbles, glass reflections and condensation. Honor the nine-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
+          ? `Create one premium commercial beverage-advertising still life. Obey the specified count of one, two or three drinks, selected recipes, camera, composition and staging surface literally. Make HERO_DRINK the visual priority without inventing a tiered triangular display. Use only the specified recipe ingredients and vessels, with photorealistic liquid, ice, foam, bubbles, glass reflections and condensation. Honor the nine-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.dualMaterialStructure
           ? `Create one sculptural art object from two contrasting materials. The named subject silhouette must be familiar and intact, with realistic primary-material volume and a restrained secondary-material accent. Honor the six-field USER_INPUT: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.materialArtStructure
@@ -304,7 +304,7 @@ export async function generateSingleImage(
             : item.culinaryEditorialStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME named dish, SAME utensil-held bite, SAME recipe ingredients, dimensional set and palette. Keep the full dish physically supported and immediately recognizable, with one realistic utensil entering from an edge and no visible hand. Correct food anatomy, utensil geometry, gravity, scale and texture. Preserve natural blank copy zones without panels. No chef, people, hands, package, label, lettering, badge, outer frame, unrelated garnish or clutter.`
             : item.beverageCampaignStructure
-              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-stage the SAME three named drinks with the SAME recipes, vessels, plinth materials and ingredient props. Keep exactly three separate complete glasses: center hero highest, left drink lower on the left, right drink lower on the right. Correct liquid, ice, foam, condensation, reflections, vessel geometry and physical support. Remove unrelated props and clutter. No fourth drink, duplicate vessel, people, hands, lettering, labels, menu layout or poster panel.`
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-stage the SAME selected drink or drinks with the SAME recipes, vessels, composition, camera, staging surface and ingredient props. Obey DRINK_COUNT_AND_SELECTION exactly and do not revert to a three-glass pyramid. Correct liquid, ice, foam, condensation, reflections, vessel geometry and physical support. Remove extra drinks, unrelated props and clutter. No duplicate vessel, people, hands, lettering, labels, menu layout or poster panel.`
             : item.dualMaterialStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME subject using the SAME two named materials. Simplify the silhouette until instantly recognizable, keep the primary material dominant, and attach the secondary accent coherently. Fix texture, support and specified shadow. No third material, props, lettering, people, hardware substitution, architecture or diagram.`
             : item.materialArtStructure
@@ -472,6 +472,9 @@ export async function generateSingleImage(
               isMaterialArt: Boolean(item.materialArtStructure),
               isDualMaterial: Boolean(item.dualMaterialStructure),
               isBeverageCampaign: Boolean(item.beverageCampaignStructure),
+              beverageBrief: item.beverageCampaignStructure
+                ? `${item.beverageCampaignStructure.DRINK_COUNT_AND_SELECTION}. ${item.beverageCampaignStructure.COMPOSITION_AND_CAMERA}. Hero: ${item.beverageCampaignStructure.HERO_DRINK}. Supporting: ${item.beverageCampaignStructure.SUPPORTING_DRINKS}`
+                : undefined,
               isCulinaryEditorial: Boolean(item.culinaryEditorialStructure),
               isAerialLandscape: Boolean(item.aerialLandscapeStructure),
               isThaiNaturePoster: Boolean(item.thaiNaturePosterStructure),

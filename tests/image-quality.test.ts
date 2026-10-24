@@ -161,7 +161,7 @@ test("Thai nature poster QA and retry preserve flowers, poster color, vintage pa
   } finally { globalThis.fetch = originalFetch; }
 });
 
-test("beverage campaign QA and retry preserve exactly three named drinks and their hierarchy", async () => {
+test("beverage campaign QA and retry preserve the selected count and non-repetitive layout", async () => {
   const originalFetch = globalThis.fetch;
   const item = buildBeverageCampaignBatch(new Date("2026-10-17T12:00:00Z"), 1)[0];
   const image = await solidImage("#c9bca4");
@@ -174,7 +174,8 @@ test("beverage campaign QA and retry preserve exactly three named drinks and the
       return new Response(JSON.stringify({ choices: [{ message: { images: [{ b64_json: image.toString("base64") }] } }] }));
     }
     const inspection = body.messages[0].content[0].text;
-    assert.match(inspection, /INTENTIONAL THREE-DRINK BEVERAGE CAMPAIGN/);
+    assert.match(inspection, /INTENTIONAL FLEXIBLE BEVERAGE CAMPAIGN/);
+    assert.match(inspection, /Required brief: Exactly [123] finished drink/);
     assert.doesNotMatch(inspection, /INTENTIONAL DUAL-MATERIAL/);
     qaCalls++;
     const passed = qaCalls === 2;
@@ -182,14 +183,14 @@ test("beverage campaign QA and retry preserve exactly three named drinks and the
       passed, hasVisibleHumanFace: false, hasText: false, hasArtificialBorder: false,
       hasPosterLayout: false, isImmediatelyRecognizable: true, hasClearLiteralStory: passed,
       hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: !passed,
-      issues: passed ? [] : ["fourth drink and unclear center hierarchy"],
+      issues: passed ? [] : ["extra drink and wrong default pyramid layout"],
     }) } }] }));
   };
   try {
     const result = await generateSingleImage(item, "test-key");
     assert.equal(qaCalls, 2);
-    assert.match(prompts[0], /exactly three complete drinks/);
-    assert.match(prompts[1], /SAME three named drinks with the SAME recipes/);
+    assert.match(prompts[0], /specified count of one, two or three drinks/);
+    assert.match(prompts[1], /SAME selected drink or drinks with the SAME recipes/);
     assert.doesNotMatch(prompts[1], /single food-hardware hybrid/);
     assert.equal(result.qualityReview?.status, "passed_after_retries");
   } finally { globalThis.fetch = originalFetch; }
@@ -209,7 +210,7 @@ test("culinary editorial QA and retry preserve dish, lifted bite and text-free c
     }
     const inspection = body.messages[0].content[0].text;
     assert.match(inspection, /INTENTIONAL EDITORIAL CULINARY ADVERTISING/);
-    assert.doesNotMatch(inspection, /INTENTIONAL THREE-DRINK/);
+    assert.doesNotMatch(inspection, /INTENTIONAL FLEXIBLE BEVERAGE/);
     qaCalls++;
     const passed = qaCalls === 2;
     return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({

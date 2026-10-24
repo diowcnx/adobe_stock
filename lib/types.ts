@@ -163,13 +163,13 @@ export interface CulinaryEditorialStructure {
 
 export interface BeverageCampaignStructure {
   CAMPAIGN_THEME: string;
-  HERO_DRINK_CENTER_ELEVATED: string;
-  SUPPORTING_DRINK_LEFT: string;
-  SUPPORTING_DRINK_RIGHT: string;
-  STAGING_PLINTHS: string;
+  DRINK_COUNT_AND_SELECTION: string;
+  HERO_DRINK: string;
+  SUPPORTING_DRINKS: string;
+  COMPOSITION_AND_CAMERA: string;
+  STAGING_SURFACE: string;
   RELEVANT_INGREDIENT_PROPS: string;
-  BACKGROUND_ENVIRONMENT: string;
-  LIGHTING_MOOD: string;
+  BACKGROUND_AND_LIGHTING: string;
   COLOR_PALETTE: string;
 }
 

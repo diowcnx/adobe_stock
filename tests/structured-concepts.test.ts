@@ -57,11 +57,17 @@ test("beverage and culinary structures keep products, ingredients and blank buye
   assert.equal(new Set(beverages.map(item => item.seoTitle)).size, BEVERAGE_CAMPAIGN_RECIPES.length);
   for (const item of beverages) {
     assert.equal(Object.keys(item.beverageCampaignStructure || {}).length, 9);
-    assert.match(item.prompt, /exactly three finished drinks/);
-    assert.match(item.prompt, /highest central plinth/i);
-    assert.match(item.negativePrompt || "", /fourth drink/);
+    assert.match(item.prompt, /Obey DRINK_COUNT_AND_SELECTION literally/);
+    assert.match(item.prompt, /instead of defaulting to a centered three-level triangle/i);
+    assert.match(item.negativePrompt || "", /default triangular plinth arrangement/);
     assert.equal(isStockImageItem(item), true);
   }
+  assert.deepEqual(
+    [...new Set(beverages.map(item => item.beverageCampaignStructure?.DRINK_COUNT_AND_SELECTION.match(/Exactly (\d)/)?.[1]))].sort(),
+    ["1", "2", "3"],
+  );
+  assert.ok(new Set(beverages.map(item => item.beverageCampaignStructure?.COMPOSITION_AND_CAMERA)).size >= 6);
+  assert.ok(new Set(beverages.map(item => item.aspectRatio)).size >= 4);
 
   const culinary = buildCulinaryEditorialBatch(date, CULINARY_EDITORIAL_RECIPES.length);
   assert.equal(new Set(culinary.map(item => item.seoTitle)).size, CULINARY_EDITORIAL_RECIPES.length);
@@ -161,7 +167,7 @@ test("symmetrical storefronts keep eight fields, readable businesses and origina
   }
 });
 
-test("all ten active structures contribute exactly one valid brief without paid planning", async () => {
+test("nine active structures fill ten slots with two distinct food-hardware fusions and no generic aerial brief", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error("Planning must not make a network call"); };
   try {
@@ -184,7 +190,8 @@ test("all ten active structures contribute exactly one valid brief without paid 
         result.items.filter(item => item.thaiNaturePosterStructure).length,
       ];
       assert.equal(counts.reduce((sum, count) => sum + count, 0), 10);
-      assert.ok(counts.every(count => count === 1));
+      assert.deepEqual(counts, [2, 1, 1, 1, 1, 1, 0, 1, 1, 1]);
+      assert.equal(new Set(result.items.filter(item => item.fusionStructure).map(item => item.seoTitle)).size, 2);
       assert.equal(result.items.some(item => item.masterplanStructure), false);
       assert.deepEqual(result.items.map(item => item.id), [1,2,3,4,5,6,7,8,9,10]);
       assert.equal(new Set(result.items.map(item => item.filename)).size, 10);
@@ -223,9 +230,9 @@ test("all ten active structures contribute exactly one valid brief without paid 
           assert.equal(isStockImageItem({ ...item, boothStructure: result.items.find(entry => entry.boothStructure)?.boothStructure }), false);
         } else if (item.beverageCampaignStructure) {
           assert.equal(Object.keys(item.beverageCampaignStructure).length, 9);
-          assert.match(item.prompt, /exactly three finished drinks/);
+          assert.match(item.prompt, /Obey DRINK_COUNT_AND_SELECTION literally/);
           assert.match(item.prompt, /no labels, letters, numbers/i);
-          assert.equal(isStockImageItem({ ...item, beverageCampaignStructure: { ...item.beverageCampaignStructure, STAGING_PLINTHS: "" } }), false);
+          assert.equal(isStockImageItem({ ...item, beverageCampaignStructure: { ...item.beverageCampaignStructure, STAGING_SURFACE: "" } }), false);
           assert.equal(isStockImageItem({ ...item, dualMaterialStructure: buildDualMaterialBatch(new Date(), 1)[0].dualMaterialStructure }), false);
         } else if (item.aerialLandscapeStructure) {
           assert.equal(Object.keys(item.aerialLandscapeStructure).length, 8);

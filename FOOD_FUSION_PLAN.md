@@ -4,24 +4,24 @@ Replaces ordinary monthly photography with the user's seven-field USER_INPUT str
 CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
-Each batch now contains ten active structures: food pairs selected from 16 matched
-concepts, exhibition booths selected from 12 templates, plus material-art still lifes selected from
-16 category-specific editorial still-life recipes, 7 active dual-material sculptures and
-12 three-drink beverage campaigns, 12 culinary-editorial dishes, 12 painterly
-aerial landscapes, 12 editorial pen sketches, 12 symmetrical minimal storefronts
-and 12 hand-painted Thai nature and flower-field posters.
-Every active structure receives exactly one slot in each ten-image batch, then all ten items
-are shuffled. Each type is sampled without duplicates within the batch. Booths use
+Each batch now contains nine active structures across ten images: two different food-hardware
+pairs selected from 16 matched concepts, one exhibition booth selected from 12 templates,
+one material-art still life selected from 16 category-specific recipes, one of 7 active
+dual-material sculptures, one flexible beverage campaign, one culinary-editorial dish,
+one editorial pen sketch, one symmetrical minimal storefront and one hand-painted Thai
+nature and flower-field poster. The generic painterly aerial-landscape structure is retired.
+All ten items are shuffled, and the two fusion concepts cannot duplicate one another within
+the batch. Booths use
 the user's 17-field specification. Thai nature and flower-field poster art replaces
 the retired architectural masterplan slot. Architectural masterplans are retired and cannot
 reach paid generation. The planner rejects a catalog
 larger than the ten-image batch rather than silently omitting a structure.
 Before any paid image request, the planner reads a durable prompt-history ledger,
 selects the least-used recipe in each structure, adds a distinct eight-axis creative
-direction, hashes every final prompt and reserves the whole batch with an optimistic
-ETag write. A simultaneous manual or cron request must retry against the winning
-ledger version, so it cannot claim the same prompt. The ledger uses its own
-`adobe-stock-prompt-history/` Blob prefix and is never removed when a downloaded
+direction, hashes every final prompt and reserves the whole batch in an immutable,
+sequence-numbered Blob snapshot. A simultaneous manual or cron request races for the
+same next sequence; only one immutable reservation can win and the other must retry.
+The history uses its own `adobe-stock-prompt-history/` Blob prefix and is never removed when a downloaded
 batch or its images are deleted. Existing saved batch manifests seed the ledger on
 first deployment. Deleted historical batches cannot be reconstructed, so all new
 briefs also carry a visually meaningful creative edition rather than relying only
@@ -150,14 +150,15 @@ Dedicated QA and retries preserve the subject and both materials without
 applying the food-hardware fusion, booth, masterplan or editorial staging rules.
 
 The fifth active structure is Beverage Campaign, with CAMPAIGN_THEME,
-HERO_DRINK_CENTER_ELEVATED, SUPPORTING_DRINK_LEFT, SUPPORTING_DRINK_RIGHT,
-STAGING_PLINTHS, RELEVANT_INGREDIENT_PROPS, BACKGROUND_ENVIRONMENT,
-LIGHTING_MOOD and COLOR_PALETTE. Each recipe creates exactly three separate drinks:
-one elevated center hero and two lower supporting drinks forming a readable triangle.
-The 12 curated recipe families pair each drink with only its actual ingredients and
-define a buyer/use hypothesis. QA checks count, hierarchy, vessel geometry, support,
-liquid/ice/foam/condensation realism and ingredient relevance. Replacements preserve
-the same three recipes and set. No people, hands, labels, lettering or fourth drink.
+DRINK_COUNT_AND_SELECTION, HERO_DRINK, SUPPORTING_DRINKS, COMPOSITION_AND_CAMERA,
+STAGING_SURFACE, RELEVANT_INGREDIENT_PROPS, BACKGROUND_AND_LIGHTING and COLOR_PALETTE.
+The 12 curated recipe families rotate through six layouts: a single off-center hero,
+an asymmetric pair, a single overhead ingredient story, a horizontal editorial pair,
+a shallow three-drink row and a diagonal three-drink journey. Aspect ratios rotate with
+the layout. QA checks the exact requested count and composition rather than imposing a
+three-glass pyramid, plus vessel geometry, support, liquid/ice/foam/condensation realism
+and ingredient relevance. Replacements preserve the same selected recipes and layout.
+No people, hands, labels, lettering, extra or missing drinks.
 
 The sixth active structure is Culinary Editorial. Its 11 fields cover project context,
 five buyer-copy placement zones, a foreground hero dish, a single utensil-held bite,
@@ -170,19 +171,7 @@ accompaniments, buyers and uses. Dedicated QA rejects distorted food, unrelated
 garnish, broken utensils, people/hands, packages, typography and poster frames;
 retries preserve the same dish, lifted bite, ingredients and dimensional set.
 
-The seventh active structure is Aerial Landscape. Its eight fields cover scene theme,
-connected aerial terrain ribbons, a winding path with minuscule overhead scale
-subjects, one focal landmark, gouache/chalk-pastel/stippled texture, color harmony,
-the text-control field and lighting/mood. TYPOGRAPHY_OVERLAY is fixed exactly to
-"None (Text-free)" and is never forwarded as a visual instruction. People, when a
-recipe needs scale, remain extremely small featureless overhead marks with no face,
-profile or anatomical detail. The result is a full-bleed painterly illustration,
-not a map, masterplan, satellite image or infographic. Dedicated QA checks connected
-terrain, route coherence, landmark support, shadow direction, medium, commercial
-clarity, full-bleed edges and the global zero-text rule. Retries preserve the same
-scene, route, landmark, palette, light and texture.
-
-The eighth active structure is Editorial Pen Sketch. Its ten fields cover project theme,
+The seventh active structure is Editorial Pen Sketch. Its ten fields cover project theme,
 location, main subject, supporting scene elements, composition, colored-pen palette,
 hatching, paper, text control and mood. TEXT_ELEMENTS is fixed to "No text" and is
 not forwarded as visual content. Twelve curated practical scenes define an explicit
@@ -194,7 +183,7 @@ abstract symbolism, people, hands, lettering and visible page edges are rejected
 Dedicated QA and retry instructions preserve the same theme, location, subject,
 supporting objects, composition, palette, hatching, paper and mood.
 
-The ninth active structure is Symmetrical Minimal Storefront. Its eight fields cover scene
+The eighth active structure is Symmetrical Minimal Storefront. Its eight fields cover scene
 theme, architectural façade, doors/windows/interior, storefront props/plants,
 flanking flora or structures, background horizon/sky, foreground pavement and
 palette/lighting. Twelve curated small-business recipes define explicit buyers,
@@ -208,7 +197,7 @@ floating props, incoherent interiors, miniatures, illustrations, people and all 
 Retries preserve all eight selected fields and the same business type. Plain boards,
 awnings, packaging and display surfaces remain completely unmarked.
 
-The tenth active structure is Thai Nature Poster. Its eight fields cover a named Thai
+The ninth active structure is Thai Nature Poster. Its eight fields cover a named Thai
 landscape and flower season, natural terrain bands, a winding path with optional tiny
 faceless scale cues, one grounded landmark, hand-painted opaque poster color, integrated
 vintage-paper texture, color harmony and light/mood. TYPOGRAPHY_OVERLAY is fixed to
