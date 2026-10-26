@@ -5,7 +5,7 @@ CONCEPT_THEME, ORGANIC_FOOD_PART, MECHANICAL_HARDWARE_PART, PLACEMENT_AND_ANGLE,
 BACKGROUND_SURFACE, LIGHTING_AND_MOOD and COLOR_PALETTE.
 
 Each batch now contains nine active structures across ten images: two different food-hardware
-pairs selected from 16 matched concepts, one exhibition booth selected from 12 templates,
+pairs selected from 62 matched concepts, one exhibition booth selected from 12 templates,
 one material-art still life selected from 16 category-specific recipes, one of 7 active
 dual-material sculptures, one flexible beverage campaign, one culinary-editorial dish,
 one editorial pen sketch, one symmetrical minimal storefront and one hand-painted Thai
@@ -42,7 +42,9 @@ excludes concepts from the preceding batch before ranking usage; after a catalog
 been fully used, it selects the least-recently-used concept rather than randomly
 returning the previous day's subject. Legacy ledgers without this field hydrate it
 from the newest stored batch. The repeatedly generated Cork Copper Elephant recipe
-is retired and cannot be selected again.
+is retired and cannot be selected again. Food-hardware now has enough unique visible
+food subjects for two daily images across a 31-day month before any subject cycles;
+both chili recipes are retired because they read as the same repeated subject.
 Food pairs use system randomness.
 Angles and neutral matte backgrounds vary independently. Pairs can recur across
 batches; this is not a guarantee of lifetime uniqueness. Preparation makes no paid
@@ -59,7 +61,7 @@ Examples of intended use:
 | Pair | Visual message | Intended buyer/use |
 | --- | --- | --- |
 | Pork belly + battery terminal | Culinary energy recharge | Food-as-fuel article or restaurant campaign |
-| Red chili + pressure valve | Intense spice | Hot-sauce or spicy-menu launch |
+| Mangosteen + camera aperture | Reveal premium freshness | Fruit-export or grocery campaign |
 | Ginger + spark plug | Warming flavor spark | Ginger drink or cooking campaign |
 | Lime + faucet | Refreshment on tap | Citrus beverage menu |
 | Shrimp + turbine | Speed and freshness | Seafood delivery advertisement |

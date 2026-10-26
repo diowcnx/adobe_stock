@@ -6,7 +6,7 @@ import { isStockImageItem } from "../lib/validation";
 import { getGenerationBlockReason } from "../lib/generation-policy";
 import { generateSingleImage } from "../lib/image-generator";
 import { generateMetadataCsv, normalizeStockKeywords } from "../lib/csv";
-import { buildFoodFusionBatch } from "../lib/food-fusion";
+import { buildFoodFusionBatch, FUSION_RECIPES } from "../lib/food-fusion";
 import { buildExhibitionBoothBatch, BOOTH_RECIPES } from "../lib/exhibition-booth";
 import { buildMaterialArtBatch, MATERIAL_ART_RECIPES } from "../lib/material-art";
 import { buildDualMaterialBatch, DUAL_MATERIAL_RECIPES } from "../lib/dual-material";
@@ -371,6 +371,38 @@ test("the immediately previous concept is not selected again even when its usage
 
 test("the overused Cork Copper Elephant concept is retired", () => {
   assert.equal(DUAL_MATERIAL_RECIPES.map(recipe => String(recipe[0])).includes("Cork Copper Elephant"), false);
+});
+
+test("two daily fusion slots have a full month of unique visible food subjects and retire chili", () => {
+  assert.ok(FUSION_RECIPES.length >= 62, "two fusion images per day need at least 62 concepts before a monthly repeat");
+  assert.equal(
+    FUSION_RECIPES.some(recipe => /\bchili\b/i.test(`${recipe[0]} ${recipe[2]}`)),
+    false,
+    "chili returned even after the user identified it as repeated",
+  );
+  assert.equal(new Set(FUSION_RECIPES.map(recipe => String(recipe[2]).toLowerCase())).size, FUSION_RECIPES.length);
+});
+
+test("planner does not repeat a food-hardware concept during a 31-day production month", async () => {
+  const conceptUsage: Record<string, number> = {};
+  let recentConceptKeys: string[] = [];
+  const seenFusionConcepts = new Set<string>();
+  for (let day = 1; day <= 31; day++) {
+    const result = await conductMarketResearchAndGeneratePrompts(
+      new Date(Date.UTC(2026, 10, day, 5)).toISOString(),
+      undefined,
+      { sequence: day, conceptUsage, recentConceptKeys },
+    );
+    const selectedKeys = result.items.map(getPromptConceptKey);
+    for (const item of result.items.filter(entry => entry.fusionStructure)) {
+      const key = getPromptConceptKey(item);
+      assert.equal(seenFusionConcepts.has(key), false, `repeated monthly fusion concept: ${key}`);
+      seenFusionConcepts.add(key);
+    }
+    for (const key of selectedKeys) conceptUsage[key] = (conceptUsage[key] ?? 0) + 1;
+    recentConceptKeys = selectedKeys;
+  }
+  assert.equal(seenFusionConcepts.size, 62);
 });
 
 test("forced PNG plans and stale browser briefs cannot spend credits", async () => {
