@@ -28,7 +28,14 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (typeof value.aspectRatio !== "string" || !ASPECT_RATIOS.has(value.aspectRatio)) return false;
   if (!isBoundedString(value.prompt, 8_000)) return false;
   if (!isBoundedString(value.modelUsed, 200)) return false;
-  if ([value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure, value.aerialLandscapeStructure, value.editorialPenSketchStructure, value.symmetricalStorefrontStructure, value.thaiNaturePosterStructure].filter(field => field !== undefined).length > 1) return false;
+  if ([value.saleReferenceStructure, value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure, value.aerialLandscapeStructure, value.editorialPenSketchStructure, value.symmetricalStorefrontStructure, value.thaiNaturePosterStructure].filter(field => field !== undefined).length > 1) return false;
+  if (value.saleReferenceStructure !== undefined) {
+    if (!isRecord(value.saleReferenceStructure)) return false;
+    const fields = ["REFERENCE_SUBJECT", "OBSERVED_SALE_SIGNAL", "NEW_CONCEPT", "TARGET_BUYER_AND_USE", "SUBJECT_TREATMENT", "COMPOSITION_AND_CAMERA", "SETTING_AND_PROPS", "LIGHTING_AND_MOOD", "COLOR_PALETTE", "TEXT_ELEMENTS"];
+    if (Object.keys(value.saleReferenceStructure).length !== fields.length ||
+        !fields.every(field => isBoundedString((value.saleReferenceStructure as Record<string, unknown>)[field], 700)) ||
+        value.saleReferenceStructure.TEXT_ELEMENTS !== "No text") return false;
+  }
   if (value.thaiNaturePosterStructure !== undefined) {
     if (!isRecord(value.thaiNaturePosterStructure)) return false;
     const fields = ["SCENE_THEME", "AERIAL_TERRAIN_RIBBONS", "WINDING_PATH_AND_SUBJECTS", "FOCAL_LANDMARK_ELEMENT", "ARTISTIC_MEDIUM_AND_TEXTURE", "COLOR_HARMONY_AND_PALETTE", "TYPOGRAPHY_OVERLAY", "LIGHTING_AND_MOOD"];

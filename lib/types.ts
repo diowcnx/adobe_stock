@@ -74,7 +74,21 @@ export interface FoodFusionStructure {
   COLOR_PALETTE: string;
 }
 
+export interface SaleReferenceStructure {
+  REFERENCE_SUBJECT: string;
+  OBSERVED_SALE_SIGNAL: string;
+  NEW_CONCEPT: string;
+  TARGET_BUYER_AND_USE: string;
+  SUBJECT_TREATMENT: string;
+  COMPOSITION_AND_CAMERA: string;
+  SETTING_AND_PROPS: string;
+  LIGHTING_AND_MOOD: string;
+  COLOR_PALETTE: string;
+  TEXT_ELEMENTS: string;
+}
+
 export interface StockImageItem {
+  saleReferenceStructure?: SaleReferenceStructure;
   thaiNaturePosterStructure?: ThaiNaturePosterStructure;
   symmetricalStorefrontStructure?: SymmetricalStorefrontStructure;
   editorialPenSketchStructure?: EditorialPenSketchStructure;

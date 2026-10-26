@@ -231,7 +231,9 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        item.thaiNaturePosterStructure
+        item.saleReferenceStructure
+          ? "Render the NEW_CONCEPT as an original full-bleed commercial JPEG for the named target buyer and use. The uploaded sold image is evidence for a subject opportunity only: do not reproduce its composition, crop, distinctive arrangement, screenshot interface, watermark, text or branded details. Preserve literal clarity and use only the specified new subject treatment, camera, setting, props, light and palette. No people with visible faces, lettering, pseudo-text, logos, labels, frames or borders."
+        : item.thaiNaturePosterStructure
           ? "Render one full-bleed hand-painted poster-color landscape of Thai nature and flower fields from a gently elevated scenic viewpoint. Preserve the named Thai flower species, terrain bands, winding route, single grounded landmark, vintage paper grain, palette, season and light. No top-down plan, map, masterplan, site plan, diagram, satellite view, poster page, border, text, pseudo-text, flags, temples, costumes, large people, portraits or visible faces."
         : item.symmetricalStorefrontStructure
           ? "Render one complete standalone small storefront in a centered straight-on eye-level architectural photograph. Preserve the named façade, doors, windows, visible business interior, balanced props, flanking elements, background horizon, sky, foreground pavement, pastel palette and daylight. No second shop, neighboring storefront row, people, hands, faces, signage, menus, labels, lettering, pseudo-text, dollhouse, illustration, poster or cropped building."
@@ -266,6 +268,8 @@ export async function generateSingleImage(
 
       const visualDirection = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : item.saleReferenceStructure
+          ? `Create one original buyer-ready commercial photograph derived from a confirmed single-asset sale signal without copying the reference image. Make the NEW_CONCEPT and TARGET_BUYER_AND_USE immediately understandable, with a genuinely different story, composition, camera, setting, lighting and palette from the uploaded source. Honor the ten-field SOLD-REFERENCE structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.thaiNaturePosterStructure
           ? `Create one original full-bleed hand-painted poster-color illustration of a real Thai natural landscape and flower field. Use a gently elevated panoramic scenic view with natural overlapping hills, meadow, water and flower bands, not a top-down map. Make the specified flower species, Thai geography, season, winding path, landmark, vintage paper fibers and matte opaque brushwork immediately readable. Honor the eight-field USER_INPUT while treating TYPOGRAPHY_OVERLAY only as a strict non-visual no-text control: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.symmetricalStorefrontStructure
@@ -480,6 +484,7 @@ export async function generateSingleImage(
               isThaiNaturePoster: Boolean(item.thaiNaturePosterStructure),
               isEditorialPenSketch: Boolean(item.editorialPenSketchStructure),
               isSymmetricalStorefront: Boolean(item.symmetricalStorefrontStructure),
+              isSaleReference: Boolean(item.saleReferenceStructure),
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

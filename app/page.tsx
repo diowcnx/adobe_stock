@@ -24,7 +24,9 @@ import {
   ArrowDownToLine,
   Loader2,
   History,
-  Trash2
+  Trash2,
+  Upload,
+  Trophy
 } from "lucide-react";
 import JSZip from "jszip";
 import { WorkflowResult, OpenRouterCreditInfo, StockImageItem } from "@/lib/types";
@@ -34,7 +36,22 @@ import { BATCH_SIZE, getDailyCategory, MONTHLY_CATEGORIES } from "@/lib/producti
 import { isWorkflowResult } from "@/lib/validation";
 import { getItemGenerationMode, summarizeConceptPlan } from "@/lib/structured-concepts";
 
-type DashboardTab = "overview" | "images" | "setup";
+type DashboardTab = "overview" | "sale" | "images" | "setup";
+
+interface PreparedBatchResponse {
+  mode: "regular_scene";
+  trend: WorkflowResult["trend"];
+  items: StockImageItem[];
+  credits: OpenRouterCreditInfo;
+  conceptPlan?: WorkflowResult["conceptPlan"];
+}
+
+interface SoldReferenceAnalysisView {
+  subject: string;
+  visualStrengths: string;
+  likelyBuyerUses: string[];
+  expansionStrategy: string;
+}
 
 interface UiNotice {
   tone: "success" | "error" | "info";
@@ -84,6 +101,27 @@ function getSavedBatchModeLabel(batch: SavedBatch): string {
   return batch.mode === "transparent_png" ? "🔲 PNG" : "🏞️ ฉาก";
 }
 
+async function compressReferenceImage(file: File): Promise<string> {
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("รองรับเฉพาะไฟล์ JPEG, PNG และ WebP");
+  if (file.size > 20_000_000) throw new Error("ไฟล์ต้นฉบับต้องมีขนาดไม่เกิน 20 MB");
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = document.createElement("img");
+    image.src = objectUrl;
+    await image.decode();
+    const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("เบราว์เซอร์ไม่สามารถเตรียมภาพได้");
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.82);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [credits, setCredits] = useState<OpenRouterCreditInfo | null>(null);
@@ -97,6 +135,9 @@ export default function Dashboard() {
   const [testingEmail, setTestingEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<TestEmailResult | null>(null);
   const [notice, setNotice] = useState<UiNotice | null>(null);
+  const [saleReferenceFile, setSaleReferenceFile] = useState<File | null>(null);
+  const [saleReferencePreview, setSaleReferencePreview] = useState<string>("");
+  const [saleReferenceAnalysis, setSaleReferenceAnalysis] = useState<SoldReferenceAnalysisView | null>(null);
 
   const showNotice = useCallback((message: string, tone: UiNotice["tone"] = "info") => {
     setNotice({ message, tone });
@@ -250,7 +291,7 @@ export default function Dashboard() {
       await Promise.resolve();
       try {
         const requestedTab = new URLSearchParams(window.location.search).get("tab");
-        if (requestedTab === "overview" || requestedTab === "images" || requestedTab === "setup") {
+        if (requestedTab === "overview" || requestedTab === "sale" || requestedTab === "images" || requestedTab === "setup") {
           setActiveTab(requestedTab);
         }
         const stored = localStorage.getItem("adobe_stock_history");
@@ -279,19 +320,22 @@ export default function Dashboard() {
   }, [fetchCredits, fetchLatestBatch]);
 
   // กดเริ่มกระบวนการทันทีด้วยระบบ Progressive Generation (ป้องกัน 504 Timeout เด็ดขาด และเห็นผลสดทันที)
-  const triggerManualRun = async () => {
+  const triggerManualRun = async (preparedBatch?: PreparedBatchResponse) => {
     setIsRunning(true);
-    setRunProgress(`กำลังวางแผนแนวคิดและเตรียม ${BATCH_SIZE} ภาพ...`);
+    setRunProgress(preparedBatch ? `กำลังเตรียมสร้าง ${preparedBatch.items.length} แนวคิดใหม่...` : `กำลังวางแผนแนวคิดและเตรียม ${BATCH_SIZE} ภาพ...`);
     try {
-      // 1. เรียกวางแผน Prompts และวิจัยตลาด (รวดเร็วเพียง 1-2 วินาที)
-      const prepRes = await fetch("/api/prepare-batch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "auto" }),
-      });
-      const prepData = await prepRes.json();
-      if (!prepRes.ok || !prepData.success) {
-        throw new Error(prepData.error || "ไม่สามารถเตรียมชุดภาพได้");
+      let prepData: PreparedBatchResponse;
+      if (preparedBatch) {
+        prepData = preparedBatch;
+      } else {
+        const prepRes = await fetch("/api/prepare-batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "auto" }),
+        });
+        const responseData = await prepRes.json();
+        if (!prepRes.ok || !responseData.success) throw new Error(responseData.error || "ไม่สามารถเตรียมชุดภาพได้");
+        prepData = responseData as PreparedBatchResponse;
       }
 
       if (prepData.credits) {
@@ -448,6 +492,32 @@ export default function Dashboard() {
       console.error("Run error:", error);
       alert("เกิดข้อผิดพลาดในการสร้างภาพ: " + getErrorMessage(error, "Unknown error"));
     } finally {
+      setIsRunning(false);
+      setRunProgress("");
+    }
+  };
+
+  const triggerSaleReferenceRun = async () => {
+    if (!saleReferenceFile) {
+      showNotice("กรุณาเลือกภาพที่มีหลักฐานการขายก่อน", "error");
+      return;
+    }
+    setIsRunning(true);
+    setRunProgress("กำลังย่อภาพและวิเคราะห์สัญญาณจากภาพที่ขายได้...");
+    try {
+      const imageDataUrl = await compressReferenceImage(saleReferenceFile);
+      const response = await fetch("/api/analyze-sale-reference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUrl }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || "วิเคราะห์ภาพไม่สำเร็จ");
+      setSaleReferenceAnalysis(data.analysis as SoldReferenceAnalysisView);
+      await triggerManualRun(data as PreparedBatchResponse);
+    } catch (error: unknown) {
+      console.error("Sold reference run error:", error);
+      showNotice(getErrorMessage(error, "ไม่สามารถวิเคราะห์และสร้างภาพได้"), "error");
       setIsRunning(false);
       setRunProgress("");
     }
@@ -696,7 +766,7 @@ export default function Dashboard() {
             {/* Run Button */}
             <button
               type="button"
-              onClick={triggerManualRun}
+              onClick={() => void triggerManualRun()}
               disabled={isRunning}
               className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-md shadow-indigo-600/20 active:scale-95 cursor-pointer"
             >
@@ -803,6 +873,20 @@ export default function Dashboard() {
               }`}
             >
               📊 สถานะระบบ &amp; เวลาทำงาน
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "sale"}
+              aria-controls="tab-panel-sale"
+              onClick={() => selectTab("sale")}
+              className={`pb-3 text-sm font-medium transition relative whitespace-nowrap ${
+                activeTab === "sale"
+                  ? "text-amber-300 border-b-2 border-amber-300 font-bold"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              🏆 ต่อยอดภาพที่ขายได้
             </button>
             <button
               type="button"
@@ -979,7 +1063,7 @@ export default function Dashboard() {
                 </div>
                 <button
                   type="button"
-                  onClick={triggerManualRun}
+                  onClick={() => void triggerManualRun()}
                   disabled={isRunning}
                   className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-lg shadow-indigo-600/30 cursor-pointer"
                 >
@@ -991,7 +1075,114 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Tab 2: Generated Images & Metadata */}
+        {activeTab === "sale" && (
+          <div id="tab-panel-sale" role="tabpanel" className="space-y-6">
+            <section className="overflow-hidden rounded-3xl border border-amber-400/25 bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/30">
+              <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
+                <div className="p-6 sm:p-8">
+                  <div className="mb-5 flex items-start gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400/15 text-amber-300">
+                      <Trophy className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">Confirmed sale signal</p>
+                      <h2 className="mt-1 text-xl font-bold text-white">อัปโหลดภาพที่ขายได้ แล้วต่อยอดเป็น 10 แนวคิดใหม่</h2>
+                      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                        ระบบจะอ่านหัวเรื่อง องค์ประกอบ และการใช้งานที่ผู้ซื้อน่าจะต้องการ แล้วเปลี่ยนฉาก มุมกล้อง เรื่องราว แสง และกลุ่มผู้ซื้อให้ต่างกันจริง โดยไม่คัดลอกภาพต้นฉบับ
+                      </p>
+                    </div>
+                  </div>
+
+                  <label htmlFor="sold-reference-upload" className="block text-sm font-semibold text-slate-100">ภาพ Capture จากอีเมลแจ้งยอดขาย</label>
+                  <label htmlFor="sold-reference-upload" className="mt-2 flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-600 bg-slate-950/60 px-6 py-8 text-center transition hover:border-amber-400/70 hover:bg-slate-950 focus-within:ring-2 focus-within:ring-amber-400">
+                    <Upload className="mb-3 h-7 w-7 text-amber-300" aria-hidden="true" />
+                    <span className="text-sm font-semibold text-white">คลิกเพื่อเลือกภาพ JPEG, PNG หรือ WebP</span>
+                    <span className="mt-1 text-xs text-slate-400">ไฟล์ต้นฉบับไม่เกิน 20 MB · ระบบย่อก่อนส่งวิเคราะห์ · ไม่บันทึกภาพอ้างอิงลงคลัง</span>
+                    <input
+                      id="sold-reference-upload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] || null;
+                        setSaleReferenceFile(file);
+                        setSaleReferenceAnalysis(null);
+                        if (!file) {
+                          setSaleReferencePreview("");
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = () => setSaleReferencePreview(typeof reader.result === "string" ? reader.result : "");
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+
+                  {saleReferenceFile && (
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-700 bg-slate-950/50 px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-white">{saleReferenceFile.name}</p>
+                        <p className="text-xs text-slate-400">{(saleReferenceFile.size / 1_000_000).toFixed(2)} MB</p>
+                      </div>
+                      <button type="button" onClick={() => { setSaleReferenceFile(null); setSaleReferencePreview(""); setSaleReferenceAnalysis(null); }} disabled={isRunning} className="text-xs font-semibold text-slate-300 underline-offset-4 hover:text-white hover:underline disabled:opacity-50">
+                        เอาภาพออก
+                      </button>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => void triggerSaleReferenceRun()}
+                    disabled={!saleReferenceFile || isRunning}
+                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/15 transition hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
+                  >
+                    {isRunning ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
+                    {isRunning ? "กำลังวิเคราะห์หรือสร้างภาพ..." : "วิเคราะห์และสร้าง 10 ภาพใหม่"}
+                  </button>
+                  <p className="mt-3 text-xs leading-5 text-slate-400">
+                    ขั้นวิเคราะห์ใช้ OpenRouter 1 ครั้ง และขั้นสร้างใช้เครดิตภาพสูงสุด 10 ภาพ รวม QA/ภาพทดแทนตามกฎเดิม การขายหนึ่งครั้งเป็นสัญญาณของภาพนี้เท่านั้น ไม่ใช่หลักฐานว่าทั้งหมวดมีความต้องการสูง
+                  </p>
+                </div>
+
+                <div className="border-t border-slate-800 bg-slate-950/55 p-6 lg:border-l lg:border-t-0">
+                  {saleReferencePreview ? (
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
+                      <NextImage src={saleReferencePreview} alt="ภาพที่ขายได้ซึ่งเลือกไว้สำหรับวิเคราะห์" fill unoptimized className="object-contain" />
+                    </div>
+                  ) : (
+                    <div className="flex aspect-[4/3] flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-950 text-center">
+                      <ImageIcon className="h-10 w-10 text-slate-700" aria-hidden="true" />
+                      <p className="mt-3 text-sm text-slate-500">ภาพตัวอย่างจะแสดงตรงนี้</p>
+                    </div>
+                  )}
+                  {saleReferenceAnalysis && (
+                    <div className="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 p-4" role="status">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">วิเคราะห์แล้ว</p>
+                      <h3 className="mt-1 font-semibold text-white">{saleReferenceAnalysis.subject}</h3>
+                      <p className="mt-2 text-xs leading-5 text-slate-300">{saleReferenceAnalysis.expansionStrategy}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {[
+                ["1", "อ่านภาพต้นทาง", "แยกตัวแบบ จุดแข็ง และการใช้งานของผู้ซื้อออกจาก UI และข้อความใน Capture"],
+                ["2", "แตก 10 Buyer Stories", "แต่ละภาพเปลี่ยนกลุ่มผู้ซื้อ การใช้งาน ฉาก มุมกล้อง แสง และสี ไม่ใช่แค่เปลี่ยนพร็อพ"],
+                ["3", "ตรวจแล้วส่งเข้าคลัง", "บังคับ JPEG ไม่มีข้อความ โลโก้ ลายน้ำ กรอบ หรือใบหน้าคน ก่อนบันทึกและส่งอีเมล"],
+              ].map(([number, title, description]) => (
+                <div key={number} className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/15 text-xs font-bold text-sky-300">{number}</span>
+                  <h3 className="mt-3 text-sm font-semibold text-white">{title}</h3>
+                  <p className="mt-2 text-xs leading-5 text-slate-400">{description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Generated Images & Metadata */}
         {activeTab === "images" && (
           <div id="tab-panel-images" role="tabpanel" className="space-y-6">
             {loadingBatch && !latestResult ? (
@@ -1009,7 +1200,7 @@ export default function Dashboard() {
                 </p>
                 <button
                   type="button"
-                  onClick={triggerManualRun}
+                  onClick={() => void triggerManualRun()}
                   disabled={isRunning}
                   className="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition cursor-pointer"
                 >
