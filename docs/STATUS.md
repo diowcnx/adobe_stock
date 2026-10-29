@@ -17,7 +17,6 @@ Next.js 16 app on Vercel that plans 10 Adobe Stock image briefs, generates JPEGs
 ## Open / blocked
 
 - Isolated-on-white mode tested live 2026-10-29 with the stone-steps sale: analyzer chose `isolated_cutout`, 10/10 passed QA first try, email sent. Weaker results: #6 rolled mossy log, #8 shapeless volcanic rock pile.
-- Generated JPEGs are 1376×768 (~1.06 MP). Adobe Stock's minimum is 4 MP, and nothing in this repo upscales — confirm how images are upscaled before upload.
 
 - New research flow not yet clicked on the live site (would spend OpenRouter credit). First real run will confirm it.
 - Login rate limit is **live** in Vercel Firewall (2026-10-29, rule `Login rate limit`): POST `/api/auth/login`, 10 requests / 600 s per IP → 429. Hobby allows only 1 rate-limit rule per project. Lives in Vercel, not git. Not yet tested with 11 real wrong-password attempts.
@@ -32,6 +31,8 @@ Next.js 16 app on Vercel that plans 10 Adobe Stock image briefs, generates JPEGs
 3. Consider splitting `app/page.tsx` (~1,900 lines).
 
 ## Gotchas
+
+- Generated JPEGs are ~1376×768 (~1 MP), below Adobe Stock's 4 MP minimum. This is intentional: the owner upscales manually before uploading, so the app does not upscale.
 
 - Read `node_modules/next/dist/docs/` before Next.js changes (AGENTS.md) — this Next version differs from older docs.
 - Files read at runtime must be listed in `outputFileTracingIncludes` (`next.config.ts`) or Vercel won't bundle them.
