@@ -88,6 +88,7 @@ export interface SaleReferenceStructure {
 }
 
 export interface StockImageItem {
+  manualResearch?: boolean;
   saleReferenceStructure?: SaleReferenceStructure;
   thaiNaturePosterStructure?: ThaiNaturePosterStructure;
   symmetricalStorefrontStructure?: SymmetricalStorefrontStructure;

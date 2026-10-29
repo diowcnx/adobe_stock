@@ -523,6 +523,21 @@ export default function Dashboard() {
     }
   };
 
+  const triggerResearchRun = async () => {
+    setIsRunning(true);
+    setRunProgress("กำลังตรวจเครดิตและเตรียม 10 prompt ที่วิจัยไว้...");
+    try {
+      const response = await fetch("/api/prepare-research-batch", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || "ไม่สามารถเตรียมชุดภาพได้");
+      await triggerManualRun(data as PreparedBatchResponse);
+    } catch (error: unknown) {
+      showNotice(getErrorMessage(error, "ไม่สามารถเตรียมชุดภาพได้"), "error");
+      setIsRunning(false);
+      setRunProgress("");
+    }
+  };
+
   const copyToClipboard = async (text: string, key: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -947,6 +962,10 @@ export default function Dashboard() {
         {/* Tab 1: Overview */}
         {activeTab === "overview" && (
           <div id="tab-panel-overview" role="tabpanel" className="space-y-6">
+            <div className="rounded-2xl border border-sky-500/30 bg-slate-900 p-5 flex flex-wrap items-center justify-between gap-4">
+              <div><h2 className="font-semibold text-white">ชุดวิจัย 28 ตุลาคม: Privacy · Smart Home · Light Pollution</h2><p className="mt-1 text-sm text-slate-400">สร้าง 10 ภาพจาก prompt ที่วิจัยไว้ พร้อมบันทึกและส่งอีเมล ใช้เครดิต OpenRouter และอาจมีการสร้างทดแทนตาม QA</p></div>
+              <button type="button" disabled={isRunning} onClick={() => void triggerResearchRun()} className="rounded-xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50">สร้างชุดวิจัย 10 ภาพ</button>
+            </div>
             {/* Quick Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">

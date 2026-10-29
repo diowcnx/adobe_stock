@@ -1,10 +1,5 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/daily-stock",
-      "schedule": "0 11 * * *"
-    }
-  ],
+  "crons": [],
   "functions": {
     "app/api/cron/daily-stock/route.ts": {
       "maxDuration": 300

@@ -231,7 +231,9 @@ export async function generateSingleImage(
         : basePrompt;
 
       const mandatoryExclusions = [
-        item.saleReferenceStructure
+        item.manualResearch
+          ? "Render the specific manually researched commercial scene and intended buyer use, with the named action and setting visibly clear. Do not add unrelated objects, people, symbols, text, logos, or visible faces."
+        : item.saleReferenceStructure
           ? "Render the NEW_CONCEPT as an original full-bleed commercial JPEG for the named target buyer and use. The uploaded sold image is evidence for a subject opportunity only: do not reproduce its composition, crop, distinctive arrangement, screenshot interface, watermark, text or branded details. Preserve literal clarity and use only the specified new subject treatment, camera, setting, props, light and palette. No people with visible faces, lettering, pseudo-text, logos, labels, frames or borders."
         : item.thaiNaturePosterStructure
           ? "Render one full-bleed hand-painted poster-color landscape of Thai nature and flower fields from a gently elevated scenic viewpoint. Preserve the named Thai flower species, terrain bands, winding route, single grounded landmark, vintage paper grain, palette, season and light. No top-down plan, map, masterplan, site plan, diagram, satellite view, poster page, border, text, pseudo-text, flags, temples, costumes, large people, portraits or visible faces."
