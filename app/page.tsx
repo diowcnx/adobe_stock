@@ -547,8 +547,8 @@ export default function Dashboard() {
     try {
       for (let index = 0; index < missing.length; index++) {
         const originalItem = missing[index];
-        const item = originalItem.id === 4 && originalItem.description?.includes("visible human face")
-          ? { ...originalItem, prompt: "Photorealistic close-up of an unbranded open laptop fitted with a dark removable privacy screen in a quiet cafe, viewed obliquely from one side so the screen appears dark. The attached privacy filter is clearly identifiable. Natural daylight, realistic monitor geometry, empty softly blurred background and natural copy space. Absolutely no people, hands, bodies, faces, screen text, labels, logos, numbers or watermarks.", description: undefined }
+        const item = originalItem.manualFallbackPrompt && originalItem.description?.includes("visible human face")
+          ? { ...originalItem, prompt: originalItem.manualFallbackPrompt, description: undefined }
           : originalItem;
         setRunProgress(`กำลังสร้างภาพที่ขาด ${index + 1}/${missing.length}...`);
         const response = await fetch("/api/generate-item-image", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ item, timestamp: batch.timestamp }) });

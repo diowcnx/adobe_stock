@@ -89,6 +89,8 @@ export interface SaleReferenceStructure {
 
 export interface StockImageItem {
   manualResearch?: boolean;
+  /** Replacement prompt from the research file, used when a retry is blocked by a visible face. */
+  manualFallbackPrompt?: string;
   saleReferenceStructure?: SaleReferenceStructure;
   thaiNaturePosterStructure?: ThaiNaturePosterStructure;
   symmetricalStorefrontStructure?: SymmetricalStorefrontStructure;

@@ -29,6 +29,7 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (!isBoundedString(value.prompt, 8_000)) return false;
   if (!isBoundedString(value.modelUsed, 200)) return false;
   if (value.manualResearch !== undefined && typeof value.manualResearch !== "boolean") return false;
+  if (value.manualFallbackPrompt !== undefined && (value.manualResearch !== true || !isBoundedString(value.manualFallbackPrompt, 8_000))) return false;
   if (value.manualResearch === true && [value.saleReferenceStructure, value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure, value.aerialLandscapeStructure, value.editorialPenSketchStructure, value.symmetricalStorefrontStructure, value.thaiNaturePosterStructure].some(field => field !== undefined)) return false;
   if ([value.saleReferenceStructure, value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure, value.aerialLandscapeStructure, value.editorialPenSketchStructure, value.symmetricalStorefrontStructure, value.thaiNaturePosterStructure].filter(field => field !== undefined).length > 1) return false;
   if (value.saleReferenceStructure !== undefined) {
