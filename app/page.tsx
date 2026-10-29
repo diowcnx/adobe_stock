@@ -268,7 +268,7 @@ export default function Dashboard() {
           const localHistory: unknown = JSON.parse(localStorage.getItem("adobe_stock_history") || "[]");
           setSavedBatches(mergeSavedBatches(batchHistory, localHistory));
         }
-        if (latestBatch.success && isWorkflowResult(latestBatch)) {
+        if (isWorkflowResult(latestBatch)) {
           setLatestResult(latestBatch);
           saveBatchToHistory(latestBatch);
           if (Array.isArray(batchHistory)) {
@@ -389,7 +389,7 @@ export default function Dashboard() {
                   ? `QA warning: ${genData.qualityReview.rejectionReasons.join("; ")}`
                   : genRes.ok && genData.imageUrl
                     ? undefined
-                    : getErrorMessage(genData.error, "สร้างภาพไม่สำเร็จ"),
+                    : typeof genData.error === "string" ? genData.error : "สร้างภาพไม่สำเร็จ",
               };
               setLatestResult((prev) => prev ? { ...prev, images: [...updatedImages] } : prev);
               if (!genData.imageUrl) {
@@ -533,6 +533,49 @@ export default function Dashboard() {
       await triggerManualRun(data as PreparedBatchResponse);
     } catch (error: unknown) {
       showNotice(getErrorMessage(error, "ไม่สามารถเตรียมชุดภาพได้"), "error");
+      setIsRunning(false);
+      setRunProgress("");
+    }
+  };
+
+  const retryMissingResearchImages = async () => {
+    if (!latestResult) return;
+    const batch = { ...latestResult, images: [...latestResult.images] };
+    const missing = batch.images.filter(image => !image.imageUrl && image.manualResearch);
+    if (!missing.length) return;
+    setIsRunning(true);
+    try {
+      for (let index = 0; index < missing.length; index++) {
+        const item = missing[index];
+        setRunProgress(`กำลังสร้างภาพที่ขาด ${index + 1}/${missing.length}...`);
+        const response = await fetch("/api/generate-item-image", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ item, timestamp: batch.timestamp }) });
+        const data = await response.json();
+        const target = batch.images.findIndex(image => image.id === item.id);
+        batch.images[target] = { ...item, imageUrl: response.ok && data.imageUrl ? data.imageUrl : undefined, qualityReview: data.qualityReview, description: data.error || undefined };
+        setLatestResult({ ...batch, images: [...batch.images] });
+        if (response.ok && data.imageUrl) {
+          const partialSave = await fetch("/api/save-batch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(batch) });
+          if (!partialSave.ok) throw new Error("บันทึกภาพที่สร้างเพิ่มไม่สำเร็จ");
+        }
+      }
+      batch.success = batch.images.every(image => Boolean(image.imageUrl));
+      if (batch.success) {
+        setRunProgress("กำลังส่งอีเมลชุดภาพที่สร้างครบ...");
+        const response = await fetch("/api/dispatch-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(batch) });
+        const data = await response.json();
+        batch.emailDelivery = { success: response.ok && Boolean(data.success), recipient: "hs5ckt@gmail.com", messageId: data.messageId, error: data.error };
+      } else {
+        batch.emailDelivery = { success: false, recipient: "hs5ckt@gmail.com", error: "Some images remain unavailable; email not sent" };
+      }
+      const saved = await fetch("/api/save-batch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(batch) });
+      if (!saved.ok) throw new Error("บันทึกสถานะชุดภาพไม่สำเร็จ");
+      setLatestResult({ ...batch });
+      saveBatchToHistory(batch);
+      void fetchCredits();
+      showNotice(batch.emailDelivery.success ? "สร้างครบและส่งอีเมลแล้ว" : "ยังมีภาพหรืออีเมลที่ไม่สำเร็จ กรุณาตรวจรายละเอียด", batch.emailDelivery.success ? "success" : "error");
+    } catch (error: unknown) {
+      showNotice(getErrorMessage(error, "ไม่สามารถสร้างภาพที่ขาดได้"), "error");
+    } finally {
       setIsRunning(false);
       setRunProgress("");
     }
@@ -1229,6 +1272,12 @@ export default function Dashboard() {
             ) : (
               <>
                 {/* Market Niche Banner */}
+                {latestResult.images.some(image => image.manualResearch && !image.imageUrl) && (
+                  <div className="rounded-xl border border-amber-500/40 bg-amber-950/20 p-4 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-amber-200">มี {latestResult.images.filter(image => image.manualResearch && !image.imageUrl).length} ภาพที่ยังสร้างไม่สำเร็จ สามารถสร้างเฉพาะภาพที่ขาดและส่งอีเมลเมื่อครบได้</p>
+                    <button type="button" disabled={isRunning} onClick={() => void retryMissingResearchImages()} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 disabled:opacity-50">สร้างเฉพาะภาพที่ขาด</button>
+                  </div>
+                )}
                 <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/60 border border-slate-800 rounded-2xl p-6">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
