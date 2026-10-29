@@ -1,6 +1,7 @@
 import { ConceptPlanSummary, MarketTrend, OpenRouterCreditInfo, StockImageItem } from "./types";
 import { generateMetadataCsv } from "./csv";
 import { summarizeConceptPlan } from "./structured-concepts";
+import { getEmailAddresses } from "./email-config";
 
 interface Smtp2goSendResponse {
   data?: {
@@ -29,8 +30,8 @@ export async function sendDailyStockEmail({
   senderEmail?: string;
   apiKey?: string;
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  const toEmail = recipientEmail || process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
-  const fromEmail = senderEmail || process.env.SENDER_EMAIL || "fms@ptis.ac.th";
+  const toEmail = recipientEmail || getEmailAddresses().recipient;
+  const fromEmail = senderEmail || getEmailAddresses().sender;
   const key = apiKey || process.env.SMTP2GO_API_KEY;
 
   const now = new Date();
@@ -75,6 +76,11 @@ export async function sendDailyStockEmail({
       mimetype: "text/csv",
     },
   ];
+
+  if (!toEmail || !fromEmail) {
+    console.warn("RECIPIENT_EMAIL or SENDER_EMAIL not configured in environment variables.");
+    return { success: false, error: "RECIPIENT_EMAIL and SENDER_EMAIL must be set in Vercel environment variables." };
+  }
 
   if (!key) {
     console.warn("SMTP2GO_API_KEY not configured in environment variables.");
@@ -269,7 +275,7 @@ function generateNotificationEmailHtml(
     <!-- Footer -->
     <div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 20px 24px; border-top: 1px solid #f1f5f9;">
       <p style="margin: 0 0 4px 0;">ระบบอัตโนมัติ Adobe Stock Daily Dispatcher บน Vercel</p>
-      <p style="margin: 0;">hs5ckt@gmail.com &bull; github.com/diowcnx/adobe_stock</p>
+      <p style="margin: 0;">github.com/diowcnx/adobe_stock</p>
     </div>
 
   </div>
@@ -338,11 +344,11 @@ export async function sendCreditDepletedEmergencyAlert({
   senderEmail?: string;
   apiKey?: string;
 }): Promise<boolean> {
-  const toEmail = recipientEmail || process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
-  const fromEmail = senderEmail || process.env.SENDER_EMAIL || "fms@ptis.ac.th";
+  const toEmail = recipientEmail || getEmailAddresses().recipient;
+  const fromEmail = senderEmail || getEmailAddresses().sender;
   const key = apiKey || process.env.SMTP2GO_API_KEY;
 
-  if (!key) return false;
+  if (!key || !toEmail || !fromEmail) return false;
 
   const html = `
     <div style="font-family: sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; border: 2px solid #ef4444; border-radius: 12px; background: #fff5f5;">
@@ -389,10 +395,10 @@ export async function sendWorkflowFailureAlert({
   senderEmail?: string;
   apiKey?: string;
 }): Promise<boolean> {
-  const toEmail = recipientEmail || process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
-  const fromEmail = senderEmail || process.env.SENDER_EMAIL || "fms@ptis.ac.th";
+  const toEmail = recipientEmail || getEmailAddresses().recipient;
+  const fromEmail = senderEmail || getEmailAddresses().sender;
   const key = apiKey || process.env.SMTP2GO_API_KEY;
-  if (!key) return false;
+  if (!key || !toEmail || !fromEmail) return false;
 
   const safeStage = escapeHtml(stage);
   const safeReason = escapeHtml(reason);

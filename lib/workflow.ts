@@ -3,6 +3,7 @@ import { reserveUniquePromptBatch } from "./prompt-history";
 import { generateAllStockImages } from "./image-generator";
 import { sendDailyStockEmail, sendCreditDepletedEmergencyAlert, sendWorkflowFailureAlert } from "./smtp2go";
 import { WorkflowResult } from "./types";
+import { recipientLabel } from "./email-config";
 
 declare global {
   var __dailyStockWorkflowRunning: boolean | undefined;
@@ -61,7 +62,7 @@ async function runDailyStockWorkflow(
     credits: latestCredits,
     emailDelivery: {
       success: false,
-      recipient: process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com",
+      recipient: recipientLabel(),
       error: "Email dispatch pending",
     },
     durationMs: Date.now() - startTime,
@@ -78,7 +79,7 @@ async function runDailyStockWorkflow(
       success: false,
       emailDelivery: {
         success: false,
-        recipient: process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com",
+        recipient: recipientLabel(),
         error: `Quality gate rejected ${rejectedImages.length} image(s); incomplete batch was not emailed`,
       },
       durationMs: Date.now() - startTime,
@@ -89,7 +90,7 @@ async function runDailyStockWorkflow(
   }
 
   // ส่งอีเมลหลังยืนยันว่าภาพและ Metadata พร้อมให้หน้าเว็บดาวน์โหลดแล้ว
-  console.log("Dispatching email via SMTP2GO to hs5ckt@gmail.com...");
+  console.log("Dispatching email via SMTP2GO...");
   const emailResult = await sendDailyStockEmail({
     trend,
     images: generatedImages,
@@ -105,7 +106,7 @@ async function runDailyStockWorkflow(
     success: emailResult.success,
     emailDelivery: {
       success: emailResult.success,
-      recipient: process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com",
+      recipient: recipientLabel(),
       messageId: emailResult.messageId,
       error: emailResult.error,
     },

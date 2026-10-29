@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOpenRouterCredits } from "@/lib/openrouter";
+import { recipientLabel } from "@/lib/email-config";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: credits,
+      recipientEmail: recipientLabel(),
     });
   } catch (error: unknown) {
     console.error("Credit lookup failed:", error);

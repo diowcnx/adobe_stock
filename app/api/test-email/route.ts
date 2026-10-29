@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
+import { getEmailAddresses } from "@/lib/email-config";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
   const apiKey = process.env.SMTP2GO_API_KEY;
-  const senderEmail = process.env.SENDER_EMAIL || "fms@ptis.ac.th";
-  const recipientEmail = process.env.RECIPIENT_EMAIL || "hs5ckt@gmail.com";
+  const { sender: senderEmail, recipient: recipientEmail } = getEmailAddresses();
+
+  if (!senderEmail || !recipientEmail) {
+    return NextResponse.json({
+      success: false,
+      configured: false,
+      error: "RECIPIENT_EMAIL and SENDER_EMAIL must be set in Vercel environment variables.",
+      senderEmail,
+      recipientEmail,
+    });
+  }
 
   if (!apiKey) {
     return NextResponse.json({

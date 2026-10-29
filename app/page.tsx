@@ -134,6 +134,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const [testingEmail, setTestingEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<TestEmailResult | null>(null);
+  const [recipientEmail, setRecipientEmail] = useState("อีเมลปลายทาง (RECIPIENT_EMAIL)");
   const [notice, setNotice] = useState<UiNotice | null>(null);
   const [saleReferenceFile, setSaleReferenceFile] = useState<File | null>(null);
   const [saleReferencePreview, setSaleReferencePreview] = useState<string>("");
@@ -170,11 +171,11 @@ export default function Dashboard() {
             ...latestResult,
             emailDelivery: {
               success: true,
-              recipient: json.recipientEmail || "hs5ckt@gmail.com",
+              recipient: json.recipientEmail || recipientEmail,
             },
           });
         }
-        alert("✅ ส่งอีเมลทดสอบไปยัง " + (json.recipientEmail || "hs5ckt@gmail.com") + " สำเร็จเรียบร้อยแล้ว! โปรดตรวจสอบใน Inbox หรือ Spam");
+        alert("✅ ส่งอีเมลทดสอบไปยัง " + (json.recipientEmail || recipientEmail) + " สำเร็จเรียบร้อยแล้ว! โปรดตรวจสอบใน Inbox หรือ Spam");
       } else {
         const errorDetail = json.error || `HTTP ${json.httpStatus || 500}`;
         alert("❌ ส่งอีเมลไม่สำเร็จ:\n" + errorDetail + "\n\nคำแนะนำ: ตรวจสอบ SMTP2GO_API_KEY หรือตั้งค่า SENDER_EMAIL ให้ตรงกับ Verified Senders ในบัญชี SMTP2GO");
@@ -207,6 +208,7 @@ export default function Dashboard() {
       const json = await res.json();
       if (!res.ok || !json.success || !json.data) throw new Error(json.error || "ไม่สามารถโหลดเครดิตได้");
       setCredits(json.data);
+      if (typeof json.recipientEmail === "string") setRecipientEmail(json.recipientEmail);
       if (announce) showNotice("อัปเดตยอดเครดิตเรียบร้อยแล้ว", "success");
     } catch (e) {
       console.error("Failed to load credits:", e);
@@ -442,7 +444,7 @@ export default function Dashboard() {
 
       // Dispatch only after persistence succeeds, so email links always work.
       if (persistenceReady && rejectedImageCount === 0) {
-        setRunProgress("กำลังส่งอีเมลแจ้งเตือนไปยัง hs5ckt@gmail.com...");
+        setRunProgress(`กำลังส่งอีเมลแจ้งเตือนไปยัง ${recipientEmail}...`);
         try {
           const emailRes = await fetch("/api/dispatch-email", {
             method: "POST",
@@ -452,7 +454,7 @@ export default function Dashboard() {
           const emailData = await emailRes.json();
           finalResult.emailDelivery = {
             success: emailRes.ok && Boolean(emailData.success),
-            recipient: "hs5ckt@gmail.com",
+            recipient: emailData.recipient || recipientEmail,
             messageId: emailData.messageId,
             error: emailData.error || (!emailRes.ok ? "Email dispatch request failed" : undefined),
           };
@@ -460,7 +462,7 @@ export default function Dashboard() {
           console.warn("Could not dispatch email:", error);
           finalResult.emailDelivery = {
             success: false,
-            recipient: "hs5ckt@gmail.com",
+            recipient: recipientEmail,
             error: getErrorMessage(error, "Email dispatch failed"),
           };
         }
@@ -468,7 +470,7 @@ export default function Dashboard() {
         finalResult.success = false;
         finalResult.emailDelivery = {
           success: false,
-          recipient: "hs5ckt@gmail.com",
+          recipient: recipientEmail,
           error: `Quality gate rejected ${rejectedImageCount} image(s); incomplete batch was not emailed`,
         };
         showNotice(`ระบบคัดภาพที่ไม่ผ่านออก ${rejectedImageCount} ภาพ และยังไม่ส่งอีเมลชุดที่ไม่ครบ`, "error");
@@ -566,9 +568,9 @@ export default function Dashboard() {
         setRunProgress("กำลังส่งอีเมลชุดภาพที่สร้างครบ...");
         const response = await fetch("/api/dispatch-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(batch) });
         const data = await response.json();
-        batch.emailDelivery = { success: response.ok && Boolean(data.success), recipient: "hs5ckt@gmail.com", messageId: data.messageId, error: data.error };
+        batch.emailDelivery = { success: response.ok && Boolean(data.success), recipient: data.recipient || recipientEmail, messageId: data.messageId, error: data.error };
       } else {
-        batch.emailDelivery = { success: false, recipient: "hs5ckt@gmail.com", error: "Some images remain unavailable; email not sent" };
+        batch.emailDelivery = { success: false, recipient: recipientEmail, error: "Some images remain unavailable; email not sent" };
       }
       const saved = await fetch("/api/save-batch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(batch) });
       if (!saved.ok) throw new Error("บันทึกสถานะชุดภาพไม่สำเร็จ");
@@ -902,7 +904,7 @@ export default function Dashboard() {
                   เครดิต OpenRouter ของคุณใกล้หมดหรือหมดแล้ว (${credits.remainingCredits.toFixed(4)})
                 </h3>
                 <p className="text-xs text-red-200/70 mt-0.5">
-                  ระบบส่งอีเมลแจ้งเตือนไปยัง hs5ckt@gmail.com เรียบร้อยแล้ว กรุณาเติมเครดิตเพื่อไม่ให้รอบการทำงานถัดไปหยุดชะงัก
+                  ระบบส่งอีเมลแจ้งเตือนไปยัง {recipientEmail} เรียบร้อยแล้ว กรุณาเติมเครดิตเพื่อไม่ให้รอบการทำงานถัดไปหยุดชะงัก
                 </p>
               </div>
             </div>
@@ -1028,7 +1030,7 @@ export default function Dashboard() {
                   <span className="text-xs font-medium text-slate-400">Target Email</span>
                   <Mail className="w-4 h-4 text-sky-400" />
                 </div>
-                <div className="text-sm font-bold text-white truncate">hs5ckt@gmail.com</div>
+                <div className="text-sm font-bold text-white truncate">{recipientEmail}</div>
                 <p className="text-xs text-slate-500 mt-1">SMTP2GO Dispatcher</p>
               </div>
 
@@ -1112,7 +1114,7 @@ export default function Dashboard() {
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
                   <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center">5</div>
                   <div className="font-semibold text-white">SMTP2GO Dispatch</div>
-                  <p className="text-slate-400">Emails high-res attachments, SEO titles, and keywords ready to paste to hs5ckt@gmail.com.</p>
+                  <p className="text-slate-400">Emails high-res attachments, SEO titles, and keywords ready to paste to {recipientEmail}.</p>
                 </div>
               </div>
             </div>
@@ -1290,7 +1292,7 @@ export default function Dashboard() {
                       Duration: {(latestResult.durationMs / 1000).toFixed(1)}s &bull; Email:{" "}
                       <span className={latestResult.emailDelivery.success ? "text-emerald-400 font-semibold" : "text-amber-400 font-semibold"}>
                         {latestResult.emailDelivery.success
-                          ? "Sent to hs5ckt@gmail.com"
+                          ? `Sent to ${latestResult.emailDelivery.recipient}`
                           : `Delivery Failed (${latestResult.emailDelivery.error || "Simulation"})`}
                       </span>
                     </span>
@@ -1823,7 +1825,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-mono text-xs font-bold text-sky-400">RECIPIENT_EMAIL</span>
                     <span className="text-xs text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Default: hs5ckt@gmail.com
+                      <CheckCircle2 className="w-3.5 h-3.5" /> {recipientEmail}
                     </span>
                   </div>
                   <p className="text-xs text-slate-400">
@@ -1851,7 +1853,7 @@ export default function Dashboard() {
                       ทดสอบการส่งอีเมลผ่าน SMTP2GO (Live Diagnostic Tool)
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">
-                      กดปุ่มนี้เพื่อยิงส่งอีเมลทดสอบไปยัง <strong>hs5ckt@gmail.com</strong> และตรวจสอบ Error ที่ SMTP2GO ตอบกลับมาแบบเรียลไทม์
+                      กดปุ่มนี้เพื่อยิงส่งอีเมลทดสอบไปยัง <strong>{recipientEmail}</strong> และตรวจสอบ Error ที่ SMTP2GO ตอบกลับมาแบบเรียลไทม์
                     </p>
                   </div>
                   <button

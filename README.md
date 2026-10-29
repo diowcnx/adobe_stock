@@ -37,7 +37,7 @@
    - ไม่ส่งคำขอภาพซ้ำไปยังโมเดลราคาแพงขึ้นอัตโนมัติเมื่อเกิด timeout; ตรวจ OpenRouter Activity เพื่อดูยอดที่เรียกเก็บจริง
    - ตรวจสอบยอดเครดิตคงเหลือ (Remaining Credits) ผ่าน OpenRouter API และแนบรายงานในอีเมลทุกวัน
 4. **SMTP2GO Automated Delivery**:
-   - ส่งอีเมลตรงถึง `hs5ckt@gmail.com`
+   - ส่งอีเมลถึงที่อยู่ใน `RECIPIENT_EMAIL` (ไม่มีอีเมลฝังในโค้ด ถ้าไม่ตั้งค่าระบบจะไม่ส่งอีเมล)
    - จัดรูปแบบ HTML สวยงาม พร้อมกล่อง Copy SEO Title และ Keywords
    - แนบ metadata CSV; ปุ่ม Dashboard ใช้ดาวน์โหลดภาพ ZIP หรือทีละภาพ
    - ชื่อไฟล์ในภาพและ CSV ใช้ `.png` สำหรับ Transparent Asset และ `.jpeg` สำหรับฉากเต็มขอบอย่างสอดคล้องกัน
@@ -55,8 +55,8 @@
 |---|---|---|
 | `OPENROUTER_API_KEY` | OpenRouter API Key | `sk-or-v1-...` |
 | `SMTP2GO_API_KEY` | SMTP2GO API Key | `api-...` |
-| `SENDER_EMAIL` | Verified Sender Email ใน SMTP2GO | `alerts@yourdomain.com` |
-| `RECIPIENT_EMAIL` | อีเมลปลายทาง | `hs5ckt@gmail.com` |
+| `SENDER_EMAIL` | Verified Sender Email ใน SMTP2GO (**ต้องตั้ง** ไม่มีค่า default) | `alerts@yourdomain.com` |
+| `RECIPIENT_EMAIL` | อีเมลปลายทาง (**ต้องตั้ง** ไม่มีค่า default) | `you@example.com` |
 | `ADMIN_PASSWORD` | รหัสผ่าน Admin ไม่ต่ำกว่า 12 ตัวอักษร | `use-a-unique-long-password` |
 | `SESSION_SECRET` | Secret สุ่มสำหรับลงลายเซ็น session ไม่ต่ำกว่า 32 ตัวอักษร และห้ามซ้ำกับรหัสผ่าน | `openssl-rand-base64-32-output` |
 | `CRON_SECRET` | Secret สุ่มป้องกัน Cron Endpoint ไม่ต่ำกว่า 32 ตัวอักษร | `openssl-rand-base64-32-output` |

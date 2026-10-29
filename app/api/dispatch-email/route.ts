@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendDailyStockEmail } from "@/lib/smtp2go";
+import { recipientLabel } from "@/lib/email-config";
 import { WorkflowResult } from "@/lib/types";
 import { readJsonBody, validationErrorResponse } from "@/lib/request";
 import { isWorkflowResult } from "@/lib/validation";
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
       mode: batch.generationMode,
     });
 
-    return NextResponse.json(emailResult);
+    return NextResponse.json({ ...emailResult, recipient: recipientLabel() });
   } catch (error: unknown) {
     const validationResponse = validationErrorResponse(error);
     if (validationResponse) return validationResponse;

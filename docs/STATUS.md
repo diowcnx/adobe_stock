@@ -10,12 +10,14 @@ Next.js 16 app on Vercel that plans 10 Adobe Stock image briefs, generates JPEGs
 
 - **Manual research batch no longer tied to one date** (2026-10-29). The dashboard button "สร้างชุดวิจัย 10 ภาพ" reads the newest `research/manual-prompts-YYYY-MM-DD.md`. Category, keywords and an optional face-safe fallback prompt now live in that file, not in code. Format: `research/README.md`.
 - Security quick audit + Next.js 16.4.3 upgrade — `docs/security/AUDIT-2026-10-29.md`.
+- Email addresses removed from code; `RECIPIENT_EMAIL` and `SENDER_EMAIL` are now **required** env vars (no email is sent without them).
 - Earlier: sold-image expansion tab, manual research batch with "retry missing images", food-fusion de-duplication.
 
 ## Open / blocked
 
 - New research flow not yet clicked on the live site (would spend OpenRouter credit). First real run will confirm it.
-- Decisions waiting on owner (see audit): hard-coded owner emails in a public repo; no login rate limit.
+- Decision waiting on owner: no login rate limit (see audit).
+- Confirm `RECIPIENT_EMAIL` and `SENDER_EMAIL` are set in Vercel (Production) before the next run, or emails will stop.
 - `vercel.json` has `"crons": []` — the daily 18:00 cron is currently **off**; README still describes it as on.
 - `research/manual-prompts-2026-10-28.md` intro still says the prompts are "not added to the pipeline" (outdated wording).
 
