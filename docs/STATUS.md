@@ -16,7 +16,7 @@ Next.js 16 app on Vercel that plans 10 Adobe Stock image briefs, generates JPEGs
 ## Open / blocked
 
 - New research flow not yet clicked on the live site (would spend OpenRouter credit). First real run will confirm it.
-- Decision waiting on owner: no login rate limit (see audit).
+- Login rate limit: owner must create the Vercel Firewall rule (Project → Firewall → Configure → New Rule: Request Path equals `/api/auth/login` AND Method equals `POST` → Rate Limit, Fixed Window 600 s, 10 requests, key IP, action 429 → Save → Review Changes → Publish). Hobby allows only 1 rate-limit rule per project. Not in git — lives in Vercel.
 - Confirm `RECIPIENT_EMAIL` and `SENDER_EMAIL` are set in Vercel (Production) before the next run, or emails will stop.
 - `vercel.json` has `"crons": []` — the daily 18:00 cron is currently **off**; README still describes it as on.
 - `research/manual-prompts-2026-10-28.md` intro still says the prompts are "not added to the pipeline" (outdated wording).

@@ -28,6 +28,12 @@ export default function LoginPage() {
         body: JSON.stringify({ password }),
       });
 
+      // Vercel Firewall rate limit answers 429 before the route runs, possibly without JSON.
+      if (res.status === 429) {
+        setError("ลองรหัสผิดหลายครั้งเกินไป กรุณารอประมาณ 10 นาทีแล้วลองใหม่");
+        return;
+      }
+
       const data = await res.json();
 
       if (res.ok && data.success) {
