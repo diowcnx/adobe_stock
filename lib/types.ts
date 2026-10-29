@@ -87,11 +87,15 @@ export interface SaleReferenceStructure {
   TEXT_ELEMENTS: string;
 }
 
+export type SaleReferenceLayout = "full_scene" | "isolated_white";
+
 export interface StockImageItem {
   manualResearch?: boolean;
   /** Replacement prompt from the research file, used when a retry is blocked by a visible face. */
   manualFallbackPrompt?: string;
   saleReferenceStructure?: SaleReferenceStructure;
+  /** Sold-reference expansion rendered as an isolated element on pure white instead of a full-bleed scene. */
+  saleReferenceLayout?: SaleReferenceLayout;
   thaiNaturePosterStructure?: ThaiNaturePosterStructure;
   symmetricalStorefrontStructure?: SymmetricalStorefrontStructure;
   editorialPenSketchStructure?: EditorialPenSketchStructure;

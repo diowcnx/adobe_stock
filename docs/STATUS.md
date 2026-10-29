@@ -11,9 +11,12 @@ Next.js 16 app on Vercel that plans 10 Adobe Stock image briefs, generates JPEGs
 - **Manual research batch no longer tied to one date** (2026-10-29). The dashboard button "สร้างชุดวิจัย 10 ภาพ" reads the newest `research/manual-prompts-YYYY-MM-DD.md`. Category, keywords and an optional face-safe fallback prompt now live in that file, not in code. Format: `research/README.md`.
 - Security quick audit + Next.js 16.4.3 upgrade — `docs/security/AUDIT-2026-10-29.md`.
 - Email addresses removed from code; `RECIPIENT_EMAIL` and `SENDER_EMAIL` are now **required** env vars (no email is sent without them).
+- **Sold-image expansion handles cutouts** (2026-10-29): when the sold asset is an isolated element (e.g. stone steps with shrubs on white), the analyzer returns `referenceLayout: isolated_cutout` and all 10 new briefs are isolated elements on seamless pure white JPEG; the white-border pixel guard is skipped and the vision QA/retry prompts are cutout-specific. Full-scene references behave as before.
 - Earlier: sold-image expansion tab, manual research batch with "retry missing images", food-fusion de-duplication.
 
 ## Open / blocked
+
+- Isolated-on-white mode not yet run with the real model; first live run will show whether the analyzer classifies cutouts correctly.
 
 - New research flow not yet clicked on the live site (would spend OpenRouter credit). First real run will confirm it.
 - Login rate limit is **live** in Vercel Firewall (2026-10-29, rule `Login rate limit`): POST `/api/auth/login`, 10 requests / 600 s per IP → 429. Hobby allows only 1 rate-limit rule per project. Lives in Vercel, not git. Not yet tested with 11 real wrong-password attempts.

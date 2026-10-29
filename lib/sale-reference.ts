@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { isRecord } from "./errors";
 import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
-import type { MarketTrend, SaleReferenceStructure, StockImageItem } from "./types";
+import type { MarketTrend, SaleReferenceLayout, SaleReferenceStructure, StockImageItem } from "./types";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_REFERENCE_BYTES = 2_500_000;
@@ -14,6 +14,8 @@ export interface SoldReferenceAnalysis {
   likelyBuyerUses: string[];
   expansionStrategy: string;
   sourceFingerprint: string;
+  /** "isolated_white" when the sold asset is a cutout element, so the expansion stays composite-ready. */
+  layout: SaleReferenceLayout;
 }
 
 export interface SaleReferencePlan {
@@ -59,11 +61,13 @@ function parseReferenceDataUrl(dataUrl: unknown): { dataUrl: string; buffer: Buf
   return { dataUrl, buffer, fingerprint: createHash("sha256").update(buffer).digest("hex").slice(0, 16) };
 }
 
-function keywords(value: unknown, title: string): string[] {
+const ISOLATED_KEYWORDS = ["isolated", "white", "background", "cutout", "element"];
+
+function keywords(value: unknown, title: string, isolated = false): string[] {
   const candidates = Array.isArray(value) ? value : [];
-  const words = [...candidates, ...title.split(/\s+/), "commercial", "advertising", "creative", "photography", "design", "campaign", "marketing", "editorial", "concept", "copyspace", "premium", "modern", "visual", "stock", "jpeg"]
+  const words = [...(isolated ? ISOLATED_KEYWORDS : []), ...candidates, ...title.split(/\s+/), "commercial", "advertising", "creative", "photography", "design", "campaign", "marketing", "editorial", "concept", "copyspace", "premium", "modern", "visual", "stock", "jpeg"]
     .flatMap((entry) => typeof entry === "string" ? entry.toLowerCase().split(/[^a-z0-9]+/) : [])
-    .filter((word) => word.length >= 2 && word.length <= 30 && !/^\d+$/.test(word));
+    .filter((word) => word.length >= 2 && word.length <= 30 && !/^\d+$/.test(word) && !(isolated && word === "copyspace"));
   return [...new Set(words)].slice(0, 25);
 }
 
@@ -102,8 +106,11 @@ export async function analyzeSoldReference(dataUrlInput: unknown, apiKey?: strin
 
 Plan exactly 10 NEW commercial JPEG concepts inspired by the buyer-use signal, not copies or near-duplicates. Preserve only the useful subject category or buyer problem. Each concept must differ materially in story, buyer/use, setting, camera/composition, lighting and palette. Do not use trivial color swaps. Do not recreate the source composition, distinctive arrangement, branded elements or protected characters. Every concept must be understandable in two seconds and explain why a buyer would license it. No visible human faces, text, letters, numerals, logos, labels, signatures, watermarks, interface elements, frames or borders. ${NO_VISIBLE_FACE_RULE}
 
+First decide referenceLayout. Use "isolated_cutout" when the sold asset is a single isolated element or group (object, plant, rock, landscape piece, etc.) cut out on a plain white or transparent background with no scene around it; buyers license such assets to composite into their own designs, renderings and mockups. Otherwise use "full_scene".
+If referenceLayout is "isolated_cutout", ALL 10 concepts must also be complete isolated, composite-ready elements in the same buyer category (new subjects or materially different arrangements, not copies), each fully visible and centered on a seamless pure white (#FFFFFF) background with even padding on all sides, no ground plane, no horizon, no scenery, no copy space, and at most a faint soft contact shadow directly beneath. In that case compositionAndCamera must describe the viewing angle of the isolated element and settingAndProps must say "Seamless pure white background only".
+
 Return pure JSON with this schema:
-{"subject":"literal source subject","visualStrengths":"why the sold image may have been useful","likelyBuyerUses":["use"],"expansionStrategy":"how the 10 concepts expand without copying","concepts":[{"title":"SEO title without brands","category":"stock category","aspectRatio":"16:9|3:2|4:5|1:1","newConcept":"clear distinct concept","targetBuyer":"specific buyer","intendedUse":"specific design use","purchaseReason":"practical licensing reason without sales guarantee","subjectTreatment":"literal subject and action","compositionAndCamera":"camera and layout","settingAndProps":"physical setting and minimal props","lightingAndMood":"lighting","colorPalette":"colors","keywords":["15 to 25 single English words"]}]}` },
+{"referenceLayout":"isolated_cutout|full_scene","subject":"literal source subject","visualStrengths":"why the sold image may have been useful","likelyBuyerUses":["use"],"expansionStrategy":"how the 10 concepts expand without copying","concepts":[{"title":"SEO title without brands","category":"stock category","aspectRatio":"16:9|3:2|4:5|1:1","newConcept":"clear distinct concept","targetBuyer":"specific buyer","intendedUse":"specific design use","purchaseReason":"practical licensing reason without sales guarantee","subjectTreatment":"literal subject and action","compositionAndCamera":"camera and layout","settingAndProps":"physical setting and minimal props","lightingAndMood":"lighting","colorPalette":"colors","keywords":["15 to 25 single English words"]}]}` },
           { type: "image_url", image_url: { url: reference.dataUrl } },
         ],
       }],
@@ -119,6 +126,8 @@ Return pure JSON with this schema:
   if (!Array.isArray(parsed.concepts) || parsed.concepts.length !== 10) throw new Error("Image analysis must return exactly 10 concepts");
 
   const subject = bounded(parsed.subject, "commercial stock subject", 180);
+  const layout: SaleReferenceLayout = parsed.referenceLayout === "isolated_cutout" ? "isolated_white" : "full_scene";
+  const isolated = layout === "isolated_white";
   const seen = new Set<string>();
   const items = parsed.concepts.map((value, index): StockImageItem => {
     if (!isRecord(value)) throw new Error(`Concept ${index + 1} is invalid`);
@@ -137,14 +146,16 @@ Return pure JSON with this schema:
       NEW_CONCEPT: newConcept,
       TARGET_BUYER_AND_USE: `${targetBuyer}; ${intendedUse}`,
       SUBJECT_TREATMENT: bounded(concept.subjectTreatment, subject),
-      COMPOSITION_AND_CAMERA: bounded(concept.compositionAndCamera, "Commercial eye-level composition with useful natural copy space"),
-      SETTING_AND_PROPS: bounded(concept.settingAndProps, "A coherent physical setting with only relevant unbranded props"),
+      COMPOSITION_AND_CAMERA: bounded(concept.compositionAndCamera, isolated ? "Complete element centered at a slightly elevated three-quarter view with even white padding" : "Commercial eye-level composition with useful natural copy space"),
+      SETTING_AND_PROPS: isolated ? "Seamless pure white background only" : bounded(concept.settingAndProps, "A coherent physical setting with only relevant unbranded props"),
       LIGHTING_AND_MOOD: bounded(concept.lightingAndMood, "Natural premium commercial lighting"),
       COLOR_PALETTE: bounded(concept.colorPalette, "Balanced contemporary commercial palette"),
       TEXT_ELEMENTS: "No text",
     };
-    const prompt = `[SOLD-REFERENCE EXPANSION — CREATE A NEW WORK, DO NOT COPY THE UPLOADED IMAGE]\n${Object.entries(structure).map(([key, field]) => `${key}: ${field}`).join("\n")}\nCreate one original, immediately readable, full-bleed commercial JPEG. Preserve the named buyer problem, but use the NEW_CONCEPT, composition, setting, light and palette as a genuinely different work. No source screenshot UI or source layout. No text, letters, numerals, pseudo-text, logos, brands, watermarks, labels, borders, frames or visible human faces.`;
-    const itemKeywords = keywords(concept.keywords, title);
+    const prompt = `[SOLD-REFERENCE EXPANSION — CREATE A NEW WORK, DO NOT COPY THE UPLOADED IMAGE]\n${Object.entries(structure).map(([key, field]) => `${key}: ${field}`).join("\n")}\n${isolated
+      ? "Create one original, immediately readable isolated element photographed on a seamless pure white (#FFFFFF) background for compositing: the complete element fully inside the frame with even white padding, no ground plane, horizon or scenery, and at most a faint soft contact shadow directly beneath."
+      : "Create one original, immediately readable, full-bleed commercial JPEG."} Preserve the named buyer problem, but use the NEW_CONCEPT, composition, setting, light and palette as a genuinely different work. No source screenshot UI or source layout. No text, letters, numerals, pseudo-text, logos, brands, watermarks, labels, borders, frames or visible human faces.`;
+    const itemKeywords = keywords(concept.keywords, title, isolated);
     if (itemKeywords.length < 15) throw new Error(`Concept ${index + 1} has insufficient keywords`);
     return {
       id: index + 1,
@@ -164,6 +175,7 @@ Return pure JSON with this schema:
       planningSource: "ai",
       generationBriefVersion: GENERATION_BRIEF_VERSION,
       saleReferenceStructure: structure,
+      ...(isolated ? { saleReferenceLayout: layout } : {}),
     };
   });
 
@@ -176,6 +188,7 @@ Return pure JSON with this schema:
     likelyBuyerUses,
     expansionStrategy: bounded(parsed.expansionStrategy, "Expand the validated subject signal into ten distinct buyer-led visual stories without copying the source", 700),
     sourceFingerprint: reference.fingerprint,
+    layout,
   };
   return {
     analysis,

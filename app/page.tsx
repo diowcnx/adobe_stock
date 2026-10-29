@@ -51,6 +51,7 @@ interface SoldReferenceAnalysisView {
   visualStrengths: string;
   likelyBuyerUses: string[];
   expansionStrategy: string;
+  layout?: "full_scene" | "isolated_white";
 }
 
 interface UiNotice {
@@ -1226,6 +1227,11 @@ export default function Dashboard() {
                     <div className="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 p-4" role="status">
                       <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">วิเคราะห์แล้ว</p>
                       <h3 className="mt-1 font-semibold text-white">{saleReferenceAnalysis.subject}</h3>
+                      <p className="mt-1 text-xs text-emerald-200">
+                        {saleReferenceAnalysis.layout === "isolated_white"
+                          ? "รูปแบบ: ภาพตัดพื้นหลัง → สร้าง 10 ชิ้นใหม่บนพื้นขาวล้วน"
+                          : "รูปแบบ: ภาพฉากเต็มเฟรม → สร้าง 10 ฉากใหม่"}
+                      </p>
                       <p className="mt-2 text-xs leading-5 text-slate-300">{saleReferenceAnalysis.expansionStrategy}</p>
                     </div>
                   )}

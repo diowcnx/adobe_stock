@@ -31,6 +31,7 @@ export interface ImageQualityContext {
   isEditorialPenSketch?: boolean;
   isSymmetricalStorefront?: boolean;
   isSaleReference?: boolean;
+  isSaleReferenceIsolated?: boolean;
 }
 
 /** Detect the common AI failure where a portrait image is placed inside white side mats. */
@@ -81,7 +82,7 @@ export async function assessGeneratedImageQuality(
     expectedTitle: "commercial image",
   },
 ): Promise<ImageQualityResult> {
-  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isMaterialArt && !context.isDualMaterial && !context.isBeverageCampaign && !context.isCulinaryEditorial && !context.isEditorialPenSketch && await detectUnintendedLightBorder(inputBuffer)) {
+  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isMaterialArt && !context.isDualMaterial && !context.isBeverageCampaign && !context.isCulinaryEditorial && !context.isEditorialPenSketch && !context.isSaleReferenceIsolated && await detectUnintendedLightBorder(inputBuffer)) {
     return {
       passed: false,
       issues: ["unintended white border or mat around the image"],
@@ -119,7 +120,9 @@ export async function assessGeneratedImageQuality(
               type: "text",
               text: `Inspect only the visible pixels of this generated commercial image. Expected title: ${context.expectedTitle}. Intended buyer use: ${context.intendedUse || "general commercial design"}. Mode: ${context.mode}.
 Reject it if ANY readable or pseudo-readable letters, words, numerals, captions, title, logo, signature or watermark appear anywhere. Also reject a poster/card/mockup layout, blank header/footer panel, outer frame, mat, border, canvas margin, or image placed inside another page.
-${context.isSaleReference
+${context.isSaleReferenceIsolated
+  ? "This is an ORIGINAL ISOLATED STOCK ELEMENT derived from a sold cutout asset, not a copy of the uploaded reference. Accept one complete, immediately recognizable element (or one cohesive element group) centered on a seamless pure WHITE background with even white padding: white negative space is intentional and is NOT an artificial border or mat. Set hasArtificialBorder=false for a continuous white backdrop; reject only an actual drawn frame, outline, card or inset page. Require realistic natural materials, coherent geometry and physical support within the element, crisp clean edges suitable for cutout, and at most a faint soft contact shadow. Reject a cropped or cut-off element, ground plane extending to the edges, horizon, sky, surrounding scenery, extra unrelated objects, floating disconnected parts, grey or gradient background, visible human face, text, pseudo-text, logo or watermark. Set hasClearLiteralStory and hasClearCommercialUse true when the element and its compositing use (design, rendering, mockup) are clear at a glance."
+  : context.isSaleReference
   ? "This is an ORIGINAL COMMERCIAL EXPANSION derived from a sold-asset signal, not a copy of the uploaded reference. Require one immediately recognizable literal subject, the planned NEW concept, coherent real-world geometry, a clear named buyer use, deliberate camera/composition, believable setting and props, and full-bleed commercial production quality. Reject screenshot or marketplace UI, watermark patterns, source-like preview treatment, copied-looking layout, cryptic metaphor, unrelated object pile, visible human face, text, pseudo-text, logo, label, frame or border. Set hasClearLiteralStory and hasClearCommercialUse true only when the image explains its subject and practical licensing use without metadata."
   : context.isThaiNaturePoster
   ? "This is an INTENTIONAL HAND-PAINTED THAI NATURE AND FLOWER-FIELD ILLUSTRATION. Require a gently elevated scenic panorama with clear foreground, middle distance and horizon; recognizable named Thai flower species; plausible natural terrain bands; one coherent winding route; and one physically grounded focal landmark with a shadow matching the light. Require matte opaque poster-color brushwork and subtle vintage-paper fibers integrated across the full-bleed painted scenery. Any people must be minuscule, featureless and faceless. Reject a top-down view, map, masterplan, site plan, satellite image, infographic, diagram, collage, invented famous landmark, incompatible regional details, photorealistic image, text, pseudo-text, logo, border, blank margin, title panel, poster mockup, floating structure, conflicting shadow, large person or visible face. Set hasClearLiteralStory=true when the Thai landscape, flowers, path and destination or botanical use are understandable at a glance."
@@ -144,7 +147,9 @@ ${context.isSaleReference
   : "Apply a strict two-second clarity test: an ordinary viewer must immediately name the main subject and understand the literal action or practical purpose without reading metadata or guessing a symbolic metaphor. Reject abstract assemblages, surreal hybrids, unrelated object piles, ambiguous sculptures, decorative material metaphors, or scenes whose buyer use is not visually clear."}
 Mandatory face rule: ${NO_VISIBLE_FACE_RULE} Set hasVisibleHumanFace=true if any human face or part of a face is visible, however small, blurred or obscured. Human backs, hands and bodies with all faces outside the frame are allowed. Animal faces are allowed.
 For transparent_png, the dark gray shown around the subject represents transparency. Require exactly one intact, familiar, opaque subject with a simple readable silhouette. Its normal practical function must be obvious, but it does not need to show an action; set hasClearLiteralStory=true when the single object and its normal use are immediately clear. Reject missing chunks, accidental transparent holes through solid areas, ragged/dirty/haloed edges, fragmented pieces, multiple unrelated objects, or a result that does not visibly match the expected title.
-${context.isSaleReference
+${context.isSaleReferenceIsolated
+  ? "The isolated element on seamless pure white IS the required final asset. Do not demand a full-bleed scene, setting, action, copy space or the uploaded source composition."
+  : context.isSaleReference
   ? "The newly planned subject treatment, buyer use, physical setting and art direction ARE the required work. Do not demand the uploaded source composition or any source text. Require a visually independent full-bleed result with no screenshot artifacts."
   : context.isThaiNaturePoster
   ? "The full-bleed Thai flower landscape, scenic terrain bands, winding path, single grounded landmark, opaque poster-color brushwork and integrated vintage paper grain ARE the correct final artwork. Do not demand photographic realism, typography, a technical plan or map symbols. Reject an actual paper sheet, page border, blank margin, title panel or framed-poster presentation."

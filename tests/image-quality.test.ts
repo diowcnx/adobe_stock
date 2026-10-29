@@ -683,3 +683,52 @@ test("transparent PNG is blocked before any billed request", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("isolated sold-reference QA permits white padding and retries keep the isolated element", async () => {
+  const originalFetch = globalThis.fetch;
+  const item: StockImageItem = {
+    id: 1, seoTitle: "Wooden garden bridge isolated on white", category: "Landscape elements",
+    aspectRatio: "3:2", composition: "advertising", prompt: "Wooden arched garden bridge with moss, isolated on seamless pure white",
+    keywords: ["bridge"], modelUsed: "google/gemini-3.1-flash-lite-image", filename: "bridge.jpeg", isTransparent: false,
+    generationMode: "regular_scene", conceptMode: "existing", generationBriefVersion: GENERATION_BRIEF_VERSION,
+    saleReferenceLayout: "isolated_white",
+    saleReferenceStructure: {
+      REFERENCE_SUBJECT: "stone garden steps", OBSERVED_SALE_SIGNAL: "one sale", NEW_CONCEPT: "wooden garden bridge",
+      TARGET_BUYER_AND_USE: "landscape architects; renderings", SUBJECT_TREATMENT: "bridge", COMPOSITION_AND_CAMERA: "three-quarter view",
+      SETTING_AND_PROPS: "Seamless pure white background only", LIGHTING_AND_MOOD: "soft daylight", COLOR_PALETTE: "natural", TEXT_ELEMENTS: "No text",
+    },
+  };
+  const source = await sharp({ create: { width: 256, height: 256, channels: 3, background: "#ffffff" } })
+    .composite([{ input: await sharp({ create: { width: 160, height: 120, channels: 3, background: "#6b5a3e" } }).png().toBuffer(), left: 48, top: 68 }])
+    .jpeg().toBuffer();
+  assert.equal(await detectUnintendedLightBorder(source), true);
+  const prompts: string[] = [];
+  let qaCalls = 0;
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    if (body.model === "google/gemini-3.1-flash-lite-image") {
+      prompts.push(body.messages[0].content);
+      return new Response(JSON.stringify({ choices: [{ message: { images: [{ b64_json: source.toString("base64") }] } }] }));
+    }
+    const inspection = body.messages[0].content[0].text;
+    assert.match(inspection, /ORIGINAL ISOLATED STOCK ELEMENT/);
+    assert.doesNotMatch(inspection, /Require a visually independent full-bleed result/);
+    qaCalls++;
+    const passed = qaCalls === 2;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      passed, hasVisibleHumanFace: false, hasText: false, hasArtificialBorder: false,
+      hasPosterLayout: false, isImmediatelyRecognizable: true, hasClearLiteralStory: true,
+      hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: false,
+      issues: passed ? [] : ["bridge is cropped at the left edge"],
+    }) } }] }));
+  };
+  try {
+    const result = await generateSingleImage(item, "test-key");
+    assert.equal(qaCalls, 2);
+    assert.match(prompts[0], /seamless pure white/i);
+    assert.doesNotMatch(prompts[0], /extend fully to all four image edges/);
+    assert.match(prompts[1], /SAME planned isolated element/);
+    assert.doesNotMatch(prompts[1], /performing one familiar action/);
+    assert.equal(result.qualityReview?.status, "passed_after_retries");
+  } finally { globalThis.fetch = originalFetch; }
+});

@@ -221,6 +221,7 @@ export async function generateSingleImage(
       console.log(`[Item #${item.id}] Calling OpenRouter model ${model} (mode: ${isTransparent ? "transparent_png" : "regular_scene"}, attempt: ${attemptNumber})...`);
 
       const basePrompt = sanitizeImagePrompt(item.prompt);
+      const isIsolatedSaleReference = Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "isolated_white";
       const sanitizedPrompt = isTransparent
         ? basePrompt
             .replace(/isolated commercial cutout asset on a 100% transparent background \(png alpha channel\) of/gi, "Commercial studio product shot of floating")
@@ -233,6 +234,8 @@ export async function generateSingleImage(
       const mandatoryExclusions = [
         item.manualResearch
           ? "Render the specific manually researched commercial scene and intended buyer use, with the named action and setting visibly clear. Do not add unrelated objects, people, symbols, text, logos, or visible faces."
+        : isIsolatedSaleReference
+          ? "Render the NEW_CONCEPT as one original complete isolated element on a seamless pure white (#FFFFFF) background for designers to composite. The uploaded sold image is evidence for a subject opportunity only: do not reproduce its exact arrangement, rock layout, plant placement, screenshot interface, watermark, text or branded details. Keep the whole element inside the frame with even white padding; no ground plane, horizon, sky, scenery, extra objects or copy space, and at most a faint soft contact shadow directly beneath. No people, lettering, pseudo-text, logos, labels, frames or drawn borders."
         : item.saleReferenceStructure
           ? "Render the NEW_CONCEPT as an original full-bleed commercial JPEG for the named target buyer and use. The uploaded sold image is evidence for a subject opportunity only: do not reproduce its composition, crop, distinctive arrangement, screenshot interface, watermark, text or branded details. Preserve literal clarity and use only the specified new subject treatment, camera, setting, props, light and palette. No people with visible faces, lettering, pseudo-text, logos, labels, frames or borders."
         : item.thaiNaturePosterStructure
@@ -257,10 +260,12 @@ export async function generateSingleImage(
         item.aerialLandscapeStructure || item.thaiNaturePosterStructure ? AERIAL_NO_VISIBLE_FACE_RULE : NO_VISIBLE_FACE_RULE,
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
-        isTransparent
+        isIsolatedSaleReference
+          ? "The pure white background must be uniform and seamless to all four edges. No drawn outline, frame, mat, card, poster, page, panel, gradient vignette or inset image."
+        : isTransparent
           ? "Render exactly one immediately recognizable, solid opaque subject on uniform pure white for alpha extraction. It must have a broad simple silhouette and no collage, assemblage, bundle, visual metaphor, extra prop, hand holding it, transparent or translucent area, glass, liquid, smoke, mesh, lace, loose fiber, thin wire, detached fragment, environment, floor, wall, horizon, frame, border, poster, card, mockup, cast shadow, contact shadow or cropped edge."
           : "The scene or physical background must extend fully to all four image edges. No outer border, mat, frame, canvas margin, poster, card, blank header, blank footer, title panel, inset image, mockup, or page-within-the-image.",
-        isTransparent
+        isTransparent || isIsolatedSaleReference
           ? "Do not create advertising copy space or a layout; preserve clear padding around the isolated asset."
           : "Any copy space must remain a natural uninterrupted part of the photographed physical background inside the full-bleed scene; never turn copy space into a white rectangle or graphic panel.",
         item.negativePrompt ? `Also exclude: ${item.negativePrompt}.` : "",
@@ -270,6 +275,8 @@ export async function generateSingleImage(
 
       const visualDirection = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : isIsolatedSaleReference
+          ? `Create one original buyer-ready isolated stock element photographed on seamless pure white, derived from a confirmed single-asset sale signal without copying the reference image. Make the NEW_CONCEPT and TARGET_BUYER_AND_USE immediately understandable as a composite-ready cutout with crisp clean edges and realistic natural materials. Honor the ten-field SOLD-REFERENCE structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.saleReferenceStructure
           ? `Create one original buyer-ready commercial photograph derived from a confirmed single-asset sale signal without copying the reference image. Make the NEW_CONCEPT and TARGET_BUYER_AND_USE immediately understandable, with a genuinely different story, composition, camera, setting, lighting and palette from the uploaded source. Honor the ten-field SOLD-REFERENCE structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.thaiNaturePosterStructure
@@ -317,6 +324,8 @@ export async function generateSingleImage(
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-stage the SAME material-art motif using the SAME raw materials and named hero products, retaining their recognizable normal shapes. Simplify the arrangement, remove unnecessary accents, fix scale and physical support, preserve clear negative space and credible texture. Adapt spacing to the actual canvas without cropping the hero. Keep one readable Editorial Still Life arrangement on a continuous studio background, no lettering, people, hardware fusion, architecture or poster layout.`
             : item.boothStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME exhibition-booth design, retaining its architectural structure, merchandise and palette. Fix camera to strict frontal orthographic, show the full canopy and platform, use plausible connected supports and organized shelving, keep pure white studio background and soft contact shadows. No people, text, logo, surrounding hall or food-hardware hybrid. Blank signs are intentional.`
+            : isIsolatedSaleReference
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-render the SAME planned isolated element with a clearer silhouette, a different viewing angle and cleaner edges. Keep the complete element centered on seamless pure white with even padding; no ground plane, horizon, scenery, extra objects, text, people, frame or border.`
             : item.fusionStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild exactly the same specified food-hardware pair as ONE seamless hybrid. Correct the joint and recognizable material textures; simplify the silhouette. Preserve the minimalist matte background, soft contact shadow, no people, no text and no additional props. Do not replace it with a literal lifestyle scene.`
               : buildQualityRetryDirection(attemptIndex, rejectionReasons)}`
@@ -487,6 +496,7 @@ export async function generateSingleImage(
               isEditorialPenSketch: Boolean(item.editorialPenSketchStructure),
               isSymmetricalStorefront: Boolean(item.symmetricalStorefrontStructure),
               isSaleReference: Boolean(item.saleReferenceStructure),
+              isSaleReferenceIsolated: isIsolatedSaleReference,
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);
