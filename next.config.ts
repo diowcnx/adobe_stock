@@ -23,7 +23,8 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
-  outputFileTracingIncludes: { "/api/prepare-research-batch": ["./research/manual-prompts-2026-10-28.md"] },
+  poweredByHeader: false,
+  outputFileTracingIncludes: { "/api/prepare-research-batch": ["./research/manual-prompts-*.md"] },
   async headers() {
     return [
       {
