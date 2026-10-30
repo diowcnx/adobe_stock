@@ -17,7 +17,6 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 - The CLI has planned a real `sold` batch (key and `credits` work on the main machine) but has not generated a real image. The owner chose to wait for the next sold image as the first real run.
 - The owner's email addresses remain in old git history of this public repo.
-- `output/php-stock-study-2026-10-28/` still holds a test image in git.
 - `research/manual-prompts-2026-10-28.md` intro still says the prompts are "not added to the pipeline" (outdated wording).
 
 ## Next steps
