@@ -15,7 +15,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 ## Open / blocked
 
 - The CLI has planned a real `sold` batch (key and `credits` work on the main machine) but has not generated a real image. The owner chose to wait for the next sold image as the first real run.
-- Vercel project `adobe-stock` and its Blob store still exist and the old deployment is live until the owner approves deleting them. The push that removed Next.js is expected to fail its Vercel build.
+- Vercel project `adobe-stock` was deleted by the owner on 2026-10-30 and the old site returns 404. Blob store `adobe-stock-blob` (only old prompt history, already in git) still exists in the Vercel team and awaits owner deletion.
 - The owner's email addresses remain in old git history of this public repo.
 - `output/php-stock-study-2026-10-28/` still holds a test image in git.
 - `research/manual-prompts-2026-10-28.md` intro still says the prompts are "not added to the pipeline" (outdated wording).
@@ -23,7 +23,6 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 ## Next steps
 
 1. Run the next sold image as the first real batch.
-2. Once that works, ask the owner before deleting the Vercel project and Blob store.
 
 ## Gotchas
 
