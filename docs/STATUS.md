@@ -8,6 +8,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Done recently
 
+- **Vercel fully removed** (2026-10-30): project `adobe-stock` and Blob store `adobe-stock-blob` were deleted by the owner; the old site returns 404. There is no longer a web fallback, though the code stays in git history before commit `79361d2`.
 - **Dashboard and Vercel app removed** (2026-10-30): `npm run generate` replaces them. Images go to `~/Downloads/adobe/` and stay on that machine; prompt history moved from Vercel Blob to `history/prompt-history.json` in git. Email (SMTP2GO), login, Next.js, React and ESLint were removed with the web app.
 - **Sold-image expansion handles cutouts** (2026-10-29): isolated elements expand into 10 isolated elements on pure white JPEG; full scenes expand into full scenes. Live-tested through the old dashboard: 10/10 passed QA. Weaker results were a rolled mossy log and a shapeless volcanic rock pile.
 - **Research files are not tied to a date** (2026-10-29): the newest `research/manual-prompts-YYYY-MM-DD.md` is used. Format: `research/README.md`.
@@ -15,7 +16,6 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 ## Open / blocked
 
 - The CLI has planned a real `sold` batch (key and `credits` work on the main machine) but has not generated a real image. The owner chose to wait for the next sold image as the first real run.
-- Vercel project `adobe-stock` was deleted by the owner on 2026-10-30 and the old site returns 404. Blob store `adobe-stock-blob` (only old prompt history, already in git) still exists in the Vercel team and awaits owner deletion.
 - The owner's email addresses remain in old git history of this public repo.
 - `output/php-stock-study-2026-10-28/` still holds a test image in git.
 - `research/manual-prompts-2026-10-28.md` intro still says the prompts are "not added to the pipeline" (outdated wording).
