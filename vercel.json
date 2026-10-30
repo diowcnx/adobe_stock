@@ -1,9 +1,5 @@
 {
-  "crons": [],
   "functions": {
-    "app/api/cron/daily-stock/route.ts": {
-      "maxDuration": 300
-    },
     "app/api/manual-trigger/route.ts": {
       "maxDuration": 300
     },

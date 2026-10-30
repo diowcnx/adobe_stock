@@ -1,6 +1,6 @@
-# 📸 Adobe Stock Automated AI Generator & Daily Dispatcher
+# 📸 Adobe Stock AI Generator & Dispatcher
 
-ระบบสร้างภาพ JPEG พร้อม SEO metadata ผ่าน OpenRouter วันละ 10 ภาพจาก 10 Structure แบบละ 1 ภาพ ทุก Structure มีแกนเรื่องเฉพาะและหมุน Creative Direction รายวันตาม Adobe Creative Trends 2026 ได้แก่ All the Feels, Connectioneering, Surreal Silliness และ Local Flavors โดยยังยึดการใช้งานจริงของผู้ซื้อ ความชัดเจนใน 2 วินาที กฎห้ามตัวอักษร และห้ามเห็นใบหน้าคน ใช้สัญญาณสาธารณะเป็นบริบท (ไม่ใช่ข้อมูลยอดขายรวมที่ยืนยันแล้ว) พร้อมตรวจเครดิตและจัดส่งอีเมลผ่าน SMTP2GO ทุกวันเวลา 18:00 น.
+ระบบสร้างภาพ JPEG พร้อม SEO metadata ผ่าน OpenRouter ครั้งละ 10 ภาพจาก 10 Structure แบบละ 1 ภาพ ทุก Structure มีแกนเรื่องเฉพาะและหมุน Creative Direction รายวันตาม Adobe Creative Trends 2026 ได้แก่ All the Feels, Connectioneering, Surreal Silliness และ Local Flavors โดยยังยึดการใช้งานจริงของผู้ซื้อ ความชัดเจนใน 2 วินาที กฎห้ามตัวอักษร และห้ามเห็นใบหน้าคน ใช้สัญญาณสาธารณะเป็นบริบท (ไม่ใช่ข้อมูลยอดขายรวมที่ยืนยันแล้ว) พร้อมตรวจเครดิตและจัดส่งอีเมลผ่าน SMTP2GO เมื่อสั่งสร้างจาก Dashboard
 
 ---
 
@@ -41,9 +41,8 @@
    - จัดรูปแบบ HTML สวยงาม พร้อมกล่อง Copy SEO Title และ Keywords
    - แนบ metadata CSV; ปุ่ม Dashboard ใช้ดาวน์โหลดภาพ ZIP หรือทีละภาพ
    - ชื่อไฟล์ในภาพและ CSV ใช้ `.png` สำหรับ Transparent Asset และ `.jpeg` สำหรับฉากเต็มขอบอย่างสอดคล้องกัน
-5. **Daily Loop via Vercel Cron**:
-   - ตั้งเวลาทำงานอัตโนมัติทุกวันเวลา 18:00 น. ตามเวลาไทย (`0 11 * * *` UTC)
-   - มี Web Dashboard ให้กด "Run Today's Batch Now" เพื่อทดสอบและดูผลลัพธ์ได้ทันที
+5. **สั่งสร้างเอง (On-Demand)**:
+   - ไม่มี Cron หรือรอบอัตโนมัติ ระบบจะสร้างภาพเมื่อกดปุ่มบน Dashboard เท่านั้น จึงไม่มีค่าใช้จ่ายถ้าไม่ได้กด
 
 ---
 
@@ -59,7 +58,6 @@
 | `RECIPIENT_EMAIL` | อีเมลปลายทาง (**ต้องตั้ง** ไม่มีค่า default) | `you@example.com` |
 | `ADMIN_PASSWORD` | รหัสผ่าน Admin ไม่ต่ำกว่า 12 ตัวอักษร | `use-a-unique-long-password` |
 | `SESSION_SECRET` | Secret สุ่มสำหรับลงลายเซ็น session ไม่ต่ำกว่า 32 ตัวอักษร และห้ามซ้ำกับรหัสผ่าน | `openssl-rand-base64-32-output` |
-| `CRON_SECRET` | Secret สุ่มป้องกัน Cron Endpoint ไม่ต่ำกว่า 32 ตัวอักษร | `openssl-rand-base64-32-output` |
 | `APP_URL` | URL หลักของแอปสำหรับลิงก์ในอีเมล | `https://your-app.vercel.app` |
 | `REMOTE_IMAGE_ALLOWED_HOSTS` | Hostname HTTPS ของภาพภายนอกที่อนุญาต คั่นด้วย comma (ห้ามใช้ wildcard) | `images.example-cdn.com` |
 | `ENABLE_STRUCTURED_CONCEPTS` | เปิด Structured Editorial Still Life ทั้ง 10 ภาพตามค่าเริ่มต้น; ตั้ง `false` เพื่อ rollback เป็น planner เดิม | `true` |
@@ -97,6 +95,5 @@ npm test
 2. ใส่ Environment Variables ในหน้า Project Settings
 3. ใน Project ไปที่ **Storage → Create Database → Blob** แล้วสร้าง Blob Store แบบ **Private** และเชื่อมต่อกับโปรเจกต์นี้ Vercel จะผูก `BLOB_STORE_ID` และการยืนยันตัวตน OIDC ให้กับ Functions โดยไม่ต้องใส่ Blob token ลงในโค้ด
 4. ตรวจสอบให้ Blob Store ใช้ Environment เดียวกับ Production แล้ว Redeploy โปรเจกต์
-5. Vercel จะเริ่มจับการทำงานของ `vercel.json` และสั่งรัน Cron Job ทุกวันเวลา 18:00 น. (11:00 UTC) โดยอัตโนมัติ
 
 ภาพและ Metadata จะถูกเก็บใน Private Blob แยกตามชุดที่สร้าง หน้าเว็บที่ล็อกอินแล้วจึงสามารถเปิดดูและดาวน์โหลดได้ข้าม Vercel Functions; หลังดาวน์โหลดครบ ระบบจะถามก่อนลบเฉพาะชุดนั้นออกจาก Storage

@@ -5,7 +5,6 @@ const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 function isSameOriginMutation(request: NextRequest): boolean {
   if (!MUTATING_METHODS.has(request.method)) return true;
-  if (request.nextUrl.pathname.startsWith("/api/cron/")) return true;
 
   if (request.headers.get("sec-fetch-site") === "cross-site") return false;
   const origin = request.headers.get("origin");
@@ -30,9 +29,6 @@ export async function proxy(request: NextRequest) {
     }
     return NextResponse.next();
   }
-
-  // The cron route performs its own fail-closed Bearer-token validation.
-  if (pathname.startsWith("/api/cron/")) return NextResponse.next();
 
   const token = request.cookies.get(COOKIE_NAME)?.value;
   const isAuthed = await verifySessionToken(token);

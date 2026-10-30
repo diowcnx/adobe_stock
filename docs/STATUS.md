@@ -8,6 +8,7 @@ Next.js 16 app on Vercel that plans 10 Adobe Stock image briefs, generates JPEGs
 
 ## Done recently
 
+- **Daily cron removed** (2026-10-30): no scheduled generation; images are created only from dashboard buttons. `/api/cron/daily-stock` was deleted and `/api/cron/*` is no longer exempt from login. `CRON_SECRET` is unused.
 - **Manual research batch no longer tied to one date** (2026-10-29). The dashboard button "สร้างชุดวิจัย 10 ภาพ" reads the newest `research/manual-prompts-YYYY-MM-DD.md`. Category, keywords and an optional face-safe fallback prompt now live in that file, not in code. Format: `research/README.md`.
 - Security quick audit + Next.js 16.4.3 upgrade — `docs/security/AUDIT-2026-10-29.md`.
 - Email addresses removed from code; `RECIPIENT_EMAIL` and `SENDER_EMAIL` are now **required** env vars (no email is sent without them).
@@ -21,7 +22,6 @@ Next.js 16 app on Vercel that plans 10 Adobe Stock image briefs, generates JPEGs
 - New research flow not yet clicked on the live site (would spend OpenRouter credit). First real run will confirm it.
 - Login rate limit is **live** in Vercel Firewall (2026-10-29, rule `Login rate limit`): POST `/api/auth/login`, 10 requests / 600 s per IP → 429. Hobby allows only 1 rate-limit rule per project. Lives in Vercel, not git. Not yet tested with 11 real wrong-password attempts.
 - Confirm `RECIPIENT_EMAIL` and `SENDER_EMAIL` are set in Vercel (Production) before the next run, or emails will stop.
-- `vercel.json` has `"crons": []` — the daily 18:00 cron is currently **off**; README still describes it as on.
 - `research/manual-prompts-2026-10-28.md` intro still says the prompts are "not added to the pipeline" (outdated wording).
 
 ## Next steps

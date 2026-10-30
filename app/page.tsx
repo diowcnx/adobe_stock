@@ -1019,11 +1019,11 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-slate-400">Scheduled Trigger</span>
+                  <span className="text-xs font-medium text-slate-400">Generation</span>
                   <Clock className="w-4 h-4 text-emerald-400" />
                 </div>
-                <div className="text-xl font-bold text-white">18:00 ICT</div>
-                <p className="text-xs text-slate-500 mt-1">Every day (11:00 UTC)</p>
+                <div className="text-xl font-bold text-white">สั่งเอง</div>
+                <p className="text-xs text-slate-500 mt-1">สร้างเมื่อกดปุ่มเท่านั้น ไม่มีรอบอัตโนมัติ</p>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -1089,7 +1089,7 @@ export default function Dashboard() {
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
               <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                 <Sliders className="w-5 h-5 text-indigo-400" />
-                Daily Automated Pipeline Architecture
+                On-Demand Pipeline Architecture
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-xs">
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
@@ -1269,7 +1269,7 @@ export default function Dashboard() {
                 <ImageIcon className="w-12 h-12 text-slate-600 mx-auto" />
                 <h3 className="font-semibold text-white text-base">ยังไม่มีชุดภาพที่สร้างในระบบ</h3>
                 <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  กดปุ่มด้านล่างเพื่อเริ่มสร้างชุดภาพสต็อกประจำวันทันที หรือรอระบบอัตโนมัติทำงานเวลา 18:00 น.
+                  กดปุ่มด้านล่างเพื่อเริ่มสร้างชุดภาพสต็อก ระบบจะสร้างเมื่อกดเท่านั้น
                 </p>
                 <button
                   type="button"
@@ -1839,15 +1839,6 @@ export default function Dashboard() {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-mono text-xs font-bold text-sky-400">CRON_SECRET</span>
-                    <span className="text-xs text-slate-500">Recommended</span>
-                  </div>
-                  <p className="text-xs text-slate-400">
-                    Token สุ่มสำหรับป้องกันคนภายนอกยิงเรียก Endpoint <code>/api/cron/daily-stock</code> โดยตรง
-                  </p>
-                </div>
               </div>
 
               {/* Interactive Email Diagnostic Card */}
