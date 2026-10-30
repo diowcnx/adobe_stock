@@ -58,7 +58,7 @@ async function main(): Promise<void> {
 
   if (command === "credits") {
     const credits = await getOpenRouterCredits();
-    console.log(`OpenRouter balance: $${credits.remainingCredits.toFixed(4)} (${credits.label})`);
+    console.log(`OpenRouter balance: $${credits.remainingCredits.toFixed(4)}${credits.label ? ` (${credits.label})` : ""}`);
     return;
   }
   if (!["daily", "research", "sold", "resume"].includes(command ?? "")) {
