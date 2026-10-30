@@ -3,29 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
+    "generate": "tsx scripts/generate.ts",
+    "typecheck": "tsc --noEmit",
     "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js && node -e \"require('node:fs').rmSync('.test-dist',{recursive:true,force:true})\""
   },
   "dependencies": {
-    "@types/jszip": "^3.4.0",
-    "@vercel/blob": "^2.8.0",
-    "jszip": "^3.10.2",
-    "lucide-react": "^1.48.0",
-    "next": "16.4.3",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "sharp": "^0.35.5",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.4.3",
-    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }

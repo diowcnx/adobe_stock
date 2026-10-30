@@ -1,99 +1,42 @@
-# 📸 Adobe Stock AI Generator & Dispatcher
+# Adobe Stock AI Generator
 
-ระบบสร้างภาพ JPEG พร้อม SEO metadata ผ่าน OpenRouter ครั้งละ 10 ภาพจาก 10 Structure แบบละ 1 ภาพ ทุก Structure มีแกนเรื่องเฉพาะและหมุน Creative Direction รายวันตาม Adobe Creative Trends 2026 ได้แก่ All the Feels, Connectioneering, Surreal Silliness และ Local Flavors โดยยังยึดการใช้งานจริงของผู้ซื้อ ความชัดเจนใน 2 วินาที กฎห้ามตัวอักษร และห้ามเห็นใบหน้าคน ใช้สัญญาณสาธารณะเป็นบริบท (ไม่ใช่ข้อมูลยอดขายรวมที่ยืนยันแล้ว) พร้อมตรวจเครดิตและจัดส่งอีเมลผ่าน SMTP2GO เมื่อสั่งสร้างจาก Dashboard
+สร้างภาพ JPEG สำหรับส่ง Adobe Stock ครั้งละ 10 ภาพ พร้อมไฟล์ `metadata.csv` ผ่าน OpenRouter โดยสั่งจาก command line หรือสั่ง AI agent ไม่มีเว็บหรือ Dashboard
 
----
-
-## 🚀 คุณสมบัติเด่น (Features)
-
-0. **Sold Image Expansion**:
-   - แท็บ `ต่อยอดภาพที่ขายได้` รับภาพ Capture จากอีเมลแจ้งยอดขาย แล้วใช้การขายที่ยืนยันแล้วของภาพนั้นเป็นสัญญาณตั้งต้น
-   - ย่อภาพในเบราว์เซอร์ก่อนส่ง วิเคราะห์เฉพาะตัวแบบและการใช้งาน โดยไม่เก็บภาพอ้างอิงลง Blob หรือประวัติชุดภาพ
-   - วาง 10 แนวคิดใหม่ที่เปลี่ยน buyer story, intended use, ฉาก, มุมกล้อง, แสง และสี โดยห้ามคัดลอกองค์ประกอบเดิมหรือใช้เพียงการสลับสี
-   - ส่งแนวคิดใหม่ผ่านกฎ JPEG, no-text, no-logo, no-visible-face และ QA ชุดเดียวกับระบบประจำวัน ก่อนบันทึกและส่งอีเมล
-   - ถือว่าการขายหนึ่งครั้งยืนยันเฉพาะว่าภาพนั้นมีผู้ซื้ออย่างน้อยหนึ่งราย ไม่กล่าวอ้างว่าเป็นข้อมูลความต้องการทั้งตลาดหรือปริมาณค้นหา
-
-1. **Market Research Engine**:
-   - สร้าง 10 แนวคิดต่อชุดจาก 10 Structure และเลือก recipe ที่ใช้น้อยที่สุด โดยไม่ใช้แนวคิดจากชุดก่อนหน้าซ้ำทันที
-   - Creative Direction Engine เปลี่ยน narrative hook, trend lens, buyer layout, แสง, วัสดุ, จังหวะองค์ประกอบ, depth และสีในแต่ละวัน
-   - กระจายแนวทางเป็นทั้งภาพสากลที่ใช้งานได้กว้างและภาพที่มีบริบทตลาดปลายทางอย่างถูกต้อง โดยให้แต่ละชุดครอบคลุมหลายภูมิภาคเมื่อหมวดนั้นเหมาะสม
-   - เก็บ `USER_INPUT` ครบ 18 ช่อง ตั้งแต่ `CAMPAIGN_THEME`, กล้อง แสง ฉาก วัสดุ และองค์ประกอบ ไปจนถึง `TEXT_ELEMENTS` เพื่อให้ตรวจสอบ Prompt ได้
-   - เก็บ Commercial Intent แยกจาก Structure ทุกภาพ ได้แก่ กลุ่มผู้ซื้อเป้าหมาย งานที่นำไปใช้จริง และเหตุผลจากคุณค่าที่มองเห็นได้ว่าทำไมควรซื้อภาพนี้แทนภาพทั่วไป
-   - ออกแบบเป็น Structure Registry เพื่อเพิ่ม Structure รูปแบบใหม่ภายหลังได้โดยยังรักษาชนิดข้อมูลของชุดเดิม
-   - สำรวจโปรไฟล์สาธารณะ 50 โปรไฟล์เพื่อหา buyer-use patterns โดยไม่เลียนแบบผู้สร้าง
-   - แยกอันดับภายในโปรไฟล์และสัญญาณจาก Pinterest/Etsy/Adobe Creative Trends ออกจากยอดขาย Adobe Stock ที่ยังไม่มีข้อมูลยืนยัน
-2. **Adobe Stock Compliant Prompts & Metadata**:
-   - สร้าง 10 Prompts แบบ JPEG เต็มขอบที่มี subject, buyer use, Structure และแกนเรื่องต่างกัน พร้อมบันทึก Prompt History แบบถาวรก่อนเรียกสร้างภาพ
-   - เน้น Editorial Still Life แบบงานถ่ายภาพสตูดิโอ วัสดุสมจริง การจัดองค์ประกอบเชิงแนวคิด และพื้นที่สำหรับใส่ข้อความภายหลัง โดยไม่เติมธง ชุดประจำชาติ หรือสัญลักษณ์เหมารวมเพื่อบอกสถานที่
-   - `TEXT_ELEMENTS` ใช้กำหนดพื้นที่เลย์เอาต์ แต่ระบบห้ามสร้างตัวอักษร โลโก้ หรือตัวหนังสือจำลองลงในภาพ
-   - บังคับภาพเต็มขอบ โดย Copy Space ต้องเป็นพื้นที่ธรรมชาติภายในฉาก ไม่ใช่กรอบขาว หัวโปสเตอร์ ท้ายโปสเตอร์ หรือแผงข้อความ
-   - ตรวจภาพหลังสร้างด้วย Pixel Guard และ Vision Guard; เมื่อพบตัวอักษร กรอบ พาสพาร์ตู หรือเลย์เอาต์แบบโปสเตอร์ ระบบจะนำเหตุผลทั้งหมดไปแก้ Prompt เปลี่ยนมุมกล้อง/การจัดวาง แล้วสร้างภาพทดแทนได้สูงสุด 3 ครั้ง
-   - หากภาพล่าสุดยังไม่ผ่านหลังสร้างทดแทนครบ 3 ครั้ง ระบบจะส่งภาพให้ครบชุดพร้อมคำเตือนและเหตุผลการปฏิเสธทุกครั้งทั้งบน Dashboard และในอีเมล
-   - ไม่มีเครื่องหมายการค้า โลโก้ หรือองค์ประกอบละเมิดลิขสิทธิ์
-   - ให้ **SEO Title** กระชับ ชัดเจน
-   - ให้ **Keywords 15-25 คำ** เรียงคำเฉพาะไว้ก่อนและตรวจความเกี่ยวข้อง
-3. **OpenRouter Integration**:
-   - ใช้ Gemini 3.1 Flash Lite Image สำหรับภาพ และ Gemini 2.5 Flash Lite สำหรับวางแผนแนวคิดหนึ่งครั้งต่อชุด
-   - ไม่ส่งคำขอภาพซ้ำไปยังโมเดลราคาแพงขึ้นอัตโนมัติเมื่อเกิด timeout; ตรวจ OpenRouter Activity เพื่อดูยอดที่เรียกเก็บจริง
-   - ตรวจสอบยอดเครดิตคงเหลือ (Remaining Credits) ผ่าน OpenRouter API และแนบรายงานในอีเมลทุกวัน
-4. **SMTP2GO Automated Delivery**:
-   - ส่งอีเมลถึงที่อยู่ใน `RECIPIENT_EMAIL` (ไม่มีอีเมลฝังในโค้ด ถ้าไม่ตั้งค่าระบบจะไม่ส่งอีเมล)
-   - จัดรูปแบบ HTML สวยงาม พร้อมกล่อง Copy SEO Title และ Keywords
-   - แนบ metadata CSV; ปุ่ม Dashboard ใช้ดาวน์โหลดภาพ ZIP หรือทีละภาพ
-   - ชื่อไฟล์ในภาพและ CSV ใช้ `.png` สำหรับ Transparent Asset และ `.jpeg` สำหรับฉากเต็มขอบอย่างสอดคล้องกัน
-5. **สั่งสร้างเอง (On-Demand)**:
-   - ไม่มี Cron หรือรอบอัตโนมัติ ระบบจะสร้างภาพเมื่อกดปุ่มบน Dashboard เท่านั้น จึงไม่มีค่าใช้จ่ายถ้าไม่ได้กด
-
----
-
-## 🛠️ Environment Variables
-
-กำหนดใน **Vercel Project Settings > Environment Variables**:
-
-| Variable Name | Description | Example / Source |
-|---|---|---|
-| `OPENROUTER_API_KEY` | OpenRouter API Key | `sk-or-v1-...` |
-| `SMTP2GO_API_KEY` | SMTP2GO API Key | `api-...` |
-| `SENDER_EMAIL` | Verified Sender Email ใน SMTP2GO (**ต้องตั้ง** ไม่มีค่า default) | `alerts@yourdomain.com` |
-| `RECIPIENT_EMAIL` | อีเมลปลายทาง (**ต้องตั้ง** ไม่มีค่า default) | `you@example.com` |
-| `ADMIN_PASSWORD` | รหัสผ่าน Admin ไม่ต่ำกว่า 12 ตัวอักษร | `use-a-unique-long-password` |
-| `SESSION_SECRET` | Secret สุ่มสำหรับลงลายเซ็น session ไม่ต่ำกว่า 32 ตัวอักษร และห้ามซ้ำกับรหัสผ่าน | `openssl-rand-base64-32-output` |
-| `APP_URL` | URL หลักของแอปสำหรับลิงก์ในอีเมล | `https://your-app.vercel.app` |
-| `REMOTE_IMAGE_ALLOWED_HOSTS` | Hostname HTTPS ของภาพภายนอกที่อนุญาต คั่นด้วย comma (ห้ามใช้ wildcard) | `images.example-cdn.com` |
-| `ENABLE_STRUCTURED_CONCEPTS` | เปิด Structured Editorial Still Life ทั้ง 10 ภาพตามค่าเริ่มต้น; ตั้ง `false` เพื่อ rollback เป็น planner เดิม | `true` |
-
----
-
-## 💻 การทดสอบและรันในเครื่อง (Local Development)
+## ตั้งเครื่องใหม่
 
 ```bash
-# 1. ติดตั้ง Dependencies
+git clone https://github.com/diowcnx/adobe_stock.git
+cd adobe_stock
 npm install
-
-# 2. คัดลอกและตั้งค่า Environment Variables
 cp .env.example .env.local
-
-# 3. รัน Development Server
-npm run dev
 ```
 
-เปิดบราวเซอร์ที่ [http://localhost:3000](http://localhost:3000)
+จากนั้นเปิดไฟล์ `.env.local` แล้วใส่ OpenRouter API key ของคุณ ไฟล์นี้ไม่ขึ้น git
 
-รัน regression tests โดยไม่เรียกสร้างภาพจริง:
+## คำสั่ง
 
 ```bash
-npm test
+npm run generate -- credits
 ```
 
-การทดสอบครอบคลุม planner แบบ mock, ช่องข้อมูลครบ 18 รายการ, curated fallback, ธีมครบทั้ง 31 วัน, CSV, rollback switch และวงจรสร้างภาพทดแทนเมื่อ QA ปฏิเสธ โดยไม่ใช้เครดิตสร้างภาพจริง
+```bash
+npm run generate -- sold ~/Downloads/sale.jpg --plan
+```
 
----
+```bash
+npm run generate -- resume "<โฟลเดอร์ที่ขึ้นมา>"
+```
 
-## 📦 การ Deploy ไปยัง Vercel
+| คำสั่ง | ทำอะไร |
+|---|---|
+| `sold <ไฟล์ภาพ>` | ต่อยอด 10 ภาพใหม่จากภาพที่ขายได้ |
+| `research` | สร้างจากไฟล์ `research/manual-prompts-*.md` ล่าสุด |
+| `daily` | สร้างจากคลัง 10 Structure |
+| `resume <โฟลเดอร์>` | สร้างเฉพาะภาพที่ยังขาด |
+| `credits` | ดูเครดิต OpenRouter |
 
-1. นำเข้า Repository `diowcnx/adobe_stock` เข้าสู่ Vercel Project ชื่อ `adobe_stock`
-2. ใส่ Environment Variables ในหน้า Project Settings
-3. ใน Project ไปที่ **Storage → Create Database → Blob** แล้วสร้าง Blob Store แบบ **Private** และเชื่อมต่อกับโปรเจกต์นี้ Vercel จะผูก `BLOB_STORE_ID` และการยืนยันตัวตน OIDC ให้กับ Functions โดยไม่ต้องใส่ Blob token ลงในโค้ด
-4. ตรวจสอบให้ Blob Store ใช้ Environment เดียวกับ Production แล้ว Redeploy โปรเจกต์
+ใส่ `--plan` เพื่อดูแผนก่อน โดยยังไม่สร้างภาพ
 
-ภาพและ Metadata จะถูกเก็บใน Private Blob แยกตามชุดที่สร้าง หน้าเว็บที่ล็อกอินแล้วจึงสามารถเปิดดูและดาวน์โหลดได้ข้าม Vercel Functions; หลังดาวน์โหลดครบ ระบบจะถามก่อนลบเฉพาะชุดนั้นออกจาก Storage
+ภาพจะอยู่ที่ `~/Downloads/adobe/` ในเครื่องที่สร้างเท่านั้น ไม่ขึ้น git เพราะ repo นี้เป็น public
+
+ขั้นตอนสำหรับ AI agent อยู่ใน [AGENTS.md](AGENTS.md)

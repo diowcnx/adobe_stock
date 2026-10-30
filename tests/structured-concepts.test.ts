@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 import { allocateDailyStructureCounts, conductMarketResearchAndGeneratePrompts } from "../lib/market-research";
 import { isStockImageItem } from "../lib/validation";
@@ -18,7 +20,6 @@ import { buildSymmetricalStorefrontBatch, SYMMETRICAL_STOREFRONT_RECIPES } from 
 import { buildThaiNaturePosterBatch, THAI_NATURE_POSTER_RECIPES } from "../lib/thai-nature-poster";
 import { reserveUniquePromptBatch } from "../lib/prompt-history";
 import { applyCreativeEdition, getPromptConceptKey } from "../lib/prompt-novelty";
-import { clearLatestBatch } from "../lib/batch-store";
 
 test("editorial still life supports product campaigns and adapts composition to canvas shape", () => {
   const date = new Date("2026-10-16T12:00:00Z");
@@ -327,13 +328,10 @@ test("creative direction changes story and Adobe trend treatment for every struc
 });
 
 test("durable planning survives batch deletion and rotates base concepts before same-day image generation", async () => {
-  const localHistory = "/tmp/adobe-stock-prompt-history-v1.json";
-  fs.rmSync(localHistory, { force: true });
-  const originalVercel = process.env.VERCEL;
-  delete process.env.VERCEL;
+  const localHistory = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "prompt-history-")), "history.json");
+  process.env.PROMPT_HISTORY_FILE = localHistory;
   try {
     const first = await reserveUniquePromptBatch("2026-10-19T11:50:00.000Z");
-    await clearLatestBatch();
     const second = await reserveUniquePromptBatch("2026-10-19T11:51:00.000Z");
     const firstPrompts = new Set(first.items.map(item => item.prompt));
     const firstConcepts = new Set(first.items.map(getPromptConceptKey));
@@ -347,9 +345,8 @@ test("durable planning survives batch deletion and rotates base concepts before 
       previousConcepts = new Set(next.items.map(getPromptConceptKey));
     }
   } finally {
-    fs.rmSync(localHistory, { force: true });
-    if (originalVercel === undefined) delete process.env.VERCEL;
-    else process.env.VERCEL = originalVercel;
+    fs.rmSync(path.dirname(localHistory), { recursive: true, force: true });
+    delete process.env.PROMPT_HISTORY_FILE;
   }
 });
 

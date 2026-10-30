@@ -2,28 +2,14 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
-    "incremental": false,
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES2022",
     "outDir": ".test-dist",
-    "rootDir": ".",
-    "plugins": []
+    "rootDir": "."
   },
   "include": [
-    "next-env.d.ts",
     "tests/**/*.test.ts",
-    "lib/structured-concepts.ts",
-    "lib/csv.ts",
-    "lib/errors.ts",
-    "lib/image-quality.ts",
-    "lib/image-generator.ts",
-    "lib/market-research.ts",
-    "lib/openrouter.ts",
-    "lib/production-plan.ts",
-    "lib/remote-image.ts",
-    "lib/sale-reference.ts",
-    "lib/types.ts",
-    "lib/validation.ts"
+    "lib/**/*.ts"
   ]
 }

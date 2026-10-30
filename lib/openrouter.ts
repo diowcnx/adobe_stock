@@ -37,7 +37,6 @@ async function requestCreditEndpoint(
           Authorization: `Bearer ${key}`,
           "Content-Type": "application/json",
         },
-        next: { revalidate: 0 },
         signal: AbortSignal.timeout(options.timeoutMs),
       });
       lastResponse = response;
