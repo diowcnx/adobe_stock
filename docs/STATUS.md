@@ -14,7 +14,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Open / blocked
 
-- `.env.local` with `OPENROUTER_API_KEY` is not yet on this machine, so the CLI has not generated a real image.
+- The CLI has planned a real `sold` batch (key and `credits` work on the main machine) but has not generated a real image. The owner chose to wait for the next sold image as the first real run.
 - Vercel project `adobe-stock` and its Blob store still exist and the old deployment is live until the owner approves deleting them. The push that removed Next.js is expected to fail its Vercel build.
 - The owner's email addresses remain in old git history of this public repo.
 - `output/php-stock-study-2026-10-28/` still holds a test image in git.
@@ -22,8 +22,8 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Next steps
 
-1. Owner adds the key; run one real `sold` batch.
-2. Delete the Vercel project once the CLI is proven.
+1. Run the next sold image as the first real batch.
+2. Once that works, ask the owner before deleting the Vercel project and Blob store.
 
 ## Gotchas
 
