@@ -12,7 +12,7 @@ The owner sends a sold image and asks for 10 new images, or asks for a daily or 
 4. Show the owner the briefs, the balance (`npm run generate -- credits`) and the estimate of about $0.04 per image (up to 4 attempts each). Wait for a yes; generation spends real money.
 5. `npm run generate -- resume "<folder>"`. It finishes when it prints `Folder:` and `Credit:`.
 6. Rerun `resume` for any `Failed` line; it generates only missing images.
-7. Report saved count, `QA warning` lines, spend and the folder. View the images and name weak ones.
+7. Report saved count, `QA warning` lines and the folder. View the images and name weak ones. Spend shows only after OpenRouter billing settles, so recheck `credits` a few minutes later.
 8. Commit and push `history/`, so other machines avoid repeating these prompts.
 
 Done means every planned image is saved or reported as failed, and `history/` is pushed.

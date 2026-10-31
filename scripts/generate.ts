@@ -96,7 +96,7 @@ async function main(): Promise<void> {
   console.log(`Saved ${report.saved.length} of ${plan.items.length} requested this run`);
   report.warnings.forEach(line => console.log(`QA warning ${line}`));
   report.failed.forEach(line => console.log(`Failed ${line}`));
-  console.log(`Credit: $${report.creditsBefore.toFixed(4)} -> $${report.creditsAfter.toFixed(4)} (spent $${(report.creditsBefore - report.creditsAfter).toFixed(4)})`);
+  console.log(`Credit: $${report.creditsBefore.toFixed(4)} -> $${report.creditsAfter.toFixed(4)} (OpenRouter billing lags; recheck with the credits command)`);
   if (report.failed.length > 0) process.exitCode = 1;
 }
 

@@ -1,6 +1,6 @@
 # Project status
 
-_Last updated: 2026-10-29_
+_Last updated: 2026-10-31_
 
 ## What this is
 
@@ -8,6 +8,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Done recently
 
+- **First real CLI batch** (2026-10-31): sesame-oil still life expanded into 10 full-scene oil images; 10/10 saved, one needed a QA retry. Exposed and fixed a cutout misclassification (`--layout` added).
 - **Vercel fully removed** (2026-10-30): project `adobe-stock` and Blob store `adobe-stock-blob` were deleted by the owner; the old site returns 404. There is no longer a web fallback, though the code stays in git history before commit `79361d2`.
 - **Dashboard and Vercel app removed** (2026-10-30): `npm run generate` replaces them. Images go to `~/Downloads/adobe/` and stay on that machine; prompt history moved from Vercel Blob to `history/prompt-history.json` in git. Email (SMTP2GO), login, Next.js, React and ESLint were removed with the web app.
 - **Sold-image expansion handles cutouts** (2026-10-29): isolated elements expand into 10 isolated elements on pure white JPEG; full scenes expand into full scenes. Live-tested through the old dashboard: 10/10 passed QA. Weaker results were a rolled mossy log and a shapeless volcanic rock pile.
@@ -15,16 +16,16 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Open / blocked
 
-- The CLI has planned a real `sold` batch (key and `credits` work on the main machine) but has not generated a real image. The owner chose to wait for the next sold image as the first real run.
 - The owner's email addresses remain in old git history of this public repo.
 - `research/manual-prompts-2026-10-28.md` intro still says the prompts are "not added to the pipeline" (outdated wording).
 
 ## Next steps
 
-1. Run the next sold image as the first real batch.
+1. Keep expanding sold images as they arrive.
 
 ## Gotchas
 
+- OpenRouter balance updates minutes after a run, so same-run credit differences read near zero.
 - Generated JPEGs are ~1376×768 (~1 MP), below Adobe Stock's 4 MP minimum. This is intentional: the owner upscales manually before uploading, so the app does not upscale.
 
 - `npm test` compiles to `.test-dist/` then deletes it. The OpenRouter `TimeoutError` lines during tests are expected (simulated).
