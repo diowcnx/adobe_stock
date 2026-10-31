@@ -1,14 +1,20 @@
 # Adobe Stock image generator
 
-Command-line tool that turns one sold image, a research file, or the structure catalog into 10 Adobe Stock JPEGs plus `metadata.csv`. Any agent on any machine runs it from this repo; git carries the code, research and prompt history.
+Command-line tool that makes 10 Adobe Stock JPEGs plus `metadata.csv`. Any agent on any machine runs it from this repo; git carries the code, research and prompt history.
+
+## Methods
+
+The owner names a method; each maps to a command:
+
+- **ต่อยอด** (`sold <image-path>`): expand a sold image.
+- **โครงสร้าง** (`structure`): one batch mixed across the 9 structures.
+- **รีเสิร์ช** (`research`): the newest research file.
 
 ## Generating images
 
-The owner sends a sold image and asks for 10 new images, or asks for a daily or research batch.
-
 1. `git pull`, then `npm install` if `node_modules` is missing.
 2. Check `.env.local` holds `OPENROUTER_API_KEY`. If it is absent, ask the owner to create it from `.env.example`; keys are entered by the owner.
-3. Plan: `npm run generate -- sold <image-path> --plan` (or `daily`, `research`). Planning writes a batch folder and lists the briefs.
+3. Plan: `npm run generate -- <method command> --plan`. Planning writes a batch folder and lists the briefs.
 4. Show the owner the briefs, the balance (`npm run generate -- credits`) and the estimate of about $0.04 per image (up to 4 attempts each). Wait for a yes; generation spends real money.
 5. `npm run generate -- resume "<folder>"`. It finishes when it prints `Folder:` and `Credit:`.
 6. Rerun `resume` for any `Failed` line; it generates only missing images.

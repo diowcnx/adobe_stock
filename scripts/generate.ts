@@ -13,7 +13,7 @@ const LAYOUTS: Record<string, SaleReferenceLayout> = { scene: "full_scene", cuto
 
 const USAGE = `Usage: npm run generate -- <command> [--plan]
 
-  daily               10 images from the structure catalog
+  structure           10 images from the structure catalog
   research            10 images from the newest research/manual-prompts-*.md
   sold <image-path>   10 new images expanded from a sold image
   resume <folder>     generate whatever is missing from a batch folder
@@ -30,7 +30,7 @@ async function soldImageDataUrl(file: string): Promise<string> {
 
 async function buildPlan(command: string, target?: string, layout?: SaleReferenceLayout): Promise<BatchPlan> {
   const createdAt = new Date().toISOString();
-  if (command === "daily") {
+  if (command === "structure") {
     const { trend, items } = await reserveUniquePromptBatch(createdAt);
     return { source: command, createdAt, trend, items };
   }
@@ -67,7 +67,7 @@ async function main(): Promise<void> {
     console.log(`OpenRouter balance: $${credits.remainingCredits.toFixed(4)}${credits.label ? ` (${credits.label})` : ""}`);
     return;
   }
-  if (!["daily", "research", "sold", "resume"].includes(command ?? "")) {
+  if (!["structure", "research", "sold", "resume"].includes(command ?? "")) {
     console.error(USAGE);
     process.exitCode = 1;
     return;
