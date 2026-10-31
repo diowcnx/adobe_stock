@@ -7,6 +7,9 @@ import { prepareManualResearchItems } from "../lib/manual-research";
 import { getOpenRouterCredits } from "../lib/openrouter";
 import { reserveUniquePromptBatch } from "../lib/prompt-history";
 import { analyzeSoldReference } from "../lib/sale-reference";
+import type { SaleReferenceLayout } from "../lib/types";
+
+const LAYOUTS: Record<string, SaleReferenceLayout> = { scene: "full_scene", cutout: "isolated_white" };
 
 const USAGE = `Usage: npm run generate -- <command> [--plan]
 
@@ -16,7 +19,8 @@ const USAGE = `Usage: npm run generate -- <command> [--plan]
   resume <folder>     generate whatever is missing from a batch folder
   credits             show the OpenRouter balance
 
-  --plan  write plan.json and metadata.csv only; generate later with resume`;
+  --plan           write plan.json and metadata.csv only; generate later with resume
+  --layout=scene   treat a sold image as a full scene (--layout=cutout for an isolated element)`;
 
 async function soldImageDataUrl(file: string): Promise<string> {
   const jpeg = await sharp(file).rotate().resize({ width: 1280, height: 1280, fit: "inside", withoutEnlargement: true })
@@ -24,7 +28,7 @@ async function soldImageDataUrl(file: string): Promise<string> {
   return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
 }
 
-async function buildPlan(command: string, target?: string): Promise<BatchPlan> {
+async function buildPlan(command: string, target?: string, layout?: SaleReferenceLayout): Promise<BatchPlan> {
   const createdAt = new Date().toISOString();
   if (command === "daily") {
     const { trend, items } = await reserveUniquePromptBatch(createdAt);
@@ -45,7 +49,7 @@ async function buildPlan(command: string, target?: string): Promise<BatchPlan> {
     };
   }
   if (!target || !fs.existsSync(target)) throw new Error(`Sold image not found: ${target ?? "(no path given)"}`);
-  const { analysis, trend, items } = await analyzeSoldReference(await soldImageDataUrl(target));
+  const { analysis, trend, items } = await analyzeSoldReference(await soldImageDataUrl(target), undefined, layout);
   console.log(`Sold image: ${analysis.subject}\nLayout: ${analysis.layout}\nStrategy: ${analysis.expansionStrategy}`);
   return { source: command, createdAt, trend, items };
 }
@@ -54,7 +58,9 @@ async function main(): Promise<void> {
   try { process.loadEnvFile(".env.local"); } catch { /* the key may come from the shell */ }
   const args = process.argv.slice(2);
   const planOnly = args.includes("--plan");
-  const [command, target] = args.filter(arg => arg !== "--plan");
+  const layoutArg = args.find(arg => arg.startsWith("--layout="))?.slice("--layout=".length);
+  if (layoutArg && !(layoutArg in LAYOUTS)) throw new Error(`Unknown layout: ${layoutArg}`);
+  const [command, target] = args.filter(arg => !arg.startsWith("--"));
 
   if (command === "credits") {
     const credits = await getOpenRouterCredits();
@@ -74,7 +80,7 @@ async function main(): Promise<void> {
     folder = path.resolve(target);
     plan = readBatchPlan(folder);
   } else {
-    plan = await buildPlan(command, target);
+    plan = await buildPlan(command, target, layoutArg ? LAYOUTS[layoutArg] : undefined);
     folder = createBatchFolder(plan.source);
     writeBatchPlan(folder, plan);
   }

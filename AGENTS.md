@@ -23,7 +23,7 @@ Images and `metadata.csv` go to `~/Downloads/adobe/<batch>/` on the machine that
 
 ## Sold images
 
-A sale proves one buyer for one asset, not market demand. New images must be original work, never copies of the source. Cutouts (isolated element on white) expand into cutouts on pure white; full scenes expand into full scenes. The analyzer picks the layout; check `Layout:` in the output matches the image.
+A sale proves one buyer for one asset, not market demand. New images must be original work, never copies of the source. Cutouts (isolated element on white) expand into cutouts on pure white; full scenes expand into full scenes. The analyzer picks the layout. Compare `Layout:` with the image; if they differ, replan with `--layout=scene` or `--layout=cutout`.
 
 ## Changing the code
 

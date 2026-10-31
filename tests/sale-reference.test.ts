@@ -121,3 +121,16 @@ test("isolated layout is only valid on sold-reference items", async () => {
     global.fetch = originalFetch;
   }
 });
+
+test("an owner-confirmed layout overrides the analyzer", async () => {
+  const originalFetch = global.fetch;
+  mockProvider({ referenceLayout: "isolated_cutout" });
+  try {
+    const plan = await analyzeSoldReference(referenceDataUrl(), "test-key", "full_scene");
+    assert.equal(plan.analysis.layout, "full_scene");
+    assert.equal(plan.items[0].saleReferenceLayout, undefined);
+    assert.match(plan.items[0].prompt, /full-bleed/i);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

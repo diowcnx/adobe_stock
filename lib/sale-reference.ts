@@ -84,7 +84,7 @@ function parseModelJson(raw: unknown): Record<string, unknown> {
   return parsed;
 }
 
-export async function analyzeSoldReference(dataUrlInput: unknown, apiKey?: string): Promise<SaleReferencePlan> {
+export async function analyzeSoldReference(dataUrlInput: unknown, apiKey?: string, forcedLayout?: SaleReferenceLayout): Promise<SaleReferencePlan> {
   const reference = parseReferenceDataUrl(dataUrlInput);
   const key = apiKey || process.env.OPENROUTER_API_KEY;
   if (!key) throw new Error("OPENROUTER_API_KEY is not configured");
@@ -106,7 +106,7 @@ export async function analyzeSoldReference(dataUrlInput: unknown, apiKey?: strin
 
 Plan exactly 10 NEW commercial JPEG concepts inspired by the buyer-use signal, not copies or near-duplicates. Preserve only the useful subject category or buyer problem. Each concept must differ materially in story, buyer/use, setting, camera/composition, lighting and palette. Do not use trivial color swaps. Do not recreate the source composition, distinctive arrangement, branded elements or protected characters. Every concept must be understandable in two seconds and explain why a buyer would license it. No visible human faces, text, letters, numerals, logos, labels, signatures, watermarks, interface elements, frames or borders. ${NO_VISIBLE_FACE_RULE}
 
-First decide referenceLayout. Use "isolated_cutout" when the sold asset is a single isolated element or group (object, plant, rock, landscape piece, etc.) cut out on a plain white or transparent background with no scene around it; buyers license such assets to composite into their own designs, renderings and mockups. Otherwise use "full_scene".
+First decide referenceLayout. Use "isolated_cutout" only when the sold asset is a single isolated element or group (object, plant, rock, landscape piece, etc.) truly cut out on a flat white or transparent background, with no visible surface, horizon, directional light pattern or cast shadow; buyers license such assets to composite into their own designs, renderings and mockups. A studio still life standing on a white tabletop or backdrop, with cast shadows, light falloff or reserved copy space, is "full_scene" even when the background is mostly white. Otherwise use "full_scene".${forcedLayout ? ` The owner has confirmed the correct value is "${forcedLayout === "isolated_white" ? "isolated_cutout" : "full_scene"}"; use it.` : ""}
 If referenceLayout is "isolated_cutout", ALL 10 concepts must also be complete isolated, composite-ready elements in the same buyer category (new subjects or materially different arrangements, not copies), each fully visible and centered on a seamless pure white (#FFFFFF) background with even padding on all sides, no ground plane, no horizon, no scenery, no copy space, and at most a faint soft contact shadow directly beneath. In that case compositionAndCamera must describe the viewing angle of the isolated element and settingAndProps must say "Seamless pure white background only".
 
 Return pure JSON with this schema:
@@ -126,7 +126,7 @@ Return pure JSON with this schema:
   if (!Array.isArray(parsed.concepts) || parsed.concepts.length !== 10) throw new Error("Image analysis must return exactly 10 concepts");
 
   const subject = bounded(parsed.subject, "commercial stock subject", 180);
-  const layout: SaleReferenceLayout = parsed.referenceLayout === "isolated_cutout" ? "isolated_white" : "full_scene";
+  const layout: SaleReferenceLayout = forcedLayout ?? (parsed.referenceLayout === "isolated_cutout" ? "isolated_white" : "full_scene");
   const isolated = layout === "isolated_white";
   const seen = new Set<string>();
   const items = parsed.concepts.map((value, index): StockImageItem => {
