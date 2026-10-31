@@ -8,7 +8,7 @@ The owner names a method; each maps to a command:
 
 - **ต่อยอด** (`sold <image-path>`): expand a sold image.
 - **โครงสร้าง** (`structure`): one batch mixed across the 9 structures.
-- **รีเสิร์ช** (`research`): the newest research file.
+- **รีเสิร์ช** (`research`): the newest research file. For a new round, follow the keyword steps in `research/README.md` first.
 
 ## Generating images
 
@@ -34,5 +34,3 @@ A sale proves one buyer for one asset, not market demand. New images must be ori
 ## Changing the code
 
 Run `npm test` and `npm run typecheck` before committing. Tests mock OpenRouter; the `TimeoutError` lines are simulated. `docs/STATUS.md` holds current state and open items.
-
-New research rounds: follow `research/README.md`.
