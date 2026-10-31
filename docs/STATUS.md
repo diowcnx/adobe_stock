@@ -8,6 +8,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Done recently
 
+- **Research rounds use low-competition long-tail keywords** (2026-10-31): 3-5 word phrases with 20-500 Adobe results, counted in the Claude app browser and logged in `research/keyword-competition.csv`. The band is the owner's choice and unproven against sales. Methods are named ต่อยอด, โครงสร้าง and รีเสิร์ช.
 - **First real CLI batch** (2026-10-31): sesame-oil still life expanded into 10 full-scene oil images; 10/10 saved, one needed a QA retry. Exposed and fixed a cutout misclassification (`--layout` added).
 - **Vercel fully removed** (2026-10-30): project `adobe-stock` and Blob store `adobe-stock-blob` were deleted by the owner; the old site returns 404. There is no longer a web fallback, though the code stays in git history before commit `79361d2`.
 - **Dashboard and Vercel app removed** (2026-10-30): `npm run generate` replaces them. Images go to `~/Downloads/adobe/` and stay on that machine; prompt history moved from Vercel Blob to `history/prompt-history.json` in git. Email (SMTP2GO), login, Next.js, React and ESLint were removed with the web app.
