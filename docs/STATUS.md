@@ -8,6 +8,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Done recently
 
+- **First รีเสิร์ช batch** (2026-10-31): 28 keywords counted, 10 briefs in `research/manual-prompts-2026-10-31.md`, 10/10 saved after removing people from one brief that kept failing the face check. Weaker results: #1 refill station, #5 sandbags away from the door.
 - **Research rounds use low-competition long-tail keywords** (2026-10-31): 3-5 word phrases with 20-500 Adobe results, counted in the Claude app browser and logged in `research/keyword-competition.csv`. The band is the owner's choice and unproven against sales. Methods are named ต่อยอด, โครงสร้าง and รีเสิร์ช.
 - **First real CLI batch** (2026-10-31): sesame-oil still life expanded into 10 full-scene oil images; 10/10 saved, one needed a QA retry. Exposed and fixed a cutout misclassification (`--layout` added).
 - **Vercel fully removed** (2026-10-30): project `adobe-stock` and Blob store `adobe-stock-blob` were deleted by the owner; the old site returns 404. There is no longer a web fallback, though the code stays in git history before commit `79361d2`.
