@@ -1,6 +1,6 @@
 # Project status
 
-_Last updated: 2026-10-31_
+_Last updated: 2026-11-01_
 
 ## What this is
 
@@ -8,6 +8,8 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Done recently
 
+- **Second รีเสิร์ช batch** (2026-11-01): 30 keywords counted, 11 passed, 10 briefs in `research/manual-prompts-2026-11-01.md`, 10/10 saved. Hands and forearms with no head in frame mostly passed the face check; #10 needed its fallback. Weak result: #1 shows a ceramic dish, not the plastic box in its title and keywords.
+- **Hair bun ต่อยอด batch** (2026-11-01): 10/10 saved, then the owner cut #6 for bad fingers after its retry failed all 4 attempts on the face check. Hair briefs that keep the head in frame are the most likely to be rejected.
 - **First รีเสิร์ช batch** (2026-10-31): 28 keywords counted, 10 briefs in `research/manual-prompts-2026-10-31.md`, 10/10 saved after removing people from one brief that kept failing the face check. Weaker results: #1 refill station, #5 sandbags away from the door.
 - **Research rounds use low-competition long-tail keywords** (2026-10-31): 3-5 word phrases with 20-500 Adobe results, counted in the Claude app browser and logged in `research/keyword-competition.csv`. The band is the owner's choice and unproven against sales. Methods are named ต่อยอด, โครงสร้าง and รีเสิร์ช.
 - **First real CLI batch** (2026-10-31): sesame-oil still life expanded into 10 full-scene oil images; 10/10 saved, one needed a QA retry. Exposed and fixed a cutout misclassification (`--layout` added).
