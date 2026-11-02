@@ -1,6 +1,6 @@
 # Project status
 
-_Last updated: 2026-11-01_
+_Last updated: 2026-11-02_
 
 ## What this is
 
@@ -8,6 +8,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Done recently
 
+- **Third รีเสิร์ช batch** (2026-11-02): seasonal round for December–February (Christmas, Dry January, winter heating, Valentine's Day, Lunar New Year). 30 keywords counted, 14 passed, 10 briefs in `research/manual-prompts-2026-11-02.md`, 10/10 saved. Lunar New Year briefs drew Chinese characters on the first tries; QA caught them and retries passed. Upload by mid-December to be indexed before the season.
 - **Second รีเสิร์ช batch** (2026-11-01): 30 keywords counted, 11 passed, 10 briefs in `research/manual-prompts-2026-11-01.md`, 10/10 saved. Hands and forearms with no head in frame mostly passed the face check; #10 needed its fallback. #1 first showed a ceramic dish instead of plastic, so it was rewritten as a plastic-beside-glass still life and regenerated.
 - **Hair bun ต่อยอด batch** (2026-11-01): 10/10 saved, then the owner cut #6 for bad fingers after its retry failed all 4 attempts on the face check. Hair briefs that keep the head in frame are the most likely to be rejected.
 - **First รีเสิร์ช batch** (2026-10-31): 28 keywords counted, 10 briefs in `research/manual-prompts-2026-10-31.md`, 10/10 saved after removing people from one brief that kept failing the face check. Weaker results: #1 refill station, #5 sandbags away from the door.
