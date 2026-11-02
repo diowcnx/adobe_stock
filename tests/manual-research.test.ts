@@ -17,7 +17,7 @@ function brief(n: number, extra = `   - Category: Test\n   - Keywords: ${KEYWORD
 test("the latest research file creates ten valid distinct manual JPEG briefs", async () => {
   const { items, researchDate, sourceFile } = await prepareManualResearchItems(DATE);
   assert.match(researchDate, /^\d{4}-\d{2}-\d{2}$/);
-  assert.equal(sourceFile, `research/manual-prompts-${researchDate}.md`);
+  assert.match(sourceFile, new RegExp(`^research/manual-prompts-${researchDate}(-\\d+)?\\.md$`));
   assert.equal(items.length, 10);
   assert.equal(new Set(items.map(item => item.prompt)).size, 10);
   for (const item of items) {
@@ -39,6 +39,19 @@ test("the newest dated research file wins and unrelated files are ignored", asyn
     assert.deepEqual(await findLatestResearchFile(dir), { file: "manual-prompts-2026-11-05.md", researchDate: "2026-11-05" });
     const { items } = await prepareManualResearchItems(DATE, dir);
     assert.equal(items[0].seoTitle, "Newest brief");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a numbered second round on the same date wins over the first", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "research-"));
+  try {
+    const body = Array.from({ length: 10 }, (_, i) => brief(i + 1)).join("\n");
+    await writeFile(path.join(dir, "manual-prompts-2026-11-02.md"), body);
+    await writeFile(path.join(dir, "manual-prompts-2026-11-02-2.md"), body);
+    await writeFile(path.join(dir, "manual-prompts-2026-11-01-3.md"), body);
+    assert.deepEqual(await findLatestResearchFile(dir), { file: "manual-prompts-2026-11-02-2.md", researchDate: "2026-11-02" });
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

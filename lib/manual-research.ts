@@ -5,7 +5,7 @@ import { GENERATION_BRIEF_VERSION } from "./generation-policy";
 import type { StockImageItem } from "./types";
 
 const RESEARCH_DIR = path.join(process.cwd(), "research");
-const RESEARCH_FILE_PATTERN = /^manual-prompts-(\d{4}-\d{2}-\d{2})\.md$/;
+const RESEARCH_FILE_PATTERN = /^manual-prompts-(\d{4}-\d{2}-\d{2})(?:-(\d+))?\.md$/;
 const BRIEF_PATTERN = /^(\d+)\. \*\*(.+?)\*\* — Buyer: (.+?)\. ([^\n]+)$/;
 const FIELD_PATTERN = /^\s+- (Category|Keywords|Fallback): (.+)$/;
 const MIN_KEYWORDS = 15;
@@ -16,14 +16,18 @@ export interface ManualResearchBatch {
   items: StockImageItem[];
 }
 
-/** The newest research/manual-prompts-YYYY-MM-DD.md, chosen by the date in its filename. */
+/** The newest research/manual-prompts-YYYY-MM-DD[-N].md, by the date in its filename, then round N (none = 1). */
 export async function findLatestResearchFile(dir = RESEARCH_DIR): Promise<{ file: string; researchDate: string }> {
   const candidates = (await readdir(dir))
-    .map(file => ({ file, researchDate: RESEARCH_FILE_PATTERN.exec(file)?.[1] }))
-    .filter((entry): entry is { file: string; researchDate: string } => Boolean(entry.researchDate))
-    .sort((a, b) => b.researchDate.localeCompare(a.researchDate));
+    .map(file => {
+      const match = RESEARCH_FILE_PATTERN.exec(file);
+      return match ? { file, researchDate: match[1], round: Number(match[2] ?? 1) } : undefined;
+    })
+    .filter(entry => entry !== undefined)
+    .sort((a, b) => b.researchDate.localeCompare(a.researchDate) || b.round - a.round);
   if (!candidates.length) throw new Error("No research/manual-prompts-YYYY-MM-DD.md file found");
-  return candidates[0];
+  const { file, researchDate } = candidates[0];
+  return { file, researchDate };
 }
 
 export function parseManualResearch(source: string, date: Date): StockImageItem[] {
