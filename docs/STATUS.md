@@ -1,6 +1,6 @@
 # Project status
 
-_Last updated: 2026-11-02_
+_Last updated: 2026-11-03_
 
 ## What this is
 
@@ -8,6 +8,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Done recently
 
+- **School and hands-on learning รีเสิร์ช batch** (2026-11-03): 24 keywords counted, 12 passed, 10 briefs with `Top results` notes in `research/manual-prompts-2026-11-03.md`. 10/10 saved; #1 needed its no-people fallback after background faces, and #6 needed a second `resume` after an empty model response. Children appear only as hands.
 - **First รีเสิร์ช round using top-result study** (2026-11-02, round 2): Thai crafts, produce and small business. 30 keywords counted, 12 passed, 10 briefs in `research/manual-prompts-2026-11-02-2.md`, each with a `Top results` note on what the top 3–5 Adobe images show and the gap the brief fills. 10/10 saved, only one face-check retry. Research files can now carry a round number (`-2`) so a second round on the same date is picked up.
 - **Third รีเสิร์ช batch** (2026-11-02): seasonal round for December–February (Christmas, Dry January, winter heating, Valentine's Day, Lunar New Year). 30 keywords counted, 14 passed, 10 briefs in `research/manual-prompts-2026-11-02.md`, 10/10 saved. Lunar New Year briefs drew Chinese characters on the first tries; QA caught them and retries passed. Upload by mid-December to be indexed before the season.
 - **Second รีเสิร์ช batch** (2026-11-01): 30 keywords counted, 11 passed, 10 briefs in `research/manual-prompts-2026-11-01.md`, 10/10 saved. Hands and forearms with no head in frame mostly passed the face check; #10 needed its fallback. #1 first showed a ceramic dish instead of plastic, so it was rewritten as a plastic-beside-glass still life and regenerated.
