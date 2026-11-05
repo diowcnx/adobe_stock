@@ -8,7 +8,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Done recently
 
-- **Origami bird ต่อยอด batch** (2026-11-05): cutout layout detected correctly; 10/10 saved with no rejections. #7 dragon came back on a grey gradient (corner pixels about 177) and #6 sailboat on light grey (about 240) although the QA prompt rejects grey backgrounds: the white-background check relies on the vision model only.
+- **Origami bird ต่อยอด batch** (2026-11-05): cutout layout detected correctly; 10/10 saved with no rejections. #7 dragon came back on a grey gradient (corner pixels about 177) and #6 sailboat on light grey (about 240) although the QA prompt rejects grey backgrounds. Added a pixel check (`measureCornerWhiteness`, corners must reach 246/255) that rejects such backdrops before the paid vision call and retries; both were regenerated clean (253 and 254) and the originals kept in `_old/`.
 - **Senior pet and pet wellness รีเสิร์ช batch** (2026-11-04): 24 keywords counted, 12 passed, 10 briefs with `Top results` notes in `research/manual-prompts-2026-11-04.md`. 10/10 saved on the first attempt with no QA rejections: animal subjects avoid the human-face check.
 - **School and hands-on learning รีเสิร์ช batch** (2026-11-03): 24 keywords counted, 12 passed, 10 briefs with `Top results` notes in `research/manual-prompts-2026-11-03.md`. 10/10 saved; #1 needed its no-people fallback after background faces, and #6 needed a second `resume` after an empty model response. Children appear only as hands.
 - **First รีเสิร์ช round using top-result study** (2026-11-02, round 2): Thai crafts, produce and small business. 30 keywords counted, 12 passed, 10 briefs in `research/manual-prompts-2026-11-02-2.md`, each with a `Top results` note on what the top 3–5 Adobe images show and the gap the brief fills. 10/10 saved, only one face-check retry. Research files can now carry a round number (`-2`) so a second round on the same date is picked up.
@@ -39,6 +39,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 - `npm test` compiles to `.test-dist/` then deletes it. The OpenRouter `TimeoutError` lines during tests are expected (simulated).
 - Only one research file per date is read unless later rounds use `manual-prompts-YYYY-MM-DD-N.md`; the highest N wins.
+- Isolated-on-white cutouts are rejected when any corner is below 246/255 (`lib/image-quality.ts`). Clean cutouts measure 250-255; a subject or shadow touching a corner would also trip it.
 - Research briefs must be exactly 10, numbered 1–10, each with `- Category:` and ≥15 `- Keywords:`, or the batch is refused before any paid call.
 
 ## Setting up a new machine

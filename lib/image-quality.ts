@@ -74,6 +74,37 @@ export async function detectUnintendedLightBorder(inputBuffer: Buffer): Promise<
   return verticalMat || horizontalMat;
 }
 
+/** Lowest corner brightness an isolated-on-white asset may have. Clean cutouts measured 250-255; a light grey backdrop measured about 240. */
+export const MIN_WHITE_CORNER_BRIGHTNESS = 246;
+
+/**
+ * Darkest of the four corner patches, measured on each pixel's weakest channel so a tinted backdrop also counts.
+ * Isolated elements sit centered with white padding, so their corners should be pure white.
+ */
+export async function measureCornerWhiteness(inputBuffer: Buffer): Promise<number> {
+  const { data, info } = await sharp(inputBuffer, { limitInputPixels: MAX_INPUT_PIXELS })
+    .resize({ width: 256, height: 256, fit: "fill" })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = info;
+  const patch = Math.max(4, Math.round(Math.min(width, height) * 0.06));
+  const patchBrightness = (x0: number, y0: number): number => {
+    let sum = 0;
+    for (let y = y0; y < y0 + patch; y++) {
+      for (let x = x0; x < x0 + patch; x++) {
+        const offset = (y * width + x) * channels;
+        sum += Math.min(data[offset], data[offset + 1], data[offset + 2]);
+      }
+    }
+    return sum / (patch * patch);
+  };
+  return Math.min(
+    patchBrightness(0, 0), patchBrightness(width - patch, 0),
+    patchBrightness(0, height - patch), patchBrightness(width - patch, height - patch),
+  );
+}
+
 export async function assessGeneratedImageQuality(
   inputBuffer: Buffer,
   apiKey?: string,
@@ -88,6 +119,17 @@ export async function assessGeneratedImageQuality(
       issues: ["unintended white border or mat around the image"],
       source: "pixel_guard",
     };
+  }
+
+  if (context.isSaleReferenceIsolated) {
+    const cornerBrightness = await measureCornerWhiteness(inputBuffer);
+    if (cornerBrightness < MIN_WHITE_CORNER_BRIGHTNESS) {
+      return {
+        passed: false,
+        issues: [`background is grey or tinted, not seamless pure white #FFFFFF (corner brightness ${Math.round(cornerBrightness)} of 255)`],
+        source: "pixel_guard",
+      };
+    }
   }
 
   const key = apiKey || process.env.OPENROUTER_API_KEY;

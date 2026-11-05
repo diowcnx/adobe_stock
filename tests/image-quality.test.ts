@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import sharp from "sharp";
-import { assessGeneratedImageQuality, detectUnintendedLightBorder } from "../lib/image-quality";
+import { assessGeneratedImageQuality, detectUnintendedLightBorder, measureCornerWhiteness } from "../lib/image-quality";
 import { buildQualityRetryDirection, ensureGenuineAlphaTransparency, generateSingleImage } from "../lib/image-generator";
 import type { StockImageItem } from "../lib/types";
 import { buildExhibitionBoothBatch } from "../lib/exhibition-booth";
@@ -730,5 +730,25 @@ test("isolated sold-reference QA permits white padding and retries keep the isol
     assert.match(prompts[1], /SAME planned isolated element/);
     assert.doesNotMatch(prompts[1], /performing one familiar action/);
     assert.equal(result.qualityReview?.status, "passed_after_retries");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("isolated sold-reference QA rejects a grey or gradient backdrop before the paid vision check", async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = async () => { fetchCalls++; throw new Error("vision check should not run"); };
+  const element = await sharp({ create: { width: 120, height: 90, channels: 3, background: "#6b5a3e" } }).png().toBuffer();
+  const onBackdrop = (background: string) => sharp({ create: { width: 256, height: 256, channels: 3, background } })
+    .composite([{ input: element, left: 68, top: 83 }]).jpeg().toBuffer();
+  const context = { mode: "regular_scene" as const, expectedTitle: "origami dragon isolated on white", isSaleReference: true, isSaleReferenceIsolated: true };
+  try {
+    for (const grey of ["#f0f0f0", "#b8b8b8"]) {
+      const result = await assessGeneratedImageQuality(await onBackdrop(grey), "test-key", context);
+      assert.equal(result.passed, false);
+      assert.equal(result.source, "pixel_guard");
+      assert.match(result.issues[0], /not seamless pure white/);
+    }
+    assert.equal(fetchCalls, 0);
+    assert.ok(await measureCornerWhiteness(await onBackdrop("#ffffff")) >= 250);
   } finally { globalThis.fetch = originalFetch; }
 });
