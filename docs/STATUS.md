@@ -1,6 +1,6 @@
 # Project status
 
-_Last updated: 2026-11-05_
+_Last updated: 2026-11-06_
 
 ## What this is
 
@@ -8,6 +8,7 @@ Command-line tool that generates 10 Adobe Stock JPEGs plus `metadata.csv` throug
 
 ## Done recently
 
+- **Ramadan and Eid 2027 รีเสิร์ช batch** (2026-11-06): 28 keywords counted, 12 passed, 10 briefs with `Top results` notes in `research/manual-prompts-2026-11-06.md`. 10/10 saved on the first attempt with no QA rejections. Ramadan 2027 runs about 8 February to 9–10 March, so upload by December. Weakest: #9 grocery cart shows no visible dates, so its Ramadan cue is thin. Briefs avoid Arabic script entirely because QA rejects any lettering.
 - **Origami bird ต่อยอด batch** (2026-11-05): cutout layout detected correctly; 10/10 saved with no rejections. #7 dragon came back on a grey gradient (corner pixels about 177) and #6 sailboat on light grey (about 240) although the QA prompt rejects grey backgrounds. Added a pixel check (`measureCornerWhiteness`, corners must reach 246/255) that rejects such backdrops before the paid vision call and retries; both were regenerated clean (253 and 254) and the originals kept in `_old/`.
 - **Senior pet and pet wellness รีเสิร์ช batch** (2026-11-04): 24 keywords counted, 12 passed, 10 briefs with `Top results` notes in `research/manual-prompts-2026-11-04.md`. 10/10 saved on the first attempt with no QA rejections: animal subjects avoid the human-face check.
 - **School and hands-on learning รีเสิร์ช batch** (2026-11-03): 24 keywords counted, 12 passed, 10 briefs with `Top results` notes in `research/manual-prompts-2026-11-03.md`. 10/10 saved; #1 needed its no-people fallback after background faces, and #6 needed a second `resume` after an empty model response. Children appear only as hands.
