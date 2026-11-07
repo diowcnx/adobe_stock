@@ -96,6 +96,8 @@ export interface StockImageItem {
   saleReferenceStructure?: SaleReferenceStructure;
   /** Sold-reference expansion rendered as an isolated element on pure white, or on a seamless plain colour backdrop, instead of a room or location scene. */
   saleReferenceLayout?: SaleReferenceLayout;
+  /** "svg" makes a sold-reference item a vector illustration generated as SVG instead of a JPEG. */
+  outputFormat?: "svg";
   thaiNaturePosterStructure?: ThaiNaturePosterStructure;
   symmetricalStorefrontStructure?: SymmetricalStorefrontStructure;
   editorialPenSketchStructure?: EditorialPenSketchStructure;

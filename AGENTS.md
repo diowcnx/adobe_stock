@@ -29,7 +29,7 @@ Images and `metadata.csv` go to `~/Downloads/adobe/<batch>/` on the machine that
 
 ## Sold images
 
-A sale proves one buyer for one asset, not market demand. New images must be original work, never copies of the source. Cutouts (isolated element on white) expand into cutouts on pure white; subjects on a plain coloured studio backdrop expand onto ten different plain backdrops; full scenes expand into full scenes. The analyzer picks the layout. Compare `Layout:` with the image; if they differ, replan with `--layout=scene`, `--layout=cutout` or `--layout=backdrop`.
+A sale proves one buyer for one asset, not market demand. New images must be original work, never copies of the source. Cutouts (isolated element on white) expand into cutouts on pure white; subjects on a plain coloured studio backdrop expand onto ten different plain backdrops; full scenes expand into full scenes. The analyzer picks the layout. Compare `Layout:` with the image; if they differ, replan with `--layout=scene`, `--layout=cutout` or `--layout=backdrop`. When the sold asset is a vector (the sales list says Vectors), add `--vector`: it makes 10 SVG vector illustrations with Recraft at about $0.08 each, and the owner uploads them as vectors with the generative-AI box ticked.
 
 ## Changing the code
 

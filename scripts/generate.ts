@@ -21,7 +21,8 @@ const USAGE = `Usage: npm run generate -- <command> [--plan]
 
   --plan           write plan.json and metadata.csv only; generate later with resume
   --layout=scene   treat a sold image as a full scene (--layout=cutout for an isolated element,
-                   --layout=backdrop for a subject on a plain colour studio backdrop)`;
+                   --layout=backdrop for a subject on a plain colour studio backdrop)
+  --vector         with sold: make 10 vector illustrations as SVG (about $0.08 each) instead of JPEGs`;
 
 async function soldImageDataUrl(file: string): Promise<string> {
   const jpeg = await sharp(file).rotate().resize({ width: 1280, height: 1280, fit: "inside", withoutEnlargement: true })
@@ -29,7 +30,7 @@ async function soldImageDataUrl(file: string): Promise<string> {
   return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
 }
 
-async function buildPlan(command: string, target?: string, layout?: SaleReferenceLayout): Promise<BatchPlan> {
+async function buildPlan(command: string, target?: string, layout?: SaleReferenceLayout, vector = false): Promise<BatchPlan> {
   const createdAt = new Date().toISOString();
   if (command === "structure") {
     const { trend, items } = await reserveUniquePromptBatch(createdAt);
@@ -50,15 +51,16 @@ async function buildPlan(command: string, target?: string, layout?: SaleReferenc
     };
   }
   if (!target || !fs.existsSync(target)) throw new Error(`Sold image not found: ${target ?? "(no path given)"}`);
-  const { analysis, trend, items } = await analyzeSoldReference(await soldImageDataUrl(target), undefined, layout);
+  const { analysis, trend, items } = await analyzeSoldReference(await soldImageDataUrl(target), undefined, layout, { vector });
   console.log(`Sold image: ${analysis.subject}\nLayout: ${analysis.layout}\nStrategy: ${analysis.expansionStrategy}`);
-  return { source: command, createdAt, trend, items };
+  return { source: vector ? "sold_vector" : command, createdAt, trend, items };
 }
 
 async function main(): Promise<void> {
   try { process.loadEnvFile(".env.local"); } catch { /* the key may come from the shell */ }
   const args = process.argv.slice(2);
   const planOnly = args.includes("--plan");
+  const vector = args.includes("--vector");
   const layoutArg = args.find(arg => arg.startsWith("--layout="))?.slice("--layout=".length);
   if (layoutArg && !(layoutArg in LAYOUTS)) throw new Error(`Unknown layout: ${layoutArg}`);
   const [command, target] = args.filter(arg => !arg.startsWith("--"));
@@ -81,7 +83,8 @@ async function main(): Promise<void> {
     folder = path.resolve(target);
     plan = readBatchPlan(folder);
   } else {
-    plan = await buildPlan(command, target, layoutArg ? LAYOUTS[layoutArg] : undefined);
+    if (vector && command !== "sold") throw new Error("--vector works only with the sold command");
+    plan = await buildPlan(command, target, layoutArg ? LAYOUTS[layoutArg] : undefined, vector);
     folder = createBatchFolder(plan.source);
     writeBatchPlan(folder, plan);
   }

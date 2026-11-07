@@ -106,7 +106,7 @@ export function getStockImageFilename(
   batchMode?: GenerationMode,
 ): string {
   const mode = inferStockImageMode(image, batchMode);
-  const extension = mode === "transparent_png" ? "png" : "jpeg";
+  const extension = image.outputFormat === "svg" ? "svg" : mode === "transparent_png" ? "png" : "jpeg";
   const fallback = `stock_image_${image.id}`;
   const original = image.filename?.trim() || fallback;
   const filenameOnly = original.split(/[\\/]/).pop() || fallback;

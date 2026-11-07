@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { isRecord } from "./errors";
 import { GENERATION_BRIEF_VERSION, NO_VISIBLE_FACE_RULE } from "./generation-policy";
+import { DEFAULT_VECTOR_MODEL } from "./vector-generator";
 import type { MarketTrend, SaleReferenceLayout, SaleReferenceStructure, StockImageItem } from "./types";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -67,18 +68,24 @@ export const FALLBACK_BACKDROP_COLORS = ["pastel pink", "pale mint green", "baby
 const ANALYZER_LAYOUT: Record<SaleReferenceLayout, string> = { full_scene: "full_scene", isolated_white: "isolated_cutout", solid_backdrop: "solid_backdrop" };
 
 const ISOLATED_KEYWORDS = ["isolated", "white", "background", "cutout", "element"];
+const VECTOR_KEYWORDS = ["vector", "illustration", "flat"];
 
-function keywords(value: unknown, title: string, isolated = false): string[] {
+function keywords(value: unknown, title: string, isolated = false, vector = false): string[] {
   const candidates = Array.isArray(value) ? value : [];
-  const words = [...(isolated ? ISOLATED_KEYWORDS : []), ...candidates, ...title.split(/\s+/), "commercial", "advertising", "creative", "photography", "design", "campaign", "marketing", "editorial", "concept", "copyspace", "premium", "modern", "visual", "stock", "jpeg"]
+  const words = [...(vector ? VECTOR_KEYWORDS : []), ...(isolated ? ISOLATED_KEYWORDS : []), ...candidates, ...title.split(/\s+/), "commercial", "advertising", "creative", vector ? "graphic" : "photography", "design", "campaign", "marketing", "editorial", "concept", "copyspace", "premium", "modern", "visual", "stock", vector ? "clipart" : "jpeg"]
     .flatMap((entry) => typeof entry === "string" ? entry.toLowerCase().split(/[^a-z0-9]+/) : [])
     .filter((word) => word.length >= 2 && word.length <= 30 && !/^\d+$/.test(word) && !(isolated && word === "copyspace"));
   return [...new Set(words)].slice(0, 25);
 }
 
-function safeFilename(title: string, id: number): string {
+function safeFilename(title: string, id: number, vector = false): string {
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 54) || `sale_reference_${id}`;
-  return `stock_sale_reference_${String(id).padStart(2, "0")}_${slug}.jpeg`;
+  return `stock_sale_reference_${vector ? "vector_" : ""}${String(id).padStart(2, "0")}_${slug}.${vector ? "svg" : "jpeg"}`;
+}
+
+export interface SoldReferenceOptions {
+  /** Plan flat vector illustrations generated as SVG instead of photographic JPEGs. */
+  vector?: boolean;
 }
 
 function parseModelJson(raw: unknown): Record<string, unknown> {
@@ -89,7 +96,8 @@ function parseModelJson(raw: unknown): Record<string, unknown> {
   return parsed;
 }
 
-export async function analyzeSoldReference(dataUrlInput: unknown, apiKey?: string, forcedLayout?: SaleReferenceLayout): Promise<SaleReferencePlan> {
+export async function analyzeSoldReference(dataUrlInput: unknown, apiKey?: string, forcedLayout?: SaleReferenceLayout, options: SoldReferenceOptions = {}): Promise<SaleReferencePlan> {
+  const vector = options.vector === true;
   const reference = parseReferenceDataUrl(dataUrlInput);
   const key = apiKey || process.env.OPENROUTER_API_KEY;
   if (!key) throw new Error("OPENROUTER_API_KEY is not configured");
@@ -109,7 +117,8 @@ export async function analyzeSoldReference(dataUrlInput: unknown, apiKey?: strin
         content: [
           { type: "text", text: `Analyze the underlying stock image in this user-supplied sales-notification screenshot. Ignore email UI, marketplace UI, text, logos, watermarks, overlays and borders; none may be reproduced. One sale proves only that this exact asset found at least one buyer, not broad demand or keyword volume.
 
-Plan exactly 10 NEW commercial JPEG concepts inspired by the buyer-use signal, not copies or near-duplicates. Preserve only the useful subject category or buyer problem. Each concept must differ materially in story, buyer/use, setting, camera/composition, lighting and palette. Do not use trivial color swaps. Do not recreate the source composition, distinctive arrangement, branded elements or protected characters. Every concept must be understandable in two seconds and explain why a buyer would license it. No visible human faces, text, letters, numerals, logos, labels, signatures, watermarks, interface elements, frames or borders. ${NO_VISIBLE_FACE_RULE}
+Plan exactly 10 NEW commercial ${vector ? "vector illustration" : "JPEG"} concepts inspired by the buyer-use signal, not copies or near-duplicates. Preserve only the useful subject category or buyer problem. Each concept must differ materially in story, buyer/use, setting, camera/composition, lighting and palette. Do not use trivial color swaps. Do not recreate the source composition, distinctive arrangement, branded elements or protected characters. Every concept must be understandable in two seconds and explain why a buyer would license it. No visible human faces, text, letters, numerals, logos, labels, signatures, watermarks, interface elements, frames or borders. ${NO_VISIBLE_FACE_RULE}${vector ? `
+The sold asset is a VECTOR illustration and all 10 concepts will be rendered as flat vector illustrations (SVG): clean closed shapes, solid flat colour fills, smooth curves and simple shading, no photographic texture, camera blur or realistic lighting. Choose subjects that read clearly as vector clip art for the same buyers and season: new characters, objects or motifs, or the same kind of subject in a genuinely different pose, action, outfit and palette, never the source character with small changes. Write compositionAndCamera as the illustration's viewpoint and framing, and lightingAndMood as the flat-colour style and mood.` : ""}
 
 First decide referenceLayout. Use "isolated_cutout" only when the sold asset is a single isolated element or group (object, plant, rock, landscape piece, etc.) truly cut out on a flat white or transparent background, with no visible surface, horizon, directional light pattern or cast shadow; buyers license such assets to composite into their own designs, renderings and mockups. A studio still life standing on a white tabletop or backdrop, with cast shadows, light falloff or reserved copy space, is "full_scene" even when the background is mostly white. Use "solid_backdrop" when the subject is photographed against a seamless plain coloured (not white) studio backdrop, such as a pastel paper sweep, with no room, furniture or location; buyers license these for ads, banners and social posts because the flat colour leaves clean copy space. Otherwise use "full_scene".${forcedLayout ? ` The owner has confirmed the correct value is "${ANALYZER_LAYOUT[forcedLayout]}"; use it.` : ""}
 If referenceLayout is "isolated_cutout", ALL 10 concepts must also be complete isolated, composite-ready elements in the same buyer category (new subjects or materially different arrangements, not copies), each fully visible and centered on a seamless pure white (#FFFFFF) background with even padding on all sides, no ground plane, no horizon, no scenery, no copy space, and at most a faint soft contact shadow directly beneath. In that case compositionAndCamera must describe the viewing angle of the isolated element and settingAndProps must say "Seamless pure white background only".
@@ -176,12 +185,18 @@ Return pure JSON with this schema:
       COLOR_PALETTE: bounded(concept.colorPalette, "Balanced contemporary commercial palette"),
       TEXT_ELEMENTS: "No text",
     };
-    const prompt = `[SOLD-REFERENCE EXPANSION — CREATE A NEW WORK, DO NOT COPY THE UPLOADED IMAGE]\n${Object.entries(structure).map(([key, field]) => `${key}: ${field}`).join("\n")}\n${isolated
+    const prompt = `[SOLD-REFERENCE EXPANSION — CREATE A NEW WORK, DO NOT COPY THE UPLOADED IMAGE]\n${Object.entries(structure).map(([key, field]) => `${key}: ${field}`).join("\n")}\n${vector
+      ? `Create one original flat vector illustration with clean closed shapes, solid flat colour fills, smooth curves and simple flat shading, no photographic texture, gradient mesh or realistic lighting. ${isolated
+        ? "Show the complete element centered on a plain pure white background with even padding, floating with no ground, floor ellipse, cast shadow or scenery beneath or around it."
+        : backdrop
+        ? `Fill the whole frame with a plain flat ${backdropColor} background, the main subject whole and off-center with a wide empty area as copy space; an animal faces the viewer with its face clearly visible.`
+        : "Fill the whole frame edge to edge with one simple illustrated scene."}`
+      : isolated
       ? "Create one original, immediately readable isolated element photographed on a seamless pure white (#FFFFFF) background for compositing: the complete element fully inside the frame with even white padding, no ground plane, horizon or scenery, and at most a faint soft contact shadow directly beneath."
       : backdrop
       ? `Create one original, immediately readable, full-bleed commercial studio JPEG on a seamless plain ${backdropColor} backdrop that fills the whole frame edge to edge, with soft even light and generous empty backdrop for copy space. Show the main subject whole and fully inside the frame, not cropped to paws, legs or a detail; if it is an animal, it faces the camera with its face clearly visible, and human hands, if any, enter only from the frame edge.`
       : "Create one original, immediately readable, full-bleed commercial JPEG."} Preserve the named buyer problem, but use the NEW_CONCEPT, composition, setting, light and palette as a genuinely different work. No source screenshot UI or source layout. No text, letters, numerals, pseudo-text, logos, brands, watermarks, labels, borders, frames or visible human faces.`;
-    const itemKeywords = keywords(concept.keywords, title, isolated);
+    const itemKeywords = keywords(concept.keywords, title, isolated, vector);
     if (itemKeywords.length < 15) throw new Error(`Concept ${index + 1} has insufficient keywords`);
     return {
       id: index + 1,
@@ -192,8 +207,8 @@ Return pure JSON with this schema:
       prompt,
       negativePrompt: "text, letters, numerals, logo, watermark, label, signature, visible face, portrait, border, frame, screenshot, interface, copied composition",
       keywords: itemKeywords,
-      modelUsed: process.env.IMAGE_GENERATION_MODEL || "google/gemini-3.1-flash-lite-image",
-      filename: safeFilename(title, index + 1),
+      modelUsed: vector ? process.env.VECTOR_IMAGE_MODEL || DEFAULT_VECTOR_MODEL : process.env.IMAGE_GENERATION_MODEL || "google/gemini-3.1-flash-lite-image",
+      filename: safeFilename(title, index + 1, vector),
       isTransparent: false,
       generationMode: "regular_scene",
       conceptMode: "existing",
@@ -202,6 +217,7 @@ Return pure JSON with this schema:
       generationBriefVersion: GENERATION_BRIEF_VERSION,
       saleReferenceStructure: structure,
       ...(isolated || backdrop ? { saleReferenceLayout: layout } : {}),
+      ...(vector ? { outputFormat: "svg" as const } : {}),
     };
   });
 

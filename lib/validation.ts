@@ -32,6 +32,7 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (value.manualFallbackPrompt !== undefined && (value.manualResearch !== true || !isBoundedString(value.manualFallbackPrompt, 8_000))) return false;
   if (value.manualResearch === true && [value.saleReferenceStructure, value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure, value.aerialLandscapeStructure, value.editorialPenSketchStructure, value.symmetricalStorefrontStructure, value.thaiNaturePosterStructure].some(field => field !== undefined)) return false;
   if ([value.saleReferenceStructure, value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure, value.aerialLandscapeStructure, value.editorialPenSketchStructure, value.symmetricalStorefrontStructure, value.thaiNaturePosterStructure].filter(field => field !== undefined).length > 1) return false;
+  if (value.outputFormat !== undefined && (value.outputFormat !== "svg" || value.saleReferenceStructure === undefined)) return false;
   if (value.saleReferenceLayout !== undefined && (value.saleReferenceStructure === undefined || !["full_scene", "isolated_white", "solid_backdrop"].includes(String(value.saleReferenceLayout)))) return false;
   if (value.saleReferenceStructure !== undefined) {
     if (!isRecord(value.saleReferenceStructure)) return false;

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { appendBatchLog, imagePath, saveImageDataUrl, type BatchPlan } from "./batch-output";
+import { generateVectorImage } from "./vector-generator";
 import { getErrorMessage } from "./errors";
 import { generateSingleImage } from "./image-generator";
 import { getOpenRouterCredits } from "./openrouter";
@@ -38,6 +39,18 @@ export async function runBatch(folder: string, plan: BatchPlan): Promise<BatchRu
     for (let item = queue.shift(); item; item = queue.shift()) {
       const label = `#${item.id} ${item.seoTitle}`;
       try {
+        if (item.outputFormat === "svg") {
+          const vector = await generateVectorImage(item);
+          if (!vector.svg) throw new Error(vector.error || "no SVG returned");
+          fs.writeFileSync(imagePath(folder, item), vector.svg, "utf8");
+          report.saved.push(imagePath(folder, item));
+          statuses[item.id] = vector.qualityReview?.status ?? "saved";
+          if (vector.qualityReview?.status === "accepted_after_retry_limit") {
+            report.warnings.push(`${label}: ${vector.qualityReview.rejectionReasons.join("; ")}`);
+          }
+          console.log(`done ${label}`);
+          continue;
+        }
         let result = await generateSingleImage(item);
         if (!result.imageUrl && item.manualFallbackPrompt && /visible human face/i.test(result.error ?? "")) {
           result = await generateSingleImage({ ...item, prompt: item.manualFallbackPrompt });
