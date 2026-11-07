@@ -10,6 +10,8 @@ export const DEFAULT_VECTOR_MODEL = "recraft/recraft-v4.1-vector";
 export const MAX_VECTOR_RETRIES = 3;
 /** Adobe Stock asks for a 15–65 MP artboard; aim between the two. */
 export const TARGET_ARTBOARD_PIXELS = 20_000_000;
+/** Adobe's vector design guide caps characters, icons and illustrations at 4800 px a side. */
+export const MAX_ARTBOARD_SIDE = 4800;
 const MAX_SVG_BYTES = 45 * 1024 * 1024;
 const RECRAFT_ASPECT: Record<StockImageItem["aspectRatio"], string> = { "16:9": "16:9", "3:2": "4:3", "4:5": "3:4", "1:1": "1:1" };
 
@@ -38,10 +40,13 @@ function viewBoxSize(svg: string): { width: number; height: number } {
   return { width, height };
 }
 
-/** Set the artboard to about 20 MP so Adobe's 15 MP minimum is met; vectors scale without loss. */
+/**
+ * Set the artboard to about 20 MP (Adobe's technical page asks 15–65 MP) without a side over 4800 px
+ * (Adobe's newer design page). A 16:9 artboard cannot meet both, so it stops at 4800 px wide.
+ */
 export function sizeArtboardForAdobe(svg: string): { svg: string; width: number; height: number } {
   const box = viewBoxSize(svg);
-  const scale = Math.sqrt(TARGET_ARTBOARD_PIXELS / (box.width * box.height));
+  const scale = Math.min(Math.sqrt(TARGET_ARTBOARD_PIXELS / (box.width * box.height)), MAX_ARTBOARD_SIDE / Math.max(box.width, box.height));
   const width = Math.round(box.width * scale);
   const height = Math.round(box.height * scale);
   const hasViewBox = /<svg\b[^>]*\sviewBox\s*=/i.test(svg);
@@ -51,6 +56,53 @@ export function sizeArtboardForAdobe(svg: string): { svg: string; width: number;
     return cleaned.replace(/^<svg\b/i, `<svg${extra}`);
   });
   return { svg: resized, width, height };
+}
+
+const SHAPE = /^\s*<(path|rect|polygon|circle|ellipse|polyline)\b[^>]*?(?:\/>|>[\s\S]*?<\/\1>)/i;
+
+function coversArtboard(shape: string, box: { width: number; height: number }): boolean {
+  const near = (value: string | undefined, target: number) => Math.abs(Number(value) - target) <= Math.max(2, target * 0.002);
+  const rect = /^<rect\b/i.test(shape.trim());
+  if (rect) {
+    const attr = (name: string) => new RegExp(`\\s${name}\\s*=\\s*["']([\\d.]+)`, "i").exec(shape)?.[1];
+    return near(attr("x") ?? "0", 0) && near(attr("y") ?? "0", 0) && near(attr("width"), box.width) && near(attr("height"), box.height);
+  }
+  const d = /\sd\s*=\s*["']([^"']*)["']/i.exec(shape)?.[1] ?? "";
+  const numbers = d.match(/-?[\d.]+/g) ?? [];
+  if (!/^\s*M/i.test(d) || /[CQSATcqsat]/.test(d) || numbers.length < 8 || numbers.length > 10) return false;
+  const points = numbers.map(Number);
+  const xs = points.filter((_, i) => i % 2 === 0);
+  const ys = points.filter((_, i) => i % 2 === 1);
+  return near(String(Math.min(...xs)), 0) && near(String(Math.min(...ys)), 0) && near(String(Math.max(...xs)), box.width) && near(String(Math.max(...ys)), box.height);
+}
+
+/**
+ * Adobe asks for labelled layers instead of a flat design. Put a full-artboard background shape in a
+ * "background" layer and every other shape in an "artwork" layer; Illustrator reads each top-level
+ * group id as a layer name. Files that already have groups are left alone.
+ */
+export function groupIntoLayers(svg: string): string {
+  if (/<g\b/i.test(svg)) return svg;
+  const open = /<svg\b[^>]*>/i.exec(svg);
+  const close = svg.lastIndexOf("</svg>");
+  if (!open || close < 0) return svg;
+  const head = svg.slice(0, open.index + open[0].length);
+  let body = svg.slice(open.index + open[0].length, close);
+  const kept: string[] = [];
+  body = body.replace(/<(metadata|defs|title|desc)\b[\s\S]*?<\/\1>/gi, block => { kept.push(block); return ""; });
+  const first = SHAPE.exec(body);
+  let background = "";
+  if (first && coversArtboard(first[0], viewBoxSize(svg))) {
+    background = first[0].trim();
+    body = body.slice(first.index + first[0].length);
+  }
+  const layers = `${background ? `\n<g id="background">\n${background}\n</g>` : ""}\n<g id="artwork">\n${body.trim()}\n</g>\n`;
+  return `${head}${kept.length ? `\n${kept.join("\n")}` : ""}${layers}${svg.slice(close)}`;
+}
+
+/** Make a generated SVG ready for Adobe: labelled layers and a correctly sized artboard. */
+export function prepareSvgForAdobe(svg: string): { svg: string; width: number; height: number } {
+  return sizeArtboardForAdobe(groupIntoLayers(svg));
 }
 
 /** A small PNG of the SVG for the vision check. */
@@ -119,7 +171,7 @@ export async function generateVectorImage(item: StockImageItem, apiKey?: string,
       rejectionReasons.splice(0, rejectionReasons.length, problem);
       continue;
     }
-    const sized = sizeArtboardForAdobe(svg);
+    const sized = prepareSvgForAdobe(svg);
     lastSvg = sized.svg;
     const quality = await assessGeneratedImageQuality(await rasterizeSvg(svg), key, {
       mode: "regular_scene",

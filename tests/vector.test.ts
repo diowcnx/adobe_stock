@@ -4,10 +4,10 @@ import { generateMetadataCsv } from "../lib/csv";
 import { getGenerationBlockReason } from "../lib/generation-policy";
 import { analyzeSoldReference } from "../lib/sale-reference";
 import { isStockImageItem } from "../lib/validation";
-import { generateVectorImage, sizeArtboardForAdobe, svgProblem } from "../lib/vector-generator";
+import { generateVectorImage, groupIntoLayers, MAX_ARTBOARD_SIDE, sizeArtboardForAdobe, svgProblem } from "../lib/vector-generator";
 import type { StockImageItem } from "../lib/types";
 
-const SNOWMAN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="768" viewBox="0 0 2048 1536"><rect width="2048" height="1536" fill="#ffffff"/><circle cx="1024" cy="1000" r="300" fill="#eef4ff"/><path d="M 900 600 C 950 500 1100 500 1150 600 Z" fill="#d33"/><metadata><recraft-signature>{}</recraft-signature></metadata></svg>`;
+const SNOWMAN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="768" viewBox="0 0 2048 1536"><path fill="rgb(254,254,254)" d="M 0 0 L 2048 0 L 2048 1536 L 0 1536 L 0 0 z"/><circle cx="1024" cy="1000" r="300" fill="#eef4ff"/><path d="M 900 600 C 950 500 1100 500 1150 600 Z" fill="#d33"/><metadata><recraft-signature>{}</recraft-signature></metadata></svg>`;
 
 function referenceDataUrl(): string {
   const bytes = Buffer.alloc(256, 0);
@@ -81,9 +81,9 @@ test("svg output is only allowed on sold-reference items", async () => {
 
 test("SVG checks reject embedded rasters, scripts and external links", () => {
   assert.equal(svgProblem(SNOWMAN_SVG), undefined);
-  assert.match(svgProblem(SNOWMAN_SVG.replace("<rect", `<image href="data:image/png;base64,AAAA"/><rect`)) ?? "", /raster/);
-  assert.match(svgProblem(SNOWMAN_SVG.replace("<rect", "<script>alert(1)</script><rect")) ?? "", /active content/);
-  assert.match(svgProblem(SNOWMAN_SVG.replace("<rect", `<use href="https://example.com/a.svg#x"/><rect`)) ?? "", /external/);
+  assert.match(svgProblem(SNOWMAN_SVG.replace("<circle", `<image href="data:image/png;base64,AAAA"/><circle`)) ?? "", /raster/);
+  assert.match(svgProblem(SNOWMAN_SVG.replace("<circle", "<script>alert(1)</script><circle")) ?? "", /active content/);
+  assert.match(svgProblem(SNOWMAN_SVG.replace("<circle", `<use href="https://example.com/a.svg#x"/><circle`)) ?? "", /external/);
   assert.match(svgProblem("<html></html>") ?? "", /not an SVG/);
   assert.match(svgProblem(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>`) ?? "", /no vector shapes/);
 });
@@ -94,7 +94,29 @@ test("the artboard is resized into Adobe's 15–65 MP range and keeps its viewBo
   assert.equal(Math.round((width / height) * 100), Math.round((2048 / 1536) * 100));
   assert.match(svg, new RegExp(`<svg width="${width}" height="${height}"`));
   assert.match(svg, /viewBox="0 0 2048 1536"/);
-  assert.equal((svg.match(/\swidth=/g) ?? []).length, 2); // the root and the background rect only
+  assert.equal((svg.match(/\swidth=/g) ?? []).length, 1);
+});
+
+test("no artboard side exceeds Adobe's 4800 px design limit", () => {
+  const wide = sizeArtboardForAdobe(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080"><path d="M 1 1 L 2 2 z"/></svg>`);
+  assert.equal(wide.width, MAX_ARTBOARD_SIDE);
+  assert.equal(wide.height, 2700);
+  const square = sizeArtboardForAdobe(SNOWMAN_SVG.replace("0 0 2048 1536", "0 0 2048 2048"));
+  assert.ok(square.width <= MAX_ARTBOARD_SIDE && square.width * square.height >= 15_000_000);
+});
+
+test("shapes are grouped into labelled background and artwork layers", () => {
+  const layered = groupIntoLayers(SNOWMAN_SVG.replace("<circle", `<defs><linearGradient id="g1"/></defs><circle`));
+  assert.match(layered, /<g id="background">\s*<path fill="rgb\(254,254,254\)" d="M 0 0[^"]*"\/>\s*<\/g>\s*<g id="artwork">\s*<circle/);
+  const order = ["<defs>", "<metadata>", '<g id="background">', '<g id="artwork">', "<circle"].map(tag => layered.indexOf(tag));
+  assert.deepEqual([...order].sort((a, b) => a - b), order);
+  assert.ok(order.every(index => index > 0));
+  assert.equal((layered.match(/<path/g) ?? []).length, 2);
+  assert.equal(svgProblem(layered), undefined);
+  assert.equal(groupIntoLayers(layered), layered);
+  const noBackground = groupIntoLayers(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M 10 10 C 20 20 30 30 40 40 z"/></svg>`);
+  assert.doesNotMatch(noBackground, /id="background"/);
+  assert.match(noBackground, /<g id="artwork">\s*<path d="M 10 10/);
 });
 
 test("vector generation requests SVG, inspects it and retries a rejected drawing", async () => {
@@ -126,6 +148,7 @@ test("vector generation requests SVG, inspects it and retries a rejected drawing
     assert.match(String(imageBodies[1].prompt), /rejected because: snowman arm is broken/);
     assert.equal(result.qualityReview?.status, "passed_after_retries");
     assert.match(result.svg ?? "", /<svg width="\d+" height="\d+"/);
+    assert.match(result.svg ?? "", /<g id="background">[\s\S]*<g id="artwork">/);
   } finally {
     global.fetch = originalFetch;
   }
