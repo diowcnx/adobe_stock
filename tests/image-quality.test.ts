@@ -774,5 +774,6 @@ test("plain backdrop sold-reference QA skips the white-mat guard and tells the v
     });
     assert.equal(result.passed, true);
     assert.match(inspection, /seamless plain coloured studio backdrop/);
+    assert.match(inspection, /reject a main subject that is cropped to paws/);
   } finally { globalThis.fetch = originalFetch; }
 });

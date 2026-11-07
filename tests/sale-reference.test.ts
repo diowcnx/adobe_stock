@@ -181,3 +181,22 @@ test("the owner can force the plain backdrop layout", async () => {
     global.fetch = originalFetch;
   }
 });
+
+test("plain backdrop briefs ask for the whole subject facing the camera", async () => {
+  const originalFetch = global.fetch;
+  let analyzerPrompt = "";
+  global.fetch = async (_input, init) => {
+    analyzerPrompt = JSON.parse(String(init?.body)).messages[0].content[0].text;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ referenceLayout: "solid_backdrop", concepts: sampleConcepts() }) } }] }), { status: 200 });
+  };
+  try {
+    const plan = await analyzeSoldReference(referenceDataUrl(), "test-key");
+    assert.match(analyzerPrompt, /must be whole and fully inside the frame, never cropped to paws/);
+    for (const item of plan.items) {
+      assert.match(item.prompt, /Show the main subject whole and fully inside the frame/);
+      assert.match(item.prompt, /faces the camera/);
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
