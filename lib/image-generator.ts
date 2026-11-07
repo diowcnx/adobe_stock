@@ -497,6 +497,7 @@ export async function generateSingleImage(
               isSymmetricalStorefront: Boolean(item.symmetricalStorefrontStructure),
               isSaleReference: Boolean(item.saleReferenceStructure),
               isSaleReferenceIsolated: isIsolatedSaleReference,
+              isSaleReferenceBackdrop: Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "solid_backdrop",
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

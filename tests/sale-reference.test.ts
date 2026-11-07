@@ -134,3 +134,50 @@ test("an owner-confirmed layout overrides the analyzer", async () => {
     global.fetch = originalFetch;
   }
 });
+
+test("a sold subject on a plain colour backdrop expands into ten briefs on distinct plain backdrops", async () => {
+  const originalFetch = global.fetch;
+  const concepts = sampleConcepts().map((concept, index) => ({
+    ...concept,
+    // Repeats, white and a missing colour must all fall back to distinct non-white colours.
+    backdropColor: ["pastel pink", "pastel pink", "white", undefined, "Sage Green!"][index] ?? `pastel tone ${"abcdefghij"[index]}`,
+  }));
+  mockProvider({ referenceLayout: "solid_backdrop", subject: "kitten on a pink backdrop", concepts });
+  try {
+    const plan = await analyzeSoldReference(referenceDataUrl(), "test-key");
+    assert.equal(plan.analysis.layout, "solid_backdrop");
+    const colors = plan.items.map(item => /Seamless solid (.+?) studio backdrop/.exec(item.saleReferenceStructure?.SETTING_AND_PROPS ?? "")?.[1]);
+    assert.equal(colors.every(Boolean), true);
+    assert.equal(new Set(colors).size, 10);
+    assert.equal(colors.some(color => /white/.test(color ?? "")), false);
+    assert.equal(colors[0], "pastel pink");
+    assert.equal(colors[4], "sage green");
+    for (const item of plan.items) {
+      assert.equal(item.saleReferenceLayout, "solid_backdrop");
+      assert.match(item.saleReferenceStructure?.SETTING_AND_PROPS ?? "", /no room, furniture or window/);
+      assert.match(item.saleReferenceStructure?.COMPOSITION_AND_CAMERA ?? "", /off-center.+copy space/);
+      assert.match(item.prompt, /full-bleed commercial studio JPEG on a seamless plain/);
+      assert.equal(isStockImageItem(item), true);
+      assert.equal(getGenerationBlockReason(item), undefined);
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("the owner can force the plain backdrop layout", async () => {
+  const originalFetch = global.fetch;
+  let analyzerPrompt = "";
+  global.fetch = async (_input, init) => {
+    analyzerPrompt = JSON.parse(String(init?.body)).messages[0].content[0].text;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ referenceLayout: "full_scene", concepts: sampleConcepts() }) } }] }), { status: 200 });
+  };
+  try {
+    const plan = await analyzeSoldReference(referenceDataUrl(), "test-key", "solid_backdrop");
+    assert.match(analyzerPrompt, /correct value is "solid_backdrop"/);
+    assert.equal(plan.analysis.layout, "solid_backdrop");
+    assert.equal(plan.items[0].saleReferenceLayout, "solid_backdrop");
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

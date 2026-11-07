@@ -87,14 +87,14 @@ export interface SaleReferenceStructure {
   TEXT_ELEMENTS: string;
 }
 
-export type SaleReferenceLayout = "full_scene" | "isolated_white";
+export type SaleReferenceLayout = "full_scene" | "isolated_white" | "solid_backdrop";
 
 export interface StockImageItem {
   manualResearch?: boolean;
   /** Replacement prompt from the research file, used when a retry is blocked by a visible face. */
   manualFallbackPrompt?: string;
   saleReferenceStructure?: SaleReferenceStructure;
-  /** Sold-reference expansion rendered as an isolated element on pure white instead of a full-bleed scene. */
+  /** Sold-reference expansion rendered as an isolated element on pure white, or on a seamless plain colour backdrop, instead of a room or location scene. */
   saleReferenceLayout?: SaleReferenceLayout;
   thaiNaturePosterStructure?: ThaiNaturePosterStructure;
   symmetricalStorefrontStructure?: SymmetricalStorefrontStructure;

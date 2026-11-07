@@ -14,7 +14,7 @@ export interface SoldReferenceAnalysis {
   likelyBuyerUses: string[];
   expansionStrategy: string;
   sourceFingerprint: string;
-  /** "isolated_white" when the sold asset is a cutout element, so the expansion stays composite-ready. */
+  /** "isolated_white" for a cutout element and "solid_backdrop" for a subject on a plain colour backdrop, so the expansion keeps the layout that sold. */
   layout: SaleReferenceLayout;
 }
 
@@ -37,6 +37,7 @@ interface RawConcept {
   settingAndProps?: unknown;
   lightingAndMood?: unknown;
   colorPalette?: unknown;
+  backdropColor?: unknown;
   keywords?: unknown;
 }
 
@@ -60,6 +61,10 @@ function parseReferenceDataUrl(dataUrl: unknown): { dataUrl: string; buffer: Buf
   }
   return { dataUrl, buffer, fingerprint: createHash("sha256").update(buffer).digest("hex").slice(0, 16) };
 }
+
+/** Used when the analyzer omits or repeats a backdrop colour, so the ten images still differ. */
+export const FALLBACK_BACKDROP_COLORS = ["pastel pink", "pale mint green", "baby blue", "soft lavender", "soft peach", "butter yellow", "powder blue", "sage green", "warm coral", "light lilac"];
+const ANALYZER_LAYOUT: Record<SaleReferenceLayout, string> = { full_scene: "full_scene", isolated_white: "isolated_cutout", solid_backdrop: "solid_backdrop" };
 
 const ISOLATED_KEYWORDS = ["isolated", "white", "background", "cutout", "element"];
 
@@ -106,11 +111,12 @@ export async function analyzeSoldReference(dataUrlInput: unknown, apiKey?: strin
 
 Plan exactly 10 NEW commercial JPEG concepts inspired by the buyer-use signal, not copies or near-duplicates. Preserve only the useful subject category or buyer problem. Each concept must differ materially in story, buyer/use, setting, camera/composition, lighting and palette. Do not use trivial color swaps. Do not recreate the source composition, distinctive arrangement, branded elements or protected characters. Every concept must be understandable in two seconds and explain why a buyer would license it. No visible human faces, text, letters, numerals, logos, labels, signatures, watermarks, interface elements, frames or borders. ${NO_VISIBLE_FACE_RULE}
 
-First decide referenceLayout. Use "isolated_cutout" only when the sold asset is a single isolated element or group (object, plant, rock, landscape piece, etc.) truly cut out on a flat white or transparent background, with no visible surface, horizon, directional light pattern or cast shadow; buyers license such assets to composite into their own designs, renderings and mockups. A studio still life standing on a white tabletop or backdrop, with cast shadows, light falloff or reserved copy space, is "full_scene" even when the background is mostly white. Otherwise use "full_scene".${forcedLayout ? ` The owner has confirmed the correct value is "${forcedLayout === "isolated_white" ? "isolated_cutout" : "full_scene"}"; use it.` : ""}
+First decide referenceLayout. Use "isolated_cutout" only when the sold asset is a single isolated element or group (object, plant, rock, landscape piece, etc.) truly cut out on a flat white or transparent background, with no visible surface, horizon, directional light pattern or cast shadow; buyers license such assets to composite into their own designs, renderings and mockups. A studio still life standing on a white tabletop or backdrop, with cast shadows, light falloff or reserved copy space, is "full_scene" even when the background is mostly white. Use "solid_backdrop" when the subject is photographed against a seamless plain coloured (not white) studio backdrop, such as a pastel paper sweep, with no room, furniture or location; buyers license these for ads, banners and social posts because the flat colour leaves clean copy space. Otherwise use "full_scene".${forcedLayout ? ` The owner has confirmed the correct value is "${ANALYZER_LAYOUT[forcedLayout]}"; use it.` : ""}
 If referenceLayout is "isolated_cutout", ALL 10 concepts must also be complete isolated, composite-ready elements in the same buyer category (new subjects or materially different arrangements, not copies), each fully visible and centered on a seamless pure white (#FFFFFF) background with even padding on all sides, no ground plane, no horizon, no scenery, no copy space, and at most a faint soft contact shadow directly beneath. In that case compositionAndCamera must describe the viewing angle of the isolated element and settingAndProps must say "Seamless pure white background only".
+If referenceLayout is "solid_backdrop", ALL 10 concepts must keep a seamless plain studio backdrop with no room, furniture, window or location, and vary the subject, action, props and camera instead. Give each concept a different backdropColor (a single named colour such as "pastel pink" or "sage green", never white), place the subject off-center and leave a wide area of plain backdrop as copy space; settingAndProps lists only the few props touching the subject.
 
 Return pure JSON with this schema:
-{"referenceLayout":"isolated_cutout|full_scene","subject":"literal source subject","visualStrengths":"why the sold image may have been useful","likelyBuyerUses":["use"],"expansionStrategy":"how the 10 concepts expand without copying","concepts":[{"title":"SEO title without brands","category":"stock category","aspectRatio":"16:9|3:2|4:5|1:1","newConcept":"clear distinct concept","targetBuyer":"specific buyer","intendedUse":"specific design use","purchaseReason":"practical licensing reason without sales guarantee","subjectTreatment":"literal subject and action","compositionAndCamera":"camera and layout","settingAndProps":"physical setting and minimal props","lightingAndMood":"lighting","colorPalette":"colors","keywords":["15 to 25 single English words"]}]}` },
+{"referenceLayout":"isolated_cutout|solid_backdrop|full_scene","subject":"literal source subject","visualStrengths":"why the sold image may have been useful","likelyBuyerUses":["use"],"expansionStrategy":"how the 10 concepts expand without copying","concepts":[{"title":"SEO title without brands","category":"stock category","aspectRatio":"16:9|3:2|4:5|1:1","newConcept":"clear distinct concept","targetBuyer":"specific buyer","intendedUse":"specific design use","purchaseReason":"practical licensing reason without sales guarantee","subjectTreatment":"literal subject and action","compositionAndCamera":"camera and layout","settingAndProps":"physical setting and minimal props","lightingAndMood":"lighting","colorPalette":"colors","backdropColor":"solid_backdrop only: one named colour","keywords":["15 to 25 single English words"]}]}` },
           { type: "image_url", image_url: { url: reference.dataUrl } },
         ],
       }],
@@ -126,9 +132,20 @@ Return pure JSON with this schema:
   if (!Array.isArray(parsed.concepts) || parsed.concepts.length !== 10) throw new Error("Image analysis must return exactly 10 concepts");
 
   const subject = bounded(parsed.subject, "commercial stock subject", 180);
-  const layout: SaleReferenceLayout = forcedLayout ?? (parsed.referenceLayout === "isolated_cutout" ? "isolated_white" : "full_scene");
+  const layout: SaleReferenceLayout = forcedLayout
+    ?? (parsed.referenceLayout === "isolated_cutout" ? "isolated_white" : parsed.referenceLayout === "solid_backdrop" ? "solid_backdrop" : "full_scene");
   const isolated = layout === "isolated_white";
+  const backdrop = layout === "solid_backdrop";
   const seen = new Set<string>();
+  const usedBackdrops = new Set<string>();
+  const pickBackdrop = (value: unknown): string => {
+    const named = bounded(value, "", 40).toLowerCase().replace(/[^a-z ]+/g, "").trim();
+    const choice = named && !/\bwhite\b/.test(named) && !usedBackdrops.has(named)
+      ? named
+      : FALLBACK_BACKDROP_COLORS.find(color => !usedBackdrops.has(color)) ?? "pastel pink";
+    usedBackdrops.add(choice);
+    return choice;
+  };
   const items = parsed.concepts.map((value, index): StockImageItem => {
     if (!isRecord(value)) throw new Error(`Concept ${index + 1} is invalid`);
     const concept = value as RawConcept;
@@ -140,20 +157,29 @@ Return pure JSON with this schema:
     const targetBuyer = bounded(concept.targetBuyer, "commercial designers", 240);
     const intendedUse = bounded(concept.intendedUse, "advertising and editorial layouts", 300);
     const purchaseReason = bounded(concept.purchaseReason, "Clear subject, practical layout flexibility, and a distinct campaign story", 400);
+    const backdropColor = backdrop ? pickBackdrop(concept.backdropColor) : "";
     const structure: SaleReferenceStructure = {
       REFERENCE_SUBJECT: subject,
       OBSERVED_SALE_SIGNAL: "The uploaded asset received at least one confirmed sale; this is a single-asset signal, not proof of market-wide demand.",
       NEW_CONCEPT: newConcept,
       TARGET_BUYER_AND_USE: `${targetBuyer}; ${intendedUse}`,
       SUBJECT_TREATMENT: bounded(concept.subjectTreatment, subject),
-      COMPOSITION_AND_CAMERA: bounded(concept.compositionAndCamera, isolated ? "Complete element centered at a slightly elevated three-quarter view with even white padding" : "Commercial eye-level composition with useful natural copy space"),
-      SETTING_AND_PROPS: isolated ? "Seamless pure white background only" : bounded(concept.settingAndProps, "A coherent physical setting with only relevant unbranded props"),
+      COMPOSITION_AND_CAMERA: backdrop
+        ? `${bounded(concept.compositionAndCamera, "Eye-level studio shot", 400)}; subject placed off-center, leaving a wide plain ${backdropColor} area as copy space`
+        : bounded(concept.compositionAndCamera, isolated ? "Complete element centered at a slightly elevated three-quarter view with even white padding" : "Commercial eye-level composition with useful natural copy space"),
+      SETTING_AND_PROPS: isolated
+        ? "Seamless pure white background only"
+        : backdrop
+        ? `Seamless solid ${backdropColor} studio backdrop and matching floor sweep, no room, furniture or window; props: ${bounded(concept.settingAndProps, "only the items the subject touches", 300)}`
+        : bounded(concept.settingAndProps, "A coherent physical setting with only relevant unbranded props"),
       LIGHTING_AND_MOOD: bounded(concept.lightingAndMood, "Natural premium commercial lighting"),
       COLOR_PALETTE: bounded(concept.colorPalette, "Balanced contemporary commercial palette"),
       TEXT_ELEMENTS: "No text",
     };
     const prompt = `[SOLD-REFERENCE EXPANSION — CREATE A NEW WORK, DO NOT COPY THE UPLOADED IMAGE]\n${Object.entries(structure).map(([key, field]) => `${key}: ${field}`).join("\n")}\n${isolated
       ? "Create one original, immediately readable isolated element photographed on a seamless pure white (#FFFFFF) background for compositing: the complete element fully inside the frame with even white padding, no ground plane, horizon or scenery, and at most a faint soft contact shadow directly beneath."
+      : backdrop
+      ? `Create one original, immediately readable, full-bleed commercial studio JPEG on a seamless plain ${backdropColor} backdrop that fills the whole frame edge to edge, with soft even light and generous empty backdrop for copy space.`
       : "Create one original, immediately readable, full-bleed commercial JPEG."} Preserve the named buyer problem, but use the NEW_CONCEPT, composition, setting, light and palette as a genuinely different work. No source screenshot UI or source layout. No text, letters, numerals, pseudo-text, logos, brands, watermarks, labels, borders, frames or visible human faces.`;
     const itemKeywords = keywords(concept.keywords, title, isolated);
     if (itemKeywords.length < 15) throw new Error(`Concept ${index + 1} has insufficient keywords`);
@@ -175,7 +201,7 @@ Return pure JSON with this schema:
       planningSource: "ai",
       generationBriefVersion: GENERATION_BRIEF_VERSION,
       saleReferenceStructure: structure,
-      ...(isolated ? { saleReferenceLayout: layout } : {}),
+      ...(isolated || backdrop ? { saleReferenceLayout: layout } : {}),
     };
   });
 

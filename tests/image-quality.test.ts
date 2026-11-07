@@ -752,3 +752,27 @@ test("isolated sold-reference QA rejects a grey or gradient backdrop before the 
     assert.ok(await measureCornerWhiteness(await onBackdrop("#ffffff")) >= 250);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+test("plain backdrop sold-reference QA skips the white-mat guard and tells the vision check the backdrop is intended", async () => {
+  const originalFetch = globalThis.fetch;
+  let inspection = "";
+  globalThis.fetch = async (_input, init) => {
+    inspection = JSON.parse(String(init?.body || "{}")).messages[0].content[0].text;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      passed: true, hasVisibleHumanFace: false, hasText: false, hasArtificialBorder: false,
+      hasPosterLayout: false, isImmediatelyRecognizable: true, hasClearLiteralStory: true,
+      hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: false, issues: [],
+    }) } }] }));
+  };
+  const subject = await sharp({ create: { width: 160, height: 120, channels: 3, background: "#7a6a5a" } }).png().toBuffer();
+  const paleBackdrop = await sharp({ create: { width: 256, height: 256, channels: 3, background: "#f2f0ee" } })
+    .composite([{ input: subject, left: 48, top: 68 }]).jpeg().toBuffer();
+  try {
+    assert.equal(await detectUnintendedLightBorder(paleBackdrop), true);
+    const result = await assessGeneratedImageQuality(paleBackdrop, "test-key", {
+      mode: "regular_scene", expectedTitle: "kitten on a pastel backdrop", isSaleReference: true, isSaleReferenceBackdrop: true,
+    });
+    assert.equal(result.passed, true);
+    assert.match(inspection, /seamless plain coloured studio backdrop/);
+  } finally { globalThis.fetch = originalFetch; }
+});

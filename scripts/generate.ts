@@ -9,7 +9,7 @@ import { reserveUniquePromptBatch } from "../lib/prompt-history";
 import { analyzeSoldReference } from "../lib/sale-reference";
 import type { SaleReferenceLayout } from "../lib/types";
 
-const LAYOUTS: Record<string, SaleReferenceLayout> = { scene: "full_scene", cutout: "isolated_white" };
+const LAYOUTS: Record<string, SaleReferenceLayout> = { scene: "full_scene", cutout: "isolated_white", backdrop: "solid_backdrop" };
 
 const USAGE = `Usage: npm run generate -- <command> [--plan]
 
@@ -20,7 +20,8 @@ const USAGE = `Usage: npm run generate -- <command> [--plan]
   credits             show the OpenRouter balance
 
   --plan           write plan.json and metadata.csv only; generate later with resume
-  --layout=scene   treat a sold image as a full scene (--layout=cutout for an isolated element)`;
+  --layout=scene   treat a sold image as a full scene (--layout=cutout for an isolated element,
+                   --layout=backdrop for a subject on a plain colour studio backdrop)`;
 
 async function soldImageDataUrl(file: string): Promise<string> {
   const jpeg = await sharp(file).rotate().resize({ width: 1280, height: 1280, fit: "inside", withoutEnlargement: true })
