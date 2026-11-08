@@ -192,6 +192,7 @@ test("plain backdrop briefs ask for the whole subject facing the camera", async 
   try {
     const plan = await analyzeSoldReference(referenceDataUrl(), "test-key");
     assert.match(analyzerPrompt, /must be whole and fully inside the frame, never cropped to paws/);
+    assert.match(analyzerPrompt, /Never ask for binary code, 0s and 1s, digits, program code/);
     for (const item of plan.items) {
       assert.match(item.prompt, /Show the main subject whole and fully inside the frame/);
       assert.match(item.prompt, /faces the camera/);
