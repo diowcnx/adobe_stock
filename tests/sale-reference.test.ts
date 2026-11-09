@@ -201,3 +201,41 @@ test("plain backdrop briefs ask for the whole subject facing the camera", async 
     global.fetch = originalFetch;
   }
 });
+
+test("a sold empty background expands into ten backgrounds that differ in both style and colour", async () => {
+  const originalFetch = global.fetch;
+  let analyzerPrompt = "";
+  const concepts = sampleConcepts().map((concept, index) => ({
+    ...concept,
+    // Repeats and missing values must fall back to unused styles and colours.
+    backgroundStyle: ["glitter bokeh", "glitter bokeh", undefined, "Softly Draped Silk!"][index] ?? `style ${"abcdefghij"[index]}`,
+    backgroundColor: ["royal blue", "royal blue", "deep red"][index] ?? `colour ${"abcdefghij"[index]}`,
+  }));
+  global.fetch = async (_input, init) => {
+    analyzerPrompt = JSON.parse(String(init?.body)).messages[0].content[0].text;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ referenceLayout: "empty_background", subject: "blue studio backdrop", concepts }) } }] }), { status: 200 });
+  };
+  try {
+    const plan = await analyzeSoldReference(referenceDataUrl(), "test-key");
+    assert.match(analyzerPrompt, /never make ten colour swaps of one style/);
+    assert.equal(plan.analysis.layout, "empty_background");
+    const treatments = plan.items.map(item => item.saleReferenceStructure?.SUBJECT_TREATMENT ?? "");
+    const styles = treatments.map(text => /^Empty \S+(?: \S+)? (.+) filling/.exec(text)?.[1]);
+    assert.equal(new Set(plan.items.map(item => item.saleReferenceStructure?.SUBJECT_TREATMENT)).size, 10);
+    assert.match(treatments[0], /^Empty royal blue glitter bokeh filling/);
+    assert.doesNotMatch(treatments[1], /glitter bokeh/);
+    assert.doesNotMatch(treatments[1], /royal blue/);
+    assert.match(treatments[3], /softly draped silk/);
+    assert.equal(styles.every(Boolean), true);
+    for (const item of plan.items) {
+      assert.equal(item.saleReferenceLayout, "empty_background");
+      assert.equal(item.saleReferenceStructure?.SETTING_AND_PROPS, "No objects; empty background only");
+      assert.match(item.prompt, /full-bleed empty background JPEG/);
+      assert.ok(["background", "backdrop", "abstract"].every(word => item.keywords.includes(word)));
+      assert.equal(isStockImageItem(item), true);
+      assert.equal(getGenerationBlockReason(item), undefined);
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

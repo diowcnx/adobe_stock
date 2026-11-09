@@ -9,7 +9,7 @@ import { reserveUniquePromptBatch } from "../lib/prompt-history";
 import { analyzeSoldReference } from "../lib/sale-reference";
 import type { SaleReferenceLayout } from "../lib/types";
 
-const LAYOUTS: Record<string, SaleReferenceLayout> = { scene: "full_scene", cutout: "isolated_white", backdrop: "solid_backdrop" };
+const LAYOUTS: Record<string, SaleReferenceLayout> = { scene: "full_scene", cutout: "isolated_white", backdrop: "solid_backdrop", background: "empty_background" };
 
 const USAGE = `Usage: npm run generate -- <command> [--plan]
 
@@ -21,7 +21,8 @@ const USAGE = `Usage: npm run generate -- <command> [--plan]
 
   --plan           write plan.json and metadata.csv only; generate later with resume
   --layout=scene   treat a sold image as a full scene (--layout=cutout for an isolated element,
-                   --layout=backdrop for a subject on a plain colour studio backdrop)
+                   --layout=backdrop for a subject on a plain colour studio backdrop,
+                   --layout=background for an empty background, texture or gradient with no subject)
   --vector         with sold: make 10 vector illustrations as SVG (about $0.08 each) instead of JPEGs`;
 
 async function soldImageDataUrl(file: string): Promise<string> {

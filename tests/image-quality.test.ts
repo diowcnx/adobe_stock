@@ -777,3 +777,30 @@ test("plain backdrop sold-reference QA skips the white-mat guard and tells the v
     assert.match(inspection, /reject a main subject that is cropped to paws/);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+test("empty background QA skips the white-mat guard and accepts a background with no subject", async () => {
+  const originalFetch = globalThis.fetch;
+  let inspection = "";
+  globalThis.fetch = async (_input, init) => {
+    inspection = JSON.parse(String(init?.body || "{}")).messages[0].content[0].text;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      passed: true, hasVisibleHumanFace: false, hasText: false, hasArtificialBorder: false,
+      hasPosterLayout: false, isImmediatelyRecognizable: true, hasClearLiteralStory: true,
+      hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: false, issues: [],
+    }) } }] }));
+  };
+  const glow = await sharp({ create: { width: 160, height: 120, channels: 3, background: "#3a7bd5" } }).png().toBuffer();
+  const lightEdges = await sharp({ create: { width: 256, height: 256, channels: 3, background: "#f2f0ee" } })
+    .composite([{ input: glow, left: 48, top: 68 }]).jpeg().toBuffer();
+  try {
+    assert.equal(await detectUnintendedLightBorder(lightEdges), true);
+    const result = await assessGeneratedImageQuality(lightEdges, "test-key", {
+      mode: "regular_scene", expectedTitle: "blue studio spotlight background", isSaleReference: true, isSaleReferenceBackground: true,
+    });
+    assert.equal(result.passed, true);
+    assert.match(inspection, /intentionally EMPTY BACKGROUND/);
+    assert.match(inspection, /do not demand an object, action, setting or story/);
+    assert.match(inspection, /colour banding/);
+    assert.match(inspection, /empty full-frame background IS the required final asset/);
+  } finally { globalThis.fetch = originalFetch; }
+});
