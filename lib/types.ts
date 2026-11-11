@@ -87,7 +87,7 @@ export interface SaleReferenceStructure {
   TEXT_ELEMENTS: string;
 }
 
-export type SaleReferenceLayout = "full_scene" | "isolated_white" | "solid_backdrop" | "empty_background";
+export type SaleReferenceLayout = "full_scene" | "isolated_white" | "solid_backdrop" | "empty_background" | "decorative_frame";
 
 export interface StockImageItem {
   manualResearch?: boolean;

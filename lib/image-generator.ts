@@ -223,6 +223,7 @@ export async function generateSingleImage(
       const basePrompt = sanitizeImagePrompt(item.prompt);
       const isIsolatedSaleReference = Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "isolated_white";
       const isBackgroundSaleReference = Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "empty_background";
+      const isFrameSaleReference = Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "decorative_frame";
       const sanitizedPrompt = isTransparent
         ? basePrompt
             .replace(/isolated commercial cutout asset on a 100% transparent background \(png alpha channel\) of/gi, "Commercial studio product shot of floating")
@@ -235,6 +236,8 @@ export async function generateSingleImage(
       const mandatoryExclusions = [
         item.manualResearch
           ? "Render the specific manually researched commercial scene and intended buyer use, with the named action and setting visibly clear. Do not add unrelated objects, people, symbols, text, logos, or visible faces."
+        : isFrameSaleReference
+          ? "Render the NEW_CONCEPT as one original decorative frame photograph: the named real props arranged along the edges of one continuous surface or backdrop, with a large clean empty centre where nothing sits, for the buyer's own headline or greeting. The arrangement around the edges is the intended composition and must be physical props with natural light and shadows, never a drawn outline, card, panel or graphic border. The uploaded sold image is evidence for a buyer need only: do not reproduce its exact props, colours or arrangement. No lettering, pseudo-text, logos or people."
         : isBackgroundSaleReference
           ? "Render the NEW_CONCEPT as one original EMPTY commercial background for designers to place their own text or products on: only the named background style, colour and light, with no object, product, person, animal, plant, furniture, horizon scenery, symbol or focal subject. Smooth even tonal gradation with no colour banding, posterization, blotches or heavy noise. The uploaded sold image is evidence for a buyer need only: do not reproduce its exact colours, light position or texture pattern. No lettering, pseudo-text, logos, frames or drawn borders."
         : isIsolatedSaleReference
@@ -278,6 +281,8 @@ export async function generateSingleImage(
 
       const visualDirection = isTransparent
         ? `Create a simple isolated commercial design element on a pure solid white studio background. Show exactly one familiar opaque subject that a buyer can identify at a glance. Centered floating subject, broad continuous silhouette, minimal internal gaps, razor-sharp clean cutout edges, absolutely zero cast shadows, zero drop shadow, zero contact shadow, zero ground shadow, zero floor shadow, zero ambient shadow, uniform bright omnidirectional studio lighting with high-key illumination from all angles, authentic solid physical material, no floor, no table, no surface, no shadows, no dark gradient, no checkerboard grid. Subject: ${sanitizedPrompt}. Clarity and practical reuse are more important than conceptual cleverness. ${mandatoryExclusions}`
+        : isFrameSaleReference
+          ? `Create one original buyer-ready decorative frame photograph derived from a confirmed sale signal without copying the reference: real props arranged along the edges of a continuous surface or backdrop that fills the whole image, around a large clean empty centre for text. Honor the SOLD-REFERENCE structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : isBackgroundSaleReference
           ? `Create one original buyer-ready empty background image that fills the whole frame edge to edge, derived from a confirmed sale signal without copying the reference. The background itself is the product: rich, clean and premium, with generous empty space for headlines, banners, product mockups or presentation slides. Honor the SOLD-REFERENCE structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : isIsolatedSaleReference
@@ -329,6 +334,8 @@ export async function generateSingleImage(
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-stage the SAME material-art motif using the SAME raw materials and named hero products, retaining their recognizable normal shapes. Simplify the arrangement, remove unnecessary accents, fix scale and physical support, preserve clear negative space and credible texture. Adapt spacing to the actual canvas without cropping the hero. Keep one readable Editorial Still Life arrangement on a continuous studio background, no lettering, people, hardware fusion, architecture or poster layout.`
             : item.boothStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild the SAME exhibition-booth design, retaining its architectural structure, merchandise and palette. Fix camera to strict frontal orthographic, show the full canopy and platform, use plausible connected supports and organized shelving, keep pure white studio background and soft contact shadows. No people, text, logo, surrounding hall or food-hardware hybrid. Blank signs are intentional.`
+            : isFrameSaleReference
+              ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-render the SAME planned props and surface as real objects arranged along the edges with a larger, cleaner empty centre. Fix every rejected defect; keep the props intact and physically resting on the surface, with no drawn outline, card, panel, text or anything in the centre.`
             : isBackgroundSaleReference
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-render the SAME planned background style and colour as a cleaner, smoother empty background filling the whole frame. Remove every object, shape, symbol, letter or pattern that reads as content; keep tonal gradation smooth with no banding, blotches or heavy noise; no frame, border, panel or vignette box.`
             : isIsolatedSaleReference
@@ -506,6 +513,7 @@ export async function generateSingleImage(
               isSaleReferenceIsolated: isIsolatedSaleReference,
               isSaleReferenceBackdrop: Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "solid_backdrop",
               isSaleReferenceBackground: isBackgroundSaleReference,
+              isSaleReferenceFrame: isFrameSaleReference,
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

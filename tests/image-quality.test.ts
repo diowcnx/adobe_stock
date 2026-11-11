@@ -804,3 +804,29 @@ test("empty background QA skips the white-mat guard and accepts a background wit
     assert.match(inspection, /empty full-frame background IS the required final asset/);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+test("decorative frame QA accepts props around the edges and rejects a cluttered centre", async () => {
+  const originalFetch = globalThis.fetch;
+  let inspection = "";
+  globalThis.fetch = async (_input, init) => {
+    inspection = JSON.parse(String(init?.body || "{}")).messages[0].content[0].text;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      passed: true, hasVisibleHumanFace: false, hasText: false, hasArtificialBorder: false,
+      hasPosterLayout: false, isImmediatelyRecognizable: true, hasClearLiteralStory: true,
+      hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: false, issues: [],
+    }) } }] }));
+  };
+  const props = await sharp({ create: { width: 160, height: 120, channels: 3, background: "#b3202a" } }).png().toBuffer();
+  const lightCentre = await sharp({ create: { width: 256, height: 256, channels: 3, background: "#f2f0ee" } })
+    .composite([{ input: props, left: 48, top: 68 }]).jpeg().toBuffer();
+  try {
+    assert.equal(await detectUnintendedLightBorder(lightCentre), true);
+    const result = await assessGeneratedImageQuality(lightCentre, "test-key", {
+      mode: "regular_scene", expectedTitle: "Christmas pine frame", isSaleReference: true, isSaleReferenceFrame: true,
+    });
+    assert.equal(result.passed, true);
+    assert.match(inspection, /intentionally DECORATIVE FRAME/);
+    assert.match(inspection, /set hasArtificialBorder=false and hasPosterLayout=false/);
+    assert.match(inspection, /any object placed in the empty centre/);
+  } finally { globalThis.fetch = originalFetch; }
+});

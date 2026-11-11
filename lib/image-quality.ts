@@ -35,6 +35,8 @@ export interface ImageQualityContext {
   isSaleReferenceBackdrop?: boolean;
   /** An empty background (texture, gradient, light) sold for designers to put their own content on. */
   isSaleReferenceBackground?: boolean;
+  /** Real props arranged along the image edges around an empty centre, sold as a decorative frame. */
+  isSaleReferenceFrame?: boolean;
   /** A flat vector illustration rasterized for inspection, not a photograph. */
   isVector?: boolean;
 }
@@ -120,7 +122,7 @@ export async function assessGeneratedImageQuality(
     expectedTitle: "commercial image",
   },
 ): Promise<ImageQualityResult> {
-  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isMaterialArt && !context.isDualMaterial && !context.isBeverageCampaign && !context.isCulinaryEditorial && !context.isEditorialPenSketch && !context.isSaleReferenceIsolated && !context.isSaleReferenceBackdrop && !context.isSaleReferenceBackground && await detectUnintendedLightBorder(inputBuffer)) {
+  if (context.mode === "regular_scene" && !context.isExhibitionBooth && !context.isMaterialArt && !context.isDualMaterial && !context.isBeverageCampaign && !context.isCulinaryEditorial && !context.isEditorialPenSketch && !context.isSaleReferenceIsolated && !context.isSaleReferenceBackdrop && !context.isSaleReferenceBackground && !context.isSaleReferenceFrame && await detectUnintendedLightBorder(inputBuffer)) {
     return {
       passed: false,
       issues: ["unintended white border or mat around the image"],
@@ -169,7 +171,9 @@ export async function assessGeneratedImageQuality(
               type: "text",
               text: `Inspect only the visible pixels of this generated commercial image. Expected title: ${context.expectedTitle}. Intended buyer use: ${context.intendedUse || "general commercial design"}. Mode: ${context.mode}.
 Reject it if ANY readable or pseudo-readable letters, words, numerals, captions, title, logo, signature or watermark appear anywhere. Also reject a poster/card/mockup layout, blank header/footer panel, outer frame, mat, border, canvas margin, or image placed inside another page.
-${context.isSaleReferenceBackground
+${context.isSaleReferenceFrame
+  ? "This is an intentionally DECORATIVE FRAME photograph derived from a sold frame asset, not a copy of it: real props arranged along the edges of a continuous surface or backdrop around a large empty centre that buyers fill with their own headline or greeting. Physical props around the edges are the intended composition, so set hasArtificialBorder=false and hasPosterLayout=false for them, and set hasClearLiteralStory and hasClearCommercialUse true when the occasion and the empty space for text are clear at a glance. Reject a drawn outline, line frame, card, panel or inset image; any object placed in the empty centre; a centre too small for a headline; broken, melted, floating or unrecognizable props; text, pseudo-text, logo, watermark or visible human face."
+  : context.isSaleReferenceBackground
   ? "This is an intentionally EMPTY BACKGROUND asset derived from a sold background, not a copy of it: designers license it to place their own text, products or slides on. The empty background IS the subject, so do not demand an object, action, setting or story. Set isImmediatelyRecognizable, hasClearLiteralStory and hasClearCommercialUse true when it reads at a glance as a clean, premium, usable background (studio light, texture, fabric, bokeh, smoke, gradient or similar) with generous empty space. Set hasArtificialBorder=false for a natural vignette or light falloff that is part of the background. Reject any object, product, person, animal, plant, furniture, scenery, symbol or focal shape; text, pseudo-text, logo or watermark; a drawn frame, border, panel or inset image; visible colour banding, posterization, blotchy patches, heavy noise, seams or tiling repeats."
   : context.isSaleReferenceIsolated
   ? "This is an ORIGINAL ISOLATED STOCK ELEMENT derived from a sold cutout asset, not a copy of the uploaded reference. Accept one complete, immediately recognizable element (or one cohesive element group) centered on a seamless pure WHITE background with even white padding: white negative space is intentional and is NOT an artificial border or mat. Set hasArtificialBorder=false for a continuous white backdrop; reject only an actual drawn frame, outline, card or inset page. Require realistic natural materials, coherent geometry and physical support within the element, crisp clean edges suitable for cutout, and at most a faint soft contact shadow. Reject a cropped or cut-off element, ground plane extending to the edges, horizon, sky, surrounding scenery, extra unrelated objects, floating disconnected parts, grey or gradient background, visible human face, text, pseudo-text, logo or watermark. Set hasClearLiteralStory and hasClearCommercialUse true when the element and its compositing use (design, rendering, mockup) are clear at a glance."
@@ -199,7 +203,9 @@ ${context.isSaleReferenceBackground
 ${context.isVector ? VECTOR_INSPECTION : ""}
 Mandatory face rule: ${NO_VISIBLE_FACE_RULE} Set hasVisibleHumanFace=true if any human face or part of a face is visible, however small, blurred or obscured. Human backs, hands and bodies with all faces outside the frame are allowed. Animal faces are allowed.
 For transparent_png, the dark gray shown around the subject represents transparency. Require exactly one intact, familiar, opaque subject with a simple readable silhouette. Its normal practical function must be obvious, but it does not need to show an action; set hasClearLiteralStory=true when the single object and its normal use are immediately clear. Reject missing chunks, accidental transparent holes through solid areas, ragged/dirty/haloed edges, fragmented pieces, multiple unrelated objects, or a result that does not visibly match the expected title.
-${context.isSaleReferenceBackground
+${context.isSaleReferenceFrame
+  ? "The props arranged around the edges with an empty centre ARE the required final asset. Do not demand a single hero subject, an action or the uploaded source's exact props."
+  : context.isSaleReferenceBackground
   ? "The empty full-frame background IS the required final asset. Do not demand a subject, scene, action or the uploaded source's exact colours and light."
   : context.isSaleReferenceIsolated
   ? "The isolated element on seamless pure white IS the required final asset. Do not demand a full-bleed scene, setting, action, copy space or the uploaded source composition."

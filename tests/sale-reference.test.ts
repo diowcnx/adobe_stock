@@ -239,3 +239,28 @@ test("a sold empty background expands into ten backgrounds that differ in both s
     global.fetch = originalFetch;
   }
 });
+
+test("a sold decorative frame expands into ten frames with props along the edges and an empty centre", async () => {
+  const originalFetch = global.fetch;
+  let analyzerPrompt = "";
+  global.fetch = async (_input, init) => {
+    analyzerPrompt = JSON.parse(String(init?.body)).messages[0].content[0].text;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ referenceLayout: "decorative_frame", subject: "Christmas ornament border", concepts: sampleConcepts() }) } }] }), { status: 200 });
+  };
+  try {
+    const plan = await analyzeSoldReference(referenceDataUrl(), "test-key");
+    assert.match(analyzerPrompt, /Stay with the sold asset's occasion and season/);
+    assert.equal(plan.analysis.layout, "decorative_frame");
+    for (const item of plan.items) {
+      assert.equal(item.saleReferenceLayout, "decorative_frame");
+      assert.match(item.saleReferenceStructure?.COMPOSITION_AND_CAMERA ?? "", /large clear empty centre/);
+      assert.match(item.prompt, /physically arranged along the edges/);
+      assert.match(item.prompt, /not a drawn frame line/);
+      assert.ok(["frame", "border", "copyspace"].every(word => item.keywords.includes(word)));
+      assert.equal(isStockImageItem(item), true);
+      assert.equal(getGenerationBlockReason(item), undefined);
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
