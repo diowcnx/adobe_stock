@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import sharp from "sharp";
-import { createBatchFolder, readBatchPlan, writeBatchPlan, type BatchPlan } from "../lib/batch-output";
+import { createBatchFolder, readBatchPlan, recentImageTitles, writeBatchPlan, type BatchPlan } from "../lib/batch-output";
 import { runBatch } from "../lib/batch-run";
 import { prepareManualResearchItems } from "../lib/manual-research";
 
@@ -104,4 +104,26 @@ test("nothing is generated without an API key", async () => {
     await assert.rejects(() => runBatch(createBatchFolder(plan.source), plan), /OPENROUTER_API_KEY/);
     assert.equal(counts.images, 0);
   });
+});
+
+test("recent image titles come from the batch log, newest first, without failures or repeats", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "history-"));
+  const file = path.join(dir, "batches.jsonl");
+  const previous = process.env.BATCH_LOG_FILE;
+  fs.writeFileSync(file, [
+    JSON.stringify({ images: [{ title: "Old Desert Villa", status: "passed" }, { title: "Shared Title", status: "passed" }] }),
+    "not json",
+    JSON.stringify({ images: [{ title: "New Lake House", status: "passed" }, { title: "Failed Terrace", status: "failed" }, { title: "Shared Title", status: "passed" }] }),
+    "",
+  ].join("\n"));
+  process.env.BATCH_LOG_FILE = file;
+  try {
+    assert.deepEqual(recentImageTitles(), ["New Lake House", "Shared Title", "Old Desert Villa"]);
+    assert.deepEqual(recentImageTitles(2), ["New Lake House", "Shared Title"]);
+    process.env.BATCH_LOG_FILE = path.join(dir, "missing.jsonl");
+    assert.deepEqual(recentImageTitles(), []);
+  } finally {
+    if (previous === undefined) delete process.env.BATCH_LOG_FILE; else process.env.BATCH_LOG_FILE = previous;
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

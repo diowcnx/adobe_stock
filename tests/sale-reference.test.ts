@@ -264,3 +264,21 @@ test("a sold decorative frame expands into ten frames with props along the edges
     global.fetch = originalFetch;
   }
 });
+
+test("the sold planner is told which images were already made so it avoids repeats", async () => {
+  const originalFetch = global.fetch;
+  let prompt = "";
+  global.fetch = async (_input, init) => {
+    prompt = JSON.parse(String(init?.body)).messages[0].content[0].text;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ subject: "modern house", concepts: sampleConcepts() }) } }] }), { status: 200 });
+  };
+  try {
+    await analyzeSoldReference(referenceDataUrl(), "test-key", undefined, { recentTitles: ["Urban Penthouse Roof Terrace", "Forest \"Retreat\"\nCabin"] });
+    assert.match(prompt, /already made these images recently \(newest first\): Urban Penthouse Roof Terrace; Forest  Retreat  Cabin\./);
+    assert.match(prompt, /do not plan any concept that repeats/);
+    await analyzeSoldReference(referenceDataUrl(), "test-key");
+    assert.doesNotMatch(prompt, /already made these images/);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

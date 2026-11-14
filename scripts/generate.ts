@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
-import { createBatchFolder, readBatchPlan, writeBatchPlan, type BatchPlan } from "../lib/batch-output";
+import { createBatchFolder, readBatchPlan, recentImageTitles, writeBatchPlan, type BatchPlan } from "../lib/batch-output";
 import { runBatch } from "../lib/batch-run";
 import { prepareManualResearchItems } from "../lib/manual-research";
 import { getOpenRouterCredits } from "../lib/openrouter";
@@ -53,7 +53,7 @@ async function buildPlan(command: string, target?: string, layout?: SaleReferenc
     };
   }
   if (!target || !fs.existsSync(target)) throw new Error(`Sold image not found: ${target ?? "(no path given)"}`);
-  const { analysis, trend, items } = await analyzeSoldReference(await soldImageDataUrl(target), undefined, layout, { vector });
+  const { analysis, trend, items } = await analyzeSoldReference(await soldImageDataUrl(target), undefined, layout, { vector, recentTitles: recentImageTitles() });
   console.log(`Sold image: ${analysis.subject}\nLayout: ${analysis.layout}\nStrategy: ${analysis.expansionStrategy}`);
   return { source: vector ? "sold_vector" : command, createdAt, trend, items };
 }

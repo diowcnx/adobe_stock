@@ -49,9 +49,34 @@ export function saveImageDataUrl(folder: string, item: StockImageItem, dataUrl: 
   return file;
 }
 
+function batchLogFile(): string {
+  return process.env.BATCH_LOG_FILE || path.join(process.cwd(), "history", "batches.jsonl");
+}
+
+/**
+ * Titles of images already made on any machine, newest first and without repeats, so planners can
+ * avoid themes that Adobe would refuse as similar content. Failed images are left out.
+ */
+export function recentImageTitles(limit = 150): string[] {
+  const file = batchLogFile();
+  if (!fs.existsSync(file)) return [];
+  const titles: string[] = [];
+  for (const line of fs.readFileSync(file, "utf8").split("\n").reverse()) {
+    let entry: { images?: Array<{ title?: unknown; status?: unknown }> };
+    try { entry = JSON.parse(line); } catch { continue; }
+    for (const image of entry.images ?? []) {
+      if (image.status === "failed" || typeof image.title !== "string") continue;
+      const title = image.title.replace(/\s+/g, " ").trim().slice(0, 120);
+      if (title && !titles.includes(title)) titles.push(title);
+      if (titles.length >= limit) return titles;
+    }
+  }
+  return titles;
+}
+
 /** One line per batch in git, without image data, so other machines can see past work. */
 export function appendBatchLog(plan: BatchPlan, statuses: Record<number, string>): void {
-  const file = process.env.BATCH_LOG_FILE || path.join(process.cwd(), "history", "batches.jsonl");
+  const file = batchLogFile();
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.appendFileSync(file, `${JSON.stringify({
     createdAt: plan.createdAt,
