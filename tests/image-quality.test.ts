@@ -830,3 +830,27 @@ test("decorative frame QA accepts props around the edges and rejects a cluttered
     assert.match(inspection, /any object placed in the empty centre/);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+test("illustration QA accepts painted texture instead of demanding a photograph", async () => {
+  const originalFetch = globalThis.fetch;
+  let inspection = "";
+  globalThis.fetch = async (_input, init) => {
+    inspection = JSON.parse(String(init?.body || "{}")).messages[0].content[0].text;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      passed: true, hasVisibleHumanFace: false, hasText: false, hasArtificialBorder: false,
+      hasPosterLayout: false, isImmediatelyRecognizable: true, hasClearLiteralStory: true,
+      hasClearCommercialUse: true, hasCutoutDamage: false, hasMultipleConfusingSubjects: false, issues: [],
+    }) } }] }));
+  };
+  const image = await sharp({ create: { width: 256, height: 256, channels: 3, background: "#ffffff" } })
+    .composite([{ input: await sharp({ create: { width: 120, height: 120, channels: 3, background: "#e05a8a" } }).png().toBuffer(), left: 68, top: 68 }]).jpeg().toBuffer();
+  try {
+    await assessGeneratedImageQuality(image, "test-key", {
+      mode: "regular_scene", expectedTitle: "watercolor rose bouquet", isSaleReference: true, isSaleReferenceIsolated: true, illustrationMedium: "loose watercolor painting",
+    });
+    assert.match(inspection, /intentional LOOSE WATERCOLOR PAINTING ILLUSTRATION, not a photograph/);
+    assert.match(inspection, /do not demand photographic realism/);
+    await assessGeneratedImageQuality(image, "test-key", { mode: "regular_scene", expectedTitle: "rose bouquet", isSaleReference: true, isSaleReferenceIsolated: true });
+    assert.doesNotMatch(inspection, /ILLUSTRATION, not a photograph/);
+  } finally { globalThis.fetch = originalFetch; }
+});

@@ -98,6 +98,8 @@ export interface StockImageItem {
   saleReferenceLayout?: SaleReferenceLayout;
   /** "svg" makes a sold-reference item a vector illustration generated as SVG instead of a JPEG. */
   outputFormat?: "svg";
+  /** Sold-reference illustration medium, such as "loose watercolor painting"; unset means a photograph. */
+  saleReferenceMedium?: string;
   thaiNaturePosterStructure?: ThaiNaturePosterStructure;
   symmetricalStorefrontStructure?: SymmetricalStorefrontStructure;
   editorialPenSketchStructure?: EditorialPenSketchStructure;

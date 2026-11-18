@@ -282,3 +282,48 @@ test("the sold planner is told which images were already made so it avoids repea
     global.fetch = originalFetch;
   }
 });
+
+test("a sold watercolor illustration expands into watercolor briefs, not photographs", async () => {
+  const originalFetch = global.fetch;
+  let prompt = "";
+  global.fetch = async (_input, init) => {
+    prompt = JSON.parse(String(init?.body)).messages[0].content[0].text;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      referenceLayout: "isolated_cutout", medium: "illustration", mediumStyle: "loose <watercolor> painting", subject: "watercolor flower bouquets", concepts: sampleConcepts(),
+    }) } }] }), { status: 200 });
+  };
+  try {
+    const plan = await analyzeSoldReference(referenceDataUrl(), "test-key");
+    assert.match(prompt, /Keep the sold subject itself: unless referenceLayout is "empty_background", at least 8 of the 10 concepts/);
+    assert.match(prompt, /Also decide medium/);
+    assert.match(prompt, /never turn an illustration into a photograph/);
+    for (const item of plan.items) {
+      assert.equal(item.saleReferenceMedium, "loose watercolor painting");
+      assert.match(item.prompt, /isolated element painted as a loose watercolor painting on a seamless pure white/);
+      assert.match(item.prompt, /MEDIUM: loose watercolor painting illustration, not a photograph/);
+      assert.doesNotMatch(item.prompt, /photographed/);
+      assert.ok(["illustration", "watercolor", "painting"].every(keyword => item.keywords.includes(keyword)), item.keywords.join(","));
+      assert.equal(item.keywords.includes("photography"), false);
+      assert.equal(isStockImageItem(item), true);
+    }
+    assert.equal(isStockImageItem({ ...plan.items[0], saleReferenceMedium: "" }), false);
+    assert.equal(isStockImageItem({ ...plan.items[0], saleReferenceStructure: undefined, saleReferenceLayout: undefined }), false);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("a sold photograph keeps photographic briefs", async () => {
+  const originalFetch = global.fetch;
+  mockProvider({ referenceLayout: "isolated_cutout", medium: "photograph", mediumStyle: "ignored" });
+  try {
+    const plan = await analyzeSoldReference(referenceDataUrl(), "test-key");
+    for (const item of plan.items) {
+      assert.equal(item.saleReferenceMedium, undefined);
+      assert.match(item.prompt, /isolated element photographed on a seamless pure white/);
+      assert.doesNotMatch(item.prompt, /MEDIUM:/);
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

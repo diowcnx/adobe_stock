@@ -39,6 +39,13 @@ export interface ImageQualityContext {
   isSaleReferenceFrame?: boolean;
   /** A flat vector illustration rasterized for inspection, not a photograph. */
   isVector?: boolean;
+  /** A sold-reference illustration medium such as "loose watercolor painting"; the image is not a photograph. */
+  illustrationMedium?: string;
+}
+
+function illustrationInspection(medium: string | undefined): string {
+  if (!medium) return "";
+  return ` This is an intentional ${medium.replace(/[^\w ,'-]/g, " ").toUpperCase()} ILLUSTRATION, not a photograph: accept painted or drawn texture, visible brush strokes, paper grain, soft bleeding edges and stylised colour, and do not demand photographic realism, real materials, camera depth of field or a real-world setting. Still require a complete, immediately recognizable subject with coherent shapes; reject a photograph, broken or melted shapes, stray fragments, a cropped subject, text, pseudo-text, logo or watermark.`;
 }
 
 const VECTOR_INSPECTION = " This is an intentional FLAT VECTOR ILLUSTRATION rasterized from SVG, not a photograph: accept clean flat cartoon or graphic shapes, solid colour fills and simple shading, and do not demand photographic realism, natural materials or a real-world setting. Still require a complete, immediately recognizable subject with coherent shapes; reject broken or melted shapes, stray fragments, a cropped subject, text, pseudo-text, logo or watermark. Simple cartoon faces on characters such as snowmen, gingerbread figures, animals and mascots are allowed: set hasVisibleHumanFace=true only for a realistic human person's face.";
@@ -200,7 +207,7 @@ ${context.isSaleReferenceFrame
   : context.isFoodFusion
   ? "This is an INTENTIONAL SURREAL FOOD-HARDWARE FUSION, not a literal scene. Accept the impossible hybrid when one recognizable food component joins one recognizable mechanical component into exactly ONE connected hero with a clean seamless joint, credible food and industrial textures, matte studio backdrop, generous negative space and a soft contact shadow. Set hasClearLiteralStory=true when the two ingredients and their intended metaphor are visually readable; do not require an everyday action, person, room or location. Reject separate props, unrelated piles, multiple heroes, broken joints, indistinguishable food or hardware, or a flat pasted collage. Do not reject simply because the fusion is surreal."
   : "Apply a strict two-second clarity test: an ordinary viewer must immediately name the main subject and understand the literal action or practical purpose without reading metadata or guessing a symbolic metaphor. Reject abstract assemblages, surreal hybrids, unrelated object piles, ambiguous sculptures, decorative material metaphors, or scenes whose buyer use is not visually clear."}
-${context.isVector ? VECTOR_INSPECTION : ""}
+${context.isVector ? VECTOR_INSPECTION : ""}${illustrationInspection(context.illustrationMedium)}
 Mandatory face rule: ${NO_VISIBLE_FACE_RULE} Set hasVisibleHumanFace=true if any human face or part of a face is visible, however small, blurred or obscured. Human backs, hands and bodies with all faces outside the frame are allowed. Animal faces are allowed.
 For transparent_png, the dark gray shown around the subject represents transparency. Require exactly one intact, familiar, opaque subject with a simple readable silhouette. Its normal practical function must be obvious, but it does not need to show an action; set hasClearLiteralStory=true when the single object and its normal use are immediately clear. Reject missing chunks, accidental transparent holes through solid areas, ragged/dirty/haloed edges, fragmented pieces, multiple unrelated objects, or a result that does not visibly match the expected title.
 ${context.isSaleReferenceFrame

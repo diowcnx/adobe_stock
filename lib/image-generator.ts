@@ -224,6 +224,7 @@ export async function generateSingleImage(
       const isIsolatedSaleReference = Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "isolated_white";
       const isBackgroundSaleReference = Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "empty_background";
       const isFrameSaleReference = Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "decorative_frame";
+      const saleMedium = item.saleReferenceStructure ? item.saleReferenceMedium : undefined;
       const sanitizedPrompt = isTransparent
         ? basePrompt
             .replace(/isolated commercial cutout asset on a 100% transparent background \(png alpha channel\) of/gi, "Commercial studio product shot of floating")
@@ -263,6 +264,7 @@ export async function generateSingleImage(
         : item.boothStructure
           ? "Render only the complete exhibition booth and specified merchandise. Strict frontal orthographic view on continuous pure white studio background. Preserve the canopy, platform, shelves, access and blank signage. No people, lettering or surrounding event hall."
           : "Use only the single food-hardware hybrid described in the brief; no people, scenery or extra cultural props.",
+        saleMedium ? `Render the whole image as a ${saleMedium} illustration, not a photograph: keep the same hand-made illustrated look everywhere, with no photographic realism, camera depth of field or real-world material rendering.` : "",
         item.aerialLandscapeStructure || item.thaiNaturePosterStructure ? AERIAL_NO_VISIBLE_FACE_RULE : NO_VISIBLE_FACE_RULE,
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
@@ -286,9 +288,9 @@ export async function generateSingleImage(
         : isBackgroundSaleReference
           ? `Create one original buyer-ready empty background image that fills the whole frame edge to edge, derived from a confirmed sale signal without copying the reference. The background itself is the product: rich, clean and premium, with generous empty space for headlines, banners, product mockups or presentation slides. Honor the SOLD-REFERENCE structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : isIsolatedSaleReference
-          ? `Create one original buyer-ready isolated stock element photographed on seamless pure white, derived from a confirmed single-asset sale signal without copying the reference image. Make the NEW_CONCEPT and TARGET_BUYER_AND_USE immediately understandable as a composite-ready cutout with crisp clean edges and realistic natural materials. Honor the ten-field SOLD-REFERENCE structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
+          ? `Create one original buyer-ready isolated stock element ${saleMedium ? `painted as a ${saleMedium} illustration` : "photographed"} on seamless pure white, derived from a confirmed single-asset sale signal without copying the reference image. Make the NEW_CONCEPT and TARGET_BUYER_AND_USE immediately understandable as a composite-ready cutout with crisp clean edges and ${saleMedium ? "a consistent illustrated finish" : "realistic natural materials"}. Honor the ten-field SOLD-REFERENCE structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.saleReferenceStructure
-          ? `Create one original buyer-ready commercial photograph derived from a confirmed single-asset sale signal without copying the reference image. Make the NEW_CONCEPT and TARGET_BUYER_AND_USE immediately understandable, with a genuinely different story, composition, camera, setting, lighting and palette from the uploaded source. Honor the ten-field SOLD-REFERENCE structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
+          ? `Create one original buyer-ready commercial ${saleMedium ? `${saleMedium} illustration` : "photograph"} derived from a confirmed single-asset sale signal without copying the reference image. Make the NEW_CONCEPT and TARGET_BUYER_AND_USE immediately understandable, with a genuinely different story, composition, camera, setting, lighting and palette from the uploaded source. Honor the ten-field SOLD-REFERENCE structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.thaiNaturePosterStructure
           ? `Create one original full-bleed hand-painted poster-color illustration of a real Thai natural landscape and flower field. Use a gently elevated panoramic scenic view with natural overlapping hills, meadow, water and flower bands, not a top-down map. Make the specified flower species, Thai geography, season, winding path, landmark, vintage paper fibers and matte opaque brushwork immediately readable. Honor the eight-field USER_INPUT while treating TYPOGRAPHY_OVERLAY only as a strict non-visual no-text control: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.symmetricalStorefrontStructure
@@ -514,6 +516,7 @@ export async function generateSingleImage(
               isSaleReferenceBackdrop: Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "solid_backdrop",
               isSaleReferenceBackground: isBackgroundSaleReference,
               isSaleReferenceFrame: isFrameSaleReference,
+              illustrationMedium: saleMedium,
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);
