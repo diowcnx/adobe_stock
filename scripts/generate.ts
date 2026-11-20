@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
-import { createBatchFolder, readBatchPlan, recentImageTitles, writeBatchPlan, type BatchPlan } from "../lib/batch-output";
+import { createBatchFolder, readBatchPlan, recentImageTitles, trimBatchPlan, writeBatchPlan, type BatchPlan } from "../lib/batch-output";
 import { runBatch } from "../lib/batch-run";
 import { prepareManualResearchItems } from "../lib/manual-research";
 import { getOpenRouterCredits } from "../lib/openrouter";
@@ -17,6 +17,7 @@ const USAGE = `Usage: npm run generate -- <command> [--plan]
   research            10 images from the newest research/manual-prompts-*.md
   sold <image-path>   10 new images expanded from a sold image
   resume <folder>     generate whatever is missing from a batch folder
+  trim <folder> <n,n> keep only these image numbers in a planned batch (e.g. 1,4,6)
   credits             show the OpenRouter balance
 
   --plan           write plan.json and metadata.csv only; generate later with resume
@@ -70,6 +71,14 @@ async function main(): Promise<void> {
   if (command === "credits") {
     const credits = await getOpenRouterCredits();
     console.log(`OpenRouter balance: $${credits.remainingCredits.toFixed(4)}${credits.label ? ` (${credits.label})` : ""}`);
+    return;
+  }
+  if (command === "trim") {
+    const ids = args.filter(arg => !arg.startsWith("--"))[2] ?? "";
+    if (!target || !/^\d+(,\d+)*$/.test(ids)) throw new Error("trim needs a batch folder and image numbers, e.g. trim \"<folder>\" 1,4,6");
+    const trimmed = trimBatchPlan(path.resolve(target), [...new Set(ids.split(",").map(Number))]);
+    trimmed.items.forEach(item => console.log(`#${item.id} [${item.category}] ${item.seoTitle}`));
+    console.log(`Kept ${trimmed.items.length} images: ${path.resolve(target)}`);
     return;
   }
   if (!["structure", "research", "sold", "resume"].includes(command ?? "")) {

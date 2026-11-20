@@ -16,10 +16,11 @@ The owner names a method; each maps to a command:
 2. Check `.env.local` holds `OPENROUTER_API_KEY`. If it is absent, ask the owner to create it from `.env.example`; keys are entered by the owner.
 3. Plan: `npm run generate -- <method command> --plan`. Planning writes a batch folder and lists the briefs.
 4. Show the owner the briefs, the balance (`npm run generate -- credits`) and the estimate of about $0.04 per image (up to 4 attempts each). Wait for a yes; generation spends real money.
-5. `npm run generate -- resume "<folder>"`. It finishes when it prints `Folder:` and `Credit:`.
-6. Rerun `resume` for any `Failed` line; it generates only missing images.
-7. Report saved count, `QA warning` lines and the folder. View the images and name weak ones. Spend shows only after OpenRouter billing settles, so recheck `credits` a few minutes later.
-8. Commit and push `history/`, so other machines avoid repeating these prompts.
+5. To make fewer images (the owner often caps a day at about 10 images or $0.50), run `npm run generate -- trim "<folder>" 1,4,6` and check the kept count it prints before resuming; never chain `resume` after a step that might fail.
+6. `npm run generate -- resume "<folder>"`. It finishes when it prints `Folder:` and `Credit:`.
+7. Rerun `resume` for any `Failed` line; it generates only missing images.
+8. Report saved count, `QA warning` lines and the folder. View the images and name weak ones. Spend shows only after OpenRouter billing settles, so recheck `credits` a few minutes later.
+9. Commit and push `history/`, so other machines avoid repeating these prompts.
 
 Done means every planned image is saved or reported as failed, and `history/` is pushed.
 

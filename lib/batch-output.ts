@@ -31,6 +31,24 @@ export function writeBatchPlan(folder: string, plan: BatchPlan): void {
   fs.writeFileSync(path.join(folder, "metadata.csv"), generateMetadataCsv(plan.items, "regular_scene"), "utf8");
 }
 
+/**
+ * Keep only the listed items of a planned batch so a resume makes fewer images. Item numbers and file
+ * names stay the same; the first full plan is kept once as plan.original.json.
+ */
+export function trimBatchPlan(folder: string, keepIds: number[]): BatchPlan {
+  const plan = readBatchPlan(folder);
+  const known = new Set(plan.items.map(item => item.id));
+  if (keepIds.length === 0) throw new Error("trim needs at least one image number to keep");
+  const unknown = keepIds.filter(id => !known.has(id));
+  if (unknown.length) throw new Error(`No image #${unknown.join(", #")} in this plan (it has #${[...known].join(", #")})`);
+  const backup = path.join(folder, "plan.original.json");
+  if (!fs.existsSync(backup)) fs.copyFileSync(path.join(folder, PLAN_FILE), backup);
+  const keep = new Set(keepIds);
+  const trimmed = { ...plan, items: plan.items.filter(item => keep.has(item.id)) };
+  writeBatchPlan(folder, trimmed);
+  return trimmed;
+}
+
 export function readBatchPlan(folder: string): BatchPlan {
   const file = path.join(folder, PLAN_FILE);
   if (!fs.existsSync(file)) throw new Error(`No ${PLAN_FILE} in ${folder}`);

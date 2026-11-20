@@ -4,7 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import sharp from "sharp";
-import { createBatchFolder, readBatchPlan, recentImageTitles, writeBatchPlan, type BatchPlan } from "../lib/batch-output";
+import { createBatchFolder, readBatchPlan, recentImageTitles, trimBatchPlan, writeBatchPlan, type BatchPlan } from "../lib/batch-output";
+import { execFileSync } from "node:child_process";
 import { runBatch } from "../lib/batch-run";
 import { prepareManualResearchItems } from "../lib/manual-research";
 
@@ -126,4 +127,33 @@ test("recent image titles come from the batch log, newest first, without failure
     if (previous === undefined) delete process.env.BATCH_LOG_FILE; else process.env.BATCH_LOG_FILE = previous;
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("trim keeps only the chosen images, keeps their numbers and saves the full plan once", async () => {
+  await withTempEnv(async () => {
+    const plan = await samplePlan();
+    const folder = createBatchFolder(plan.source);
+    writeBatchPlan(folder, plan);
+    const trimmed = trimBatchPlan(folder, [2, 5, 9]);
+    assert.deepEqual(trimmed.items.map(item => item.id), [2, 5, 9]);
+    assert.deepEqual(readBatchPlan(folder).items.map(item => item.id), [2, 5, 9]);
+    assert.equal(JSON.parse(fs.readFileSync(path.join(folder, "plan.original.json"), "utf8")).items.length, 10);
+    assert.equal(fs.readFileSync(path.join(folder, "metadata.csv"), "utf8").trim().split("\n").length, 4);
+    trimBatchPlan(folder, [5]);
+    assert.equal(JSON.parse(fs.readFileSync(path.join(folder, "plan.original.json"), "utf8")).items.length, 10);
+    assert.throws(() => trimBatchPlan(folder, [2]), /No image #2 in this plan \(it has #5\)/);
+    assert.throws(() => trimBatchPlan(folder, []), /at least one/);
+  });
+});
+
+test("the trim command fails loudly on a bad folder or numbers instead of carrying on", async () => {
+  await withTempEnv(async () => {
+    const plan = await samplePlan();
+    const folder = createBatchFolder(plan.source);
+    writeBatchPlan(folder, plan);
+    const run = (...args: string[]) => execFileSync("npx", ["tsx", "scripts/generate.ts", "trim", ...args], { encoding: "utf8", stdio: "pipe" });
+    assert.match(run(folder, "1,3"), /Kept 2 images/);
+    assert.throws(() => run(folder, "abc"));
+    assert.throws(() => run(path.join(folder, "missing"), "1"));
+  });
 });
