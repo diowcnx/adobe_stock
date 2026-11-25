@@ -93,6 +93,10 @@ export interface StockImageItem {
   manualResearch?: boolean;
   /** Replacement prompt from the research file, used when a retry is blocked by a visible face. */
   manualFallbackPrompt?: string;
+  /** Research brief drawn by hand, e.g. "loose watercolor painting"; the image is an illustration, not a photograph. */
+  manualMedium?: string;
+  /** Research brief rendered as one isolated element on pure white instead of a full-bleed scene. */
+  manualLayout?: "isolated_white";
   saleReferenceStructure?: SaleReferenceStructure;
   /** Sold-reference expansion rendered as an isolated element on pure white, or on a seamless plain colour backdrop, instead of a room or location scene. */
   saleReferenceLayout?: SaleReferenceLayout;

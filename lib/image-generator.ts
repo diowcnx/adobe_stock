@@ -225,6 +225,10 @@ export async function generateSingleImage(
       const isBackgroundSaleReference = Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "empty_background";
       const isFrameSaleReference = Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "decorative_frame";
       const saleMedium = item.saleReferenceStructure ? item.saleReferenceMedium : undefined;
+      const manualMedium = item.manualResearch ? item.manualMedium : undefined;
+      const isIsolatedManual = item.manualResearch === true && item.manualLayout === "isolated_white";
+      const illustrationMedium = saleMedium ?? manualMedium;
+      const isIsolatedElement = isIsolatedSaleReference || isIsolatedManual;
       const sanitizedPrompt = isTransparent
         ? basePrompt
             .replace(/isolated commercial cutout asset on a 100% transparent background \(png alpha channel\) of/gi, "Commercial studio product shot of floating")
@@ -264,16 +268,16 @@ export async function generateSingleImage(
         : item.boothStructure
           ? "Render only the complete exhibition booth and specified merchandise. Strict frontal orthographic view on continuous pure white studio background. Preserve the canopy, platform, shelves, access and blank signage. No people, lettering or surrounding event hall."
           : "Use only the single food-hardware hybrid described in the brief; no people, scenery or extra cultural props.",
-        saleMedium ? `Render the whole image as a ${saleMedium} illustration, not a photograph: keep the same hand-made illustrated look everywhere, with no photographic realism, camera depth of field or real-world material rendering.` : "",
+        illustrationMedium ? `Render the whole image as a ${illustrationMedium} illustration, not a photograph: keep the same hand-made illustrated look everywhere, with no photographic realism, camera depth of field or real-world material rendering.` : "",
         item.aerialLandscapeStructure || item.thaiNaturePosterStructure ? AERIAL_NO_VISIBLE_FACE_RULE : NO_VISIBLE_FACE_RULE,
         "The final pixels must contain no letters, words, typography, captions, signatures, watermarks, repeated watermark patterns, logos, trademarks, interface elements, or attribution marks.",
         "Do not imitate a marketplace preview, proof image, contact sheet, or licensed-media overlay.",
-        isIsolatedSaleReference
+        isIsolatedElement
           ? "The pure white background must be uniform and seamless to all four edges. No drawn outline, frame, mat, card, poster, page, panel, gradient vignette or inset image."
         : isTransparent
           ? "Render exactly one immediately recognizable, solid opaque subject on uniform pure white for alpha extraction. It must have a broad simple silhouette and no collage, assemblage, bundle, visual metaphor, extra prop, hand holding it, transparent or translucent area, glass, liquid, smoke, mesh, lace, loose fiber, thin wire, detached fragment, environment, floor, wall, horizon, frame, border, poster, card, mockup, cast shadow, contact shadow or cropped edge."
           : "The scene or physical background must extend fully to all four image edges. No outer border, mat, frame, canvas margin, poster, card, blank header, blank footer, title panel, inset image, mockup, or page-within-the-image.",
-        isTransparent || isIsolatedSaleReference
+        isTransparent || isIsolatedElement
           ? "Do not create advertising copy space or a layout; preserve clear padding around the isolated asset."
           : "Any copy space must remain a natural uninterrupted part of the photographed physical background inside the full-bleed scene; never turn copy space into a white rectangle or graphic panel.",
         item.negativePrompt ? `Also exclude: ${item.negativePrompt}.` : "",
@@ -311,6 +315,10 @@ export async function generateSingleImage(
           ? `Create a full-size premium exhibition-booth architectural visualization on a seamless pure white studio background, strictly frontal orthographic elevation, all architecture visible. Balanced white negative space is studio backdrop, not a frame. Follow the booth USER_INPUT structure: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.fusionStructure
           ? `Create one minimalist surrealist still-life photograph: exactly one seamless organic-food/mechanical-hardware hybrid on a matte studio surface, with generous natural copy space and a soft contact shadow. The physical background fills every edge. Preserve recognizable food and hardware textures and the specified clean fusion joint. ${sanitizedPrompt}. ${mandatoryExclusions}`
+        : isIsolatedManual
+          ? `Create one original buyer-ready isolated stock element ${manualMedium ? `painted as a ${manualMedium} illustration` : "photographed"} on seamless pure white for designers to composite: the complete subject centered with even white padding, crisp clean edges and ${manualMedium ? "a consistent illustrated finish" : "realistic natural materials"}, no ground plane, horizon or scenery, and at most a faint soft contact shadow. Research brief: ${sanitizedPrompt}. ${mandatoryExclusions}`
+        : manualMedium
+          ? `Create one original full-bleed commercial ${manualMedium} illustration, not a photograph, whose painted scene reaches every edge of the final image. Make the named subject, action and buyer use readable at a glance, and keep any copy space a natural painted part of the scene. Research brief: ${sanitizedPrompt}. ${mandatoryExclusions}`
         : item.composition === "artwork"
           ? `Create the original full-bleed artwork itself, not a photograph of a print, room, frame or mockup. Follow the specified artistic medium and composition with detailed print-friendly texture. Do not reserve advertising copy space. ${sanitizedPrompt}. ${mandatoryExclusions}`
           : `Create a single full-bleed art-directed commercial scene whose photographed background reaches every edge of the final image. Authentic materials, tactile textures, natural lighting and believable geometry. Leave useful natural negative space within the physical scene when requested, but never add a layout panel or margin. No plastic AI glossiness. Follow the intended medium and visual details: ${sanitizedPrompt}. ${mandatoryExclusions}`;
@@ -340,7 +348,7 @@ export async function generateSingleImage(
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-render the SAME planned props and surface as real objects arranged along the edges with a larger, cleaner empty centre. Fix every rejected defect; keep the props intact and physically resting on the surface, with no drawn outline, card, panel, text or anything in the centre.`
             : isBackgroundSaleReference
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-render the SAME planned background style and colour as a cleaner, smoother empty background filling the whole frame. Remove every object, shape, symbol, letter or pattern that reads as content; keep tonal gradation smooth with no banding, blotches or heavy noise; no frame, border, panel or vignette box.`
-            : isIsolatedSaleReference
+            : isIsolatedElement
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Re-render the SAME planned isolated element with a clearer silhouette, a different viewing angle and cleaner edges. Keep the complete element centered on seamless pure white with even padding; no ground plane, horizon, scenery, extra objects, text, people, frame or border.`
             : item.fusionStructure
               ? `QUALITY REPLACEMENT ${attemptIndex}/${MAX_QUALITY_RETRIES}: Previous defects: ${compactQualityIssue(rejectionReasons)}. Rebuild exactly the same specified food-hardware pair as ONE seamless hybrid. Correct the joint and recognizable material textures; simplify the silhouette. Preserve the minimalist matte background, soft contact shadow, no people, no text and no additional props. Do not replace it with a literal lifestyle scene.`
@@ -512,11 +520,11 @@ export async function generateSingleImage(
               isEditorialPenSketch: Boolean(item.editorialPenSketchStructure),
               isSymmetricalStorefront: Boolean(item.symmetricalStorefrontStructure),
               isSaleReference: Boolean(item.saleReferenceStructure),
-              isSaleReferenceIsolated: isIsolatedSaleReference,
+              isSaleReferenceIsolated: isIsolatedElement,
               isSaleReferenceBackdrop: Boolean(item.saleReferenceStructure) && item.saleReferenceLayout === "solid_backdrop",
               isSaleReferenceBackground: isBackgroundSaleReference,
               isSaleReferenceFrame: isFrameSaleReference,
-              illustrationMedium: saleMedium,
+              illustrationMedium,
             });
             if (!quality.passed) {
               const reason = compactQualityIssue(quality.issues);

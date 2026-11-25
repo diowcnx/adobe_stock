@@ -30,6 +30,8 @@ export function isStockImageItem(value: unknown): value is StockImageItem {
   if (!isBoundedString(value.modelUsed, 200)) return false;
   if (value.manualResearch !== undefined && typeof value.manualResearch !== "boolean") return false;
   if (value.manualFallbackPrompt !== undefined && (value.manualResearch !== true || !isBoundedString(value.manualFallbackPrompt, 8_000))) return false;
+  if (value.manualMedium !== undefined && (value.manualResearch !== true || !isBoundedString(value.manualMedium, 80) || !String(value.manualMedium).trim())) return false;
+  if (value.manualLayout !== undefined && (value.manualResearch !== true || value.manualLayout !== "isolated_white")) return false;
   if (value.manualResearch === true && [value.saleReferenceStructure, value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure, value.aerialLandscapeStructure, value.editorialPenSketchStructure, value.symmetricalStorefrontStructure, value.thaiNaturePosterStructure].some(field => field !== undefined)) return false;
   if ([value.saleReferenceStructure, value.fusionStructure, value.boothStructure, value.masterplanStructure, value.materialArtStructure, value.dualMaterialStructure, value.beverageCampaignStructure, value.culinaryEditorialStructure, value.aerialLandscapeStructure, value.editorialPenSketchStructure, value.symmetricalStorefrontStructure, value.thaiNaturePosterStructure].filter(field => field !== undefined).length > 1) return false;
   if (value.outputFormat !== undefined && (value.outputFormat !== "svg" || value.saleReferenceStructure === undefined)) return false;

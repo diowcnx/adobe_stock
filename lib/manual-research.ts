@@ -7,7 +7,7 @@ import type { StockImageItem } from "./types";
 const RESEARCH_DIR = path.join(process.cwd(), "research");
 const RESEARCH_FILE_PATTERN = /^manual-prompts-(\d{4}-\d{2}-\d{2})(?:-(\d+))?\.md$/;
 const BRIEF_PATTERN = /^(\d+)\. \*\*(.+?)\*\* — Buyer: (.+?)\. ([^\n]+)$/;
-const FIELD_PATTERN = /^\s+- (Category|Keywords|Fallback): (.+)$/;
+const FIELD_PATTERN = /^\s+- (Category|Keywords|Fallback|Medium|Layout): (.+)$/;
 const MIN_KEYWORDS = 15;
 
 export interface ManualResearchBatch {
@@ -31,7 +31,7 @@ export async function findLatestResearchFile(dir = RESEARCH_DIR): Promise<{ file
 }
 
 export function parseManualResearch(source: string, date: Date): StockImageItem[] {
-  const briefs: { title: string; buyer: string; prompt: string; category?: string; keywords?: string; fallback?: string }[] = [];
+  const briefs: { title: string; buyer: string; prompt: string; category?: string; keywords?: string; fallback?: string; medium?: string; layout?: string }[] = [];
   for (const line of source.split(/\r?\n/)) {
     const brief = BRIEF_PATTERN.exec(line);
     if (brief) {
@@ -44,21 +44,28 @@ export function parseManualResearch(source: string, date: Date): StockImageItem[
     if (!field || !current) continue;
     if (field[1] === "Category") current.category = field[2].trim();
     else if (field[1] === "Keywords") current.keywords = field[2];
+    else if (field[1] === "Medium") current.medium = field[2].trim();
+    else if (field[1] === "Layout") current.layout = field[2].trim().toLowerCase();
     else current.fallback = field[2].trim();
   }
   if (briefs.length !== 10) throw new Error(`Research prompt file must contain exactly ten ordered briefs (found ${briefs.length})`);
   return briefs.map((brief, index) => {
     if (!brief.category) throw new Error(`Research brief ${index + 1} is missing "- Category:"`);
     const keywords = normalizeStockKeywords((brief.keywords || "").split(/[,\s]+/));
+    if (brief.layout !== undefined && brief.layout !== "isolated") throw new Error(`Research brief ${index + 1} has an unknown "- Layout:" (use "isolated" or leave it out)`);
+    if (brief.medium !== undefined && (!brief.medium || brief.medium.length > 80)) throw new Error(`Research brief ${index + 1} needs a "- Medium:" of 1-80 characters`);
+    const isolated = brief.layout === "isolated";
     if (keywords.length < MIN_KEYWORDS) throw new Error(`Research brief ${index + 1} needs at least ${MIN_KEYWORDS} distinct keywords (found ${keywords.length})`);
     return {
       id: index + 1, seoTitle: brief.title, category: brief.category,
-      aspectRatio: "3:2", composition: "advertising", prompt: brief.prompt,
+      aspectRatio: isolated ? "1:1" : "3:2", composition: "advertising", prompt: brief.prompt,
       keywords, modelUsed: "google/gemini-3.1-flash-lite-image",
       filename: generateUniqueStockFilename(brief.title, index + 1, date, "regular_scene"), isTransparent: false,
       generationMode: "regular_scene", conceptMode: "existing", generationBriefVersion: GENERATION_BRIEF_VERSION,
       manualResearch: true, commercialIntent: { targetBuyer: brief.buyer, intendedUse: brief.buyer, purchaseReason: "Specific practical scene with natural copy space for commercial communication" },
       ...(brief.fallback ? { manualFallbackPrompt: brief.fallback } : {}),
+      ...(brief.medium ? { manualMedium: brief.medium } : {}),
+      ...(isolated ? { manualLayout: "isolated_white" as const } : {}),
     };
   });
 }

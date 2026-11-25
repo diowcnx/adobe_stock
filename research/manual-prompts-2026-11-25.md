@@ -6,36 +6,48 @@ Keywords and result counts are in `keyword-competition.csv` (rows dated 2026-11-
    - Top results: most hatchlings carry a birthday number or card lettering, or come as repeating patterns; few single clean hatchlings without numbers that a designer can place anywhere.
    - Category: Animals
    - Keywords: watercolor, dinosaur, baby, hatching, egg, triceratops, cute, nursery, illustration, isolated, white, background, kids, birthday, shower, prehistoric, hand, painted, clipart, children
+   - Medium: loose watercolor painting
+   - Layout: isolated
 
 2. **Watercolor nest of dinosaur eggs with two hatchlings** — Buyer: children's book publishers, kids' party and classroom decoration designers. Loose hand-painted watercolor illustration of a round nest of twigs and dry fern holding four large pastel speckled eggs, two of them cracked open with a small blue baby sauropod and a small orange baby raptor peeking out, soft blended washes and paper texture, centered on a seamless pure white background with even padding, no text, numbers, letters, frame or border.
    - Top results: single hatchlings or flat patterns; few show a whole nest with several eggs that tells a story of birth and family.
    - Category: Animals
    - Keywords: watercolor, dinosaur, nest, eggs, hatching, baby, hatchlings, cute, nursery, illustration, isolated, white, kids, prehistoric, sauropod, raptor, spring, birth, family, clipart
+   - Medium: loose watercolor painting
+   - Layout: isolated
 
 3. **Watercolor mother brachiosaurus with baby** — Buyer: Mother's Day and baby-card designers, nursery wall art sellers. Loose hand-painted watercolor illustration of a tall sage-green mother brachiosaurus lowering her long neck toward a small pale green baby brachiosaurus standing at her front feet, gentle muted earth tones with soft wet edges and visible paper grain, both complete and centered on a seamless pure white background with even padding, no text, letters, frame or border.
    - Top results: tyrannosaur families, mixed character sets and single babies with stars; few calm long-neck parent and baby pairs.
    - Category: Animals
    - Keywords: watercolor, dinosaur, family, mother, baby, brachiosaurus, nursery, illustration, isolated, white, cute, kids, love, mothers, day, gentle, prehistoric, hand, painted, clipart
+   - Medium: loose watercolor painting
+   - Layout: isolated
 
 4. **Watercolor stegosaurus parent and baby walking together** — Buyer: Father's Day cards, kids' apparel and sticker designers. Loose hand-painted watercolor illustration of an adult olive-green stegosaurus with warm terracotta back plates walking slowly beside a small matching baby stegosaurus, both in side view, soft shadow wash under their feet, gentle bleeding colour and paper texture, centered on a seamless pure white background with even padding, no text, letters, frame or border.
    - Top results: mixed sets of many baby dinosaurs; few single-species parent and child pairs in motion.
    - Category: Animals
    - Keywords: watercolor, dinosaur, stegosaurus, parent, baby, family, walking, together, nursery, illustration, isolated, white, kids, fathers, day, cute, prehistoric, hand, painted, clipart
+   - Medium: loose watercolor painting
+   - Layout: isolated
 
 5. **Watercolor prehistoric valley with a smoking volcano** — Buyer: children's book and science-lesson illustrators, museum education designers. Full-bleed loose hand-painted watercolor landscape of a calm prehistoric valley, a distant smoking volcano in soft violet and rust tones, tall tree ferns and cycads in the foreground, a winding river and a small herd of long-neck dinosaurs far in the middle distance, wide pale peach and blue sky copy space at the top, wet-on-wet washes and visible paper grain reaching all four edges, no text, letters, frame or border.
    - Top results: element sheets of volcanoes and eggs on white and single cartoon volcanoes; few full painted scenes with depth and sky copy space for a book page or slide.
    - Category: Landscapes
    - Keywords: watercolor, prehistoric, landscape, volcano, dinosaur, valley, jurassic, ferns, river, illustration, painting, kids, book, science, education, nature, background, ancient, scenery, copyspace
+   - Medium: loose watercolor painting
 
 6. **Watercolor pterodactyl mother feeding chicks on a cliff nest** — Buyer: children's book illustrators and science-education designers. Loose hand-painted watercolor illustration of an adult grey-blue pterodactyl with folded wings perched on a small rocky cliff ledge, two fluffy chicks in a twig nest reaching up toward her beak, soft blended washes and paper texture, the complete rock and birds centered on a seamless pure white background with even padding, no text, letters, frame or border.
    - Top results: single flying pterosaurs and cute clipart sets; few nesting scenes that show pterosaur family life.
    - Category: Animals
    - Keywords: watercolor, pterodactyl, pterosaur, nest, chicks, mother, feeding, cliff, dinosaur, prehistoric, illustration, isolated, white, kids, family, wings, education, hand, painted, clipart
+   - Medium: loose watercolor painting
+   - Layout: isolated
 
 7. **Watercolor baby dinosaurs at a jungle pond** — Buyer: nursery decor, kids' party backdrop and picture-book designers. Full-bleed loose hand-painted watercolor scene of a quiet prehistoric jungle pond, a baby triceratops drinking at the edge and a baby long-neck dinosaur wading in shallow water, large monstera and fern leaves framing the sides, soft dappled light, a calm pale green clearing in the upper centre as copy space, wet washes and paper grain to all four edges, no text, letters, frame or border.
    - Top results: single dinosaurs among ferns, babies tucked into leaves and seamless wallpaper patterns; few full scenes with water, action and room for a title.
    - Category: Animals
    - Keywords: watercolor, dinosaur, jungle, pond, baby, prehistoric, scene, ferns, nursery, kids, illustration, painting, cute, water, tropical, leaves, background, book, party, copyspace
+   - Medium: loose watercolor painting
 
 8. **Arab businessman in thobe looking at a city skyline at dusk** — Buyer: Gulf corporate, real estate and Vision 2030 campaign designers. Photorealistic photograph from behind of a man in a crisp white thobe and red-and-white checked ghutra standing at a floor-to-ceiling office window, one hand in pocket, looking out over a generic modern Gulf city skyline of glass towers at blue-hour dusk with warm city lights, the window reflections soft, his face fully turned away and hidden by the ghutra, wide sky copy space on the right, no text, signs, logos or recognisable real towers.
    - Top results: men looking up at buildings at street level, rooftop sunset views and named Riyadh or Dubai towers; few calm dusk interior views with generic skylines and real copy space.
