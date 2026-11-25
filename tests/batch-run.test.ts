@@ -47,7 +47,9 @@ function mockOpenRouter(image: Buffer, counts: { images: number }, failFirst = 0
 }
 
 async function samplePlan(): Promise<BatchPlan> {
-  const { items } = await prepareManualResearchItems(new Date("2026-10-30T05:00:00Z"));
+  const { items: researched } = await prepareManualResearchItems(new Date("2026-10-30T05:00:00Z"));
+  // The mocked image is a green scene; drop any white-cutout layout from the live research file so the pixel guard does not reject it.
+  const items = researched.map(({ manualLayout: _layout, ...item }) => item);
   return {
     source: "research", createdAt: "2026-10-30T05:00:00.000Z", items,
     trend: { theme: "Test", targetMarket: "Test", commercialReasoning: "Test", seasonalRelevance: "Test", buyerDemandRating: "Research Candidate" },
